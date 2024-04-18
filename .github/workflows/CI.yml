@@ -24,6 +24,7 @@ jobs:
 
       - name: Install
         run: pnpm install
+        working-directory: . 
 
   publish:
     needs: [test]
