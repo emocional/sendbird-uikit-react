@@ -1,7 +1,6 @@
 {
   "npm": {
-    "publish": true,
-    "publishPath": "./dist"
+    "publish": true
   },
   "git": {
     "commitMessage": "chore(release): emo-sendbird-uikit-react ${version}",

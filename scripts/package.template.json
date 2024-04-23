@@ -28,9 +28,6 @@
     "type": "git",
     "url": "git+ssh://git@github.com/emocional/sendbird-uikit-react.git"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  },
   "author": "SendBird <support@sendbird.com>",
   "license": "SEE LICENSE IN LICENSE.md",
   "bugs": {
