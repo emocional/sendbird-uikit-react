@@ -4,7 +4,7 @@
     "publishPath": "./dist"
   },
   "git": {
-    "commitMessage": "chore(release): emo sendbird uikit react ${version}",
+    "commitMessage": "chore(release): emo-sendbird-uikit-react ${version}",
     "requireBranch": "main",
     "requireCommits": true,
     "tagName": "sendbird-uikit-react@${version}"
