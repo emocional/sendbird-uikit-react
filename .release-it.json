@@ -11,7 +11,7 @@
   },
   "github": {
     "release": true,
-    "releaseName": "Release sendbird-uikit-react@${version}"
+    "releaseName": "Release emo-sendbird-uikit-react@${version}"
   },
   "plugins": {
     "@release-it/conventional-changelog": {
