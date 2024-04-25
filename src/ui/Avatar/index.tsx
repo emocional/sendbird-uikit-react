@@ -6,23 +6,16 @@ import AvatarDefault from './AvatarDefault';
 const imageRendererClassName = 'sendbird-avatar-img';
 
 interface AvatarInnerProps {
-  height: string | number,
-  width: string | number,
-  src?: string | Array<string>,
-  alt?: string,
-  customDefaultComponent?({ width, height }: { width: number | string, height: number | string }): ReactElement;
+  height: string | number;
+  width: string | number;
+  src?: string | Array<string>;
+  alt?: string;
+  customDefaultComponent?({ width, height }: { width: number | string; height: number | string }): ReactElement;
 }
 
-export const AvatarInner = ({
-  src = '',
-  alt = '',
-  height,
-  width,
-  customDefaultComponent,
-}: AvatarInnerProps): ReactElement => {
-  const defaultComponent = () => customDefaultComponent
-    ? customDefaultComponent({ width, height })
-    : <AvatarDefault width={width} height={height} />;
+export const AvatarInner = ({ src = '', alt = '', height, width, customDefaultComponent }: AvatarInnerProps): ReactElement => {
+  const defaultComponent = () =>
+    customDefaultComponent ? customDefaultComponent({ width, height }) : <AvatarDefault width={width} height={height} />;
 
   if (typeof src === 'string') {
     return (
@@ -33,6 +26,7 @@ export const AvatarInner = ({
         width={width}
         alt={alt}
         defaultComponent={defaultComponent}
+        borderRadius={'6px'}
       />
     );
   }
@@ -47,6 +41,7 @@ export const AvatarInner = ({
           width={width}
           alt={alt}
           defaultComponent={defaultComponent}
+          borderRadius={'6px'}
         />
       );
     }
@@ -111,47 +106,37 @@ export const AvatarInner = ({
 
     return (
       <div className="sendbird-avatar--inner__four-child">
-        {
-          src.slice(0, 4)
-            .map((url, index) => (
-              <ImageRenderer
-                className={imageRendererClassName}
-                url={url}
-                height={height}
-                width={width}
-                alt={alt}
-                key={`${url}-${index}`}
-                defaultComponent={defaultComponent}
-              />
-            ))
-        }
+        {src.slice(0, 4).map((url, index) => (
+          <ImageRenderer
+            className={imageRendererClassName}
+            url={url}
+            height={height}
+            width={width}
+            alt={alt}
+            key={`${url}-${index}`}
+            defaultComponent={defaultComponent}
+          />
+        ))}
       </div>
     );
   }
   // default img
   return (
-    <ImageRenderer
-      className={imageRendererClassName}
-      url=""
-      height={height}
-      width={width}
-      alt={alt}
-      defaultComponent={defaultComponent}
-    />
+    <ImageRenderer className={imageRendererClassName} url="" height={height} width={width} alt={alt} defaultComponent={defaultComponent} />
   );
 };
 
 interface AvatarProps {
-  className?: string | Array<string>,
-  height?: string | number,
-  width?: string | number,
-  zIndex?: string | number,
-  left?: string,
-  bottom?: string,
-  src?: string | Array<string>,
-  alt?: string,
-  onClick?(): void,
-  customDefaultComponent?({ width, height }: { width: number | string, height: number | string }): ReactElement;
+  className?: string | Array<string>;
+  height?: string | number;
+  width?: string | number;
+  zIndex?: string | number;
+  left?: string;
+  bottom?: string;
+  src?: string | Array<string>;
+  alt?: string;
+  onClick?(): void;
+  customDefaultComponent?({ width, height }: { width: number | string; height: number | string }): ReactElement;
 }
 
 function Avatar(
@@ -167,14 +152,11 @@ function Avatar(
     onClick,
     customDefaultComponent,
   }: AvatarProps,
-  ref?: RefObject<HTMLDivElement>,
+  ref?: RefObject<HTMLDivElement>
 ): ReactElement {
   return (
     <div
-      className={[
-        ...(Array.isArray(className) ? className : [className]),
-        'sendbird-avatar',
-      ].join(' ')}
+      className={[...(Array.isArray(className) ? className : [className]), 'sendbird-avatar'].join(' ')}
       role="button"
       ref={ref}
       style={{
@@ -188,13 +170,7 @@ function Avatar(
       onKeyDown={onClick}
       tabIndex={0}
     >
-      <AvatarInner
-        src={src}
-        width={width}
-        height={height}
-        alt={alt}
-        customDefaultComponent={customDefaultComponent}
-      />
+      <AvatarInner src={src} width={width} height={height} alt={alt} customDefaultComponent={customDefaultComponent} />
     </div>
   );
 }
