@@ -108,7 +108,7 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: In
                   } else {
                     const params: GroupChannelCreateParams = {};
                     params.invitedUserIds = selectedUserList;
-                    params.isDistinct = false;
+                    params.isDistinct = true;
                     if (userId) {
                       params.operatorUserIds = [userId];
                     }
