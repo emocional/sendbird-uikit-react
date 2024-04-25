@@ -6,5 +6,3 @@ echo "voy al path de emo-front"
 cd ../emo-front
 echo "install"
 pnpm i
-echo "levanto front"
-pnpm nx serve 
