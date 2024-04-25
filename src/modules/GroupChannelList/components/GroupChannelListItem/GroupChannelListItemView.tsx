@@ -80,7 +80,7 @@ export const GroupChannelListItemView = ({
         {...(isMobile ? { ...onLongPress } : { onClick })}
       >
         <div className="sendbird-channel-preview__avatar">
-          <ChannelAvatar channel={channel} userId={userId} theme={theme} />
+          <ChannelAvatar width={32} height={32} channel={channel} userId={userId} theme={theme} />
         </div>
         <div className="sendbird-channel-preview__content">
           <div className="sendbird-channel-preview__content__upper">
@@ -103,57 +103,33 @@ export const GroupChannelListItemView = ({
                 </div>
               )}
             </div>
-            {!channel.isEphemeral && isMessageStatusEnabled && (
-              <MessageStatus
-                className="sendbird-channel-preview__content__upper__last-message-at"
-                channel={channel}
-                message={channel.lastMessage as CoreMessageType}
-                isDateSeparatorConsidered={false}
-              />
+            {getChannelUnreadMessageCount(channel) ? ( // return number
+              <Badge count={getChannelUnreadMessageCount(channel)} />
+            ) : (
+              <>
+                {!channel.isEphemeral && isMessageStatusEnabled && (
+                  <MessageStatus
+                    className="sendbird-channel-preview__content__upper__last-message-at"
+                    channel={channel}
+                    message={channel.lastMessage as CoreMessageType}
+                    isDateSeparatorConsidered={false}
+                  />
+                )}
+                {!channel.isEphemeral && !isMessageStatusEnabled && (
+                  <Label
+                    className="sendbird-channel-preview__content__upper__last-message-at"
+                    type={LabelTypography.CAPTION_3}
+                    color={LabelColors.ONBACKGROUND_2}
+                  >
+                    {getLastMessageCreatedAt({
+                      channel,
+                      locale: dateLocale,
+                      stringSet,
+                    })}
+                  </Label>
+                )}
+              </>
             )}
-            {!channel.isEphemeral && !isMessageStatusEnabled && (
-              <Label
-                className="sendbird-channel-preview__content__upper__last-message-at"
-                type={LabelTypography.CAPTION_3}
-                color={LabelColors.ONBACKGROUND_2}
-              >
-                {getLastMessageCreatedAt({
-                  channel,
-                  locale: dateLocale,
-                  stringSet,
-                })}
-              </Label>
-            )}
-          </div>
-          <div className="sendbird-channel-preview__content__lower">
-            <Label
-              className="sendbird-channel-preview__content__lower__last-message"
-              type={LabelTypography.BODY_2}
-              color={LabelColors.ONBACKGROUND_3}
-            >
-              {isTyping && <TypingIndicatorText members={channel.getTypingUsers()} />}
-              {!isTyping && !isVoiceMessage(channel.lastMessage as FileMessage | null) && getLastMessage(channel, stringSet)}
-              {!isTyping && isVoiceMessage(channel.lastMessage as FileMessage | null) && stringSet.VOICE_MESSAGE}
-            </Label>
-            {
-              /**
-               * Do not show unread count for focused channel. This is because of the limitation where
-               * isScrollBottom and hasNext states needs to be added globally but they are from channel context
-               * so channel list cannot see them with the current architecture.
-               */
-              !isSelected && !channel.isEphemeral && (
-                <div className="sendbird-channel-preview__content__lower__unread-message-count">
-                  {isMentionEnabled && channel.unreadMentionCount > 0 ? (
-                    <MentionUserLabel className="sendbird-channel-preview__content__lower__unread-message-count__mention" color="purple">
-                      {'@'}
-                    </MentionUserLabel>
-                  ) : null}
-                  {getChannelUnreadMessageCount(channel) ? ( // return number
-                    <Badge count={getChannelUnreadMessageCount(channel)} />
-                  ) : null}
-                </div>
-              )
-            }
           </div>
         </div>
         {!isMobile && <div className="sendbird-channel-preview__action">{renderChannelAction({ channel })}</div>}

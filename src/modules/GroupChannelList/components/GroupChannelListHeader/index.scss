@@ -22,35 +22,12 @@
     width: 100%;
   }
 
-  &.sendbird-channel-header--allow-edit {
-    .sendbird-channel-header__title {
-      cursor: pointer;
-    }
-  }
-
   .sendbird-channel-header__title {
     display: flex;
     flex-direction: row;
     width: 260px;
     height: 48px;
     border-radius: 4px;
-
-    &:hover {
-      @include themed() {
-        background: t(bg-1);
-      }
-    }
-    &:focus {
-      outline: none;
-      @include themed() {
-        background: t(bg-2);
-      }
-    }
-    &:active {
-      @include themed() {
-        border: solid 2px t(primary-3);
-      }
-    }
 
     .sendbird-channel-header__title__left {
       width: 48px;

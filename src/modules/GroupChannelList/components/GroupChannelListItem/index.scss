@@ -35,7 +35,6 @@
   cursor: pointer;
   box-sizing: border-box;
   width: 100%;
-  height: 80px;
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -53,8 +52,8 @@
   }
 
   .sendbird-channel-preview__avatar {
-    width: 56px;
-    height: 56px;
+    width: 32px;
+    height: 32px;
   }
   .sendbird-channel-preview__content {
     width: 100%;
@@ -69,7 +68,6 @@
       display: flex;
       justify-content: space-between;
       width: 100%;
-      height: 16px;
 
       @include mobile() {
         width: auto;
@@ -89,6 +87,7 @@
           max-width: 128px;
           word-break: break-all;
           white-space: nowrap;
+          font-weight: 700;
         }
         .sendbird-channel-preview__content__upper__header__total-members {
           margin-top: 2px;
@@ -113,7 +112,6 @@
     .sendbird-channel-preview__content__lower {
       margin-top: 8px;
       width: 100%;
-      height: 32px;
       display: flex;
       justify-content: space-between;
       @include mobile() {
@@ -170,17 +168,9 @@
 
 .sendbird-channel-preview--active {
   @include themed() {
-    border-left: solid 4px t(primary-3);
-    border-bottom: solid 1px t(on-bg-4);
     background-color: t(primary--1-7);
   }
-  padding: 12px 16px 12px 12px;
-
-  .sendbird-channel-preview__content__upper__header__channel-name {
-    @include themed() {
-      color: t(primary-3);
-    }
-  }
+  padding: 12px 16px 12px 16px;
 }
 
 .sendbird-channel-preview__content__lower__unread-message-count {
