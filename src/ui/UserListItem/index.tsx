@@ -100,7 +100,12 @@ export default function UserListItem({
           )
         }
       />
-      <Label className="sendbird-user-list-item__title" type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
+      <Label
+        className="sendbird-user-list-item__title"
+        type={LabelTypography.SUBTITLE_1}
+        color={LabelColors.ONBACKGROUND_1}
+      >
+        {user?.metaData['professional'] ? '🧠 ' : ''}
         {user.nickname || stringSet.NO_NAME}
         {currentUser === user.userId && stringSet.CHANNEL_SETTING__MEMBERS__YOU}
       </Label>
