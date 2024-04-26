@@ -58,13 +58,25 @@ function ChannelAvatar({
           )
       )
       : (
-        <Avatar
-          className="sendbird-chat-header--avatar--group-channel"
-          src={utils.getChannelAvatarSource(channel, userId)}
-          width={`${width}px`}
-          height={`${height}px`}
-          alt={channel?.name}
-        />
+        <div style={{position: "relative"}}>
+          <Avatar
+            className="sendbird-chat-header--avatar--group-channel"
+            src={utils.getChannelAvatarSource(channel, userId)}
+            width={`${width}px`}
+            height={`${height}px`}
+            alt={channel?.name}
+          />
+          <div style={
+            {
+              bottom: 4, 
+              right: -2, 
+              padding: 5, 
+              borderRadius: 9999, 
+              position: "absolute", 
+              backgroundColor: utils.getMemberStatus(channel, userId) === "online" ? "#4ADE80FF" : undefined, 
+            } 
+          }/>
+        </div>
       )
   ), [utils.getChannelAvatarSource(channel, userId), theme]);
   return (

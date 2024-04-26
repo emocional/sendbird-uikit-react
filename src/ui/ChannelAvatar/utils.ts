@@ -20,6 +20,12 @@ export const getChannelAvatarSource = (channel: GroupChannel, currentUserId: str
     .map(({ profileUrl }) => profileUrl);
 };
 
+export const getMemberStatus = (channel: GroupChannel, currentUserId: string): string | Array<string> => {
+  return (channel?.members || [])
+    .filter((member) => member.userId !== currentUserId)
+    .map(({ connectionStatus }) => connectionStatus);
+};
+
 export const generateDefaultAvatar = (channel: GroupChannel): boolean => {
   if (channel?.coverUrl) {
     if (new RegExp(`^${DEFAULT_URL_PREFIX}`).test(channel.coverUrl)) {
