@@ -16,12 +16,13 @@ import { UserListQuery } from '../../../../types';
 
 export interface InviteUsersProps {
   onCancel?: () => void;
+  showCreateChannel?: boolean;
   userListQuery?(): UserListQuery;
 }
 
 const BUFFER = 50;
 
-const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: InviteUsersProps) => {
+const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, showCreateChannel }: InviteUsersProps) => {
   const { onCreateChannelClick, onBeforeCreateChannel, onChannelCreated, createChannel, onCreateChannel, overrideInviteUser, type } =
     useCreateChannelContext();
 
@@ -61,7 +62,7 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: In
   }, []);
 
   useEffect(() => {
-    if (users.length > 0) handleSubmit(users[0].userId);
+    if (users.length === 1) handleSubmit(users[0].userId);
   }, [users]);
 
   const handleSubmit = (id: string) => {
@@ -96,7 +97,7 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: In
     onCancel?.();
   };
 
-  return users.length > 1 ? (
+  return users.length > 0 && !!showCreateChannel ? (
     <Modal isFullScreenOnMobile titleText={titleText} onCancel={onCancel} hideFooter>
       <div
         className="sendbird-create-channel--scroll"

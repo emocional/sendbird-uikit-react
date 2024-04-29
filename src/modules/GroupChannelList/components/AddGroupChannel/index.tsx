@@ -5,12 +5,11 @@ import { UserListQuery } from '../../../../types';
 
 export interface AddGroupChannelProps {
   userQuery?(): UserListQuery;
-  showCreateChannel?: boolean;
 }
 
 export const AddGroupChannel = (props: AddGroupChannelProps) => {
-  const { userQuery, showCreateChannel } = props;
-  const [createChannelVisible, setCreateChannelVisible] = useState(!!showCreateChannel);
+  const { userQuery } = props;
+  const [createChannelVisible, setCreateChannelVisible] = useState(false);
   const { onChannelCreated, onBeforeCreateChannel, onCreateChannelClick } = useGroupChannelListContext();
 
   return (
