@@ -19,11 +19,13 @@ export interface GroupChannelListUIProps {
   renderPlaceHolderError?: (props: void) => React.ReactElement;
   renderPlaceHolderLoading?: (props: void) => React.ReactElement;
   renderPlaceHolderEmptyList?: (props: void) => React.ReactElement;
-  userQuery?(): UserListQuery
+  userQuery?(): UserListQuery;
+  showCreateChannel?: boolean;
 }
 
 export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
-  const { renderHeader, renderChannelPreview, renderPlaceHolderError, renderPlaceHolderLoading, renderPlaceHolderEmptyList, userQuery } = props;
+  const { renderHeader, renderChannelPreview, renderPlaceHolderError, renderPlaceHolderLoading, renderPlaceHolderEmptyList, userQuery } =
+    props;
 
   const {
     onChannelSelect,
@@ -89,7 +91,7 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
       channels={groupChannels}
       onLoadMore={loadMore}
       initialized={initialized}
-      renderAddChannel={() => <AddGroupChannel userQuery={userQuery}  />}
+      renderAddChannel={() => <AddGroupChannel userQuery={userQuery} />}
     />
   );
 };

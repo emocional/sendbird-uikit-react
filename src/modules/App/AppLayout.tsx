@@ -9,9 +9,7 @@ import { MobileLayout } from './MobileLayout';
 import useSendbirdStateContext from '../../hooks/useSendbirdStateContext';
 import { SendableMessageType } from '../../utils';
 
-export const AppLayout: React.FC<AppLayoutProps> = (
-  props: AppLayoutProps,
-) => {
+export const AppLayout: React.FC<AppLayoutProps> = (props: AppLayoutProps) => {
   const {
     isMessageGroupingEnabled,
     allowProfileEdit,
@@ -21,6 +19,7 @@ export const AppLayout: React.FC<AppLayoutProps> = (
     setCurrentChannel,
     enableLegacyChannelModules,
     userQuery,
+    showCreateChannel,
   } = props;
 
   const globalStore = useSendbirdStateContext();
@@ -44,56 +43,53 @@ export const AppLayout: React.FC<AppLayoutProps> = (
 
   return (
     <>
-      {
-        isMobile
-          ? (
-            <MobileLayout
-              replyType={replyType}
-              showSearchIcon={showSearchIcon}
-              isReactionEnabled={isReactionEnabled}
-              isMessageGroupingEnabled={isMessageGroupingEnabled}
-              allowProfileEdit={allowProfileEdit}
-              onProfileEditSuccess={onProfileEditSuccess}
-              currentChannel={currentChannel}
-              setCurrentChannel={setCurrentChannel}
-              highlightedMessage={highlightedMessage}
-              setHighlightedMessage={setHighlightedMessage}
-              startingPoint={startingPoint}
-              setStartingPoint={setStartingPoint}
-              threadTargetMessage={threadTargetMessage}
-              setThreadTargetMessage={setThreadTargetMessage}
-              enableLegacyChannelModules={enableLegacyChannelModules}
-              userQuery={userQuery}
-            />
-          )
-          : (
-            <DesktopLayout
-              replyType={replyType}
-              isReactionEnabled={isReactionEnabled}
-              showSearchIcon={showSearchIcon}
-              isMessageGroupingEnabled={isMessageGroupingEnabled}
-              allowProfileEdit={allowProfileEdit}
-              onProfileEditSuccess={onProfileEditSuccess}
-              disableAutoSelect={disableAutoSelect}
-              currentChannel={currentChannel}
-              setCurrentChannel={setCurrentChannel}
-              showThread={showThread}
-              setShowThread={setShowThread}
-              threadTargetMessage={threadTargetMessage}
-              setThreadTargetMessage={setThreadTargetMessage}
-              showSettings={showSettings}
-              setShowSettings={setShowSettings}
-              showSearch={showSearch}
-              setShowSearch={setShowSearch}
-              highlightedMessage={highlightedMessage}
-              setHighlightedMessage={setHighlightedMessage}
-              startingPoint={startingPoint}
-              setStartingPoint={setStartingPoint}
-              enableLegacyChannelModules={enableLegacyChannelModules}
-              userQuery={userQuery}
-            />
-          )
-      }
+      {isMobile ? (
+        <MobileLayout
+          replyType={replyType}
+          showSearchIcon={showSearchIcon}
+          isReactionEnabled={isReactionEnabled}
+          isMessageGroupingEnabled={isMessageGroupingEnabled}
+          allowProfileEdit={allowProfileEdit}
+          onProfileEditSuccess={onProfileEditSuccess}
+          currentChannel={currentChannel}
+          setCurrentChannel={setCurrentChannel}
+          highlightedMessage={highlightedMessage}
+          setHighlightedMessage={setHighlightedMessage}
+          startingPoint={startingPoint}
+          setStartingPoint={setStartingPoint}
+          threadTargetMessage={threadTargetMessage}
+          setThreadTargetMessage={setThreadTargetMessage}
+          enableLegacyChannelModules={enableLegacyChannelModules}
+          userQuery={userQuery}
+        />
+      ) : (
+        <DesktopLayout
+          replyType={replyType}
+          isReactionEnabled={isReactionEnabled}
+          showSearchIcon={showSearchIcon}
+          isMessageGroupingEnabled={isMessageGroupingEnabled}
+          allowProfileEdit={allowProfileEdit}
+          onProfileEditSuccess={onProfileEditSuccess}
+          disableAutoSelect={disableAutoSelect}
+          currentChannel={currentChannel}
+          setCurrentChannel={setCurrentChannel}
+          showThread={showThread}
+          setShowThread={setShowThread}
+          threadTargetMessage={threadTargetMessage}
+          setThreadTargetMessage={setThreadTargetMessage}
+          showSettings={showSettings}
+          setShowSettings={setShowSettings}
+          showSearch={showSearch}
+          setShowSearch={setShowSearch}
+          highlightedMessage={highlightedMessage}
+          setHighlightedMessage={setHighlightedMessage}
+          startingPoint={startingPoint}
+          setStartingPoint={setStartingPoint}
+          enableLegacyChannelModules={enableLegacyChannelModules}
+          userQuery={userQuery}
+          showCreateChannel={showCreateChannel}
+        />
+      )}
     </>
   );
 };

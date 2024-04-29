@@ -30,12 +30,9 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: In
   const sdk = globalStore?.stores?.sdkStore?.sdk;
   const idsToFilter = [userId];
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedUsers, setSelectedUsers] = useState({});
   const { stringSet } = useContext(LocalizationContext);
   const [usersDataSource, setUsersDataSource] = useState<UserListQuery | null>(null);
-  const selectedCount = Object.keys(selectedUsers).length;
   const titleText = stringSet.MODAL__CREATE_CHANNEL__TITLE;
-  const submitText = stringSet.BUTTON__CREATE;
   const { isMobile } = useMediaQueryContext();
   const [scrollableAreaHeight, setScrollableAreaHeight] = useState<number>(window.innerHeight);
 
@@ -45,12 +42,12 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: In
     const applicationUserListQuery = userQueryCreator;
     setUsersDataSource(applicationUserListQuery);
     // @ts-ignore
-    if (!applicationUserListQuery?.isLoading) {
+    if (!applicationUserListQuery?.isLoading && !!applicationUserListQuery?.hasNext) {
       applicationUserListQuery.next().then((users_) => {
         setUsers(users_);
       });
     }
-  }, []);
+  }, [userQueryCreator?.hasNext]);
 
   // To fix navbar break in mobile we set dynamic height to the scrollable area
   useEffect(() => {
@@ -63,7 +60,43 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: In
     };
   }, []);
 
-  return (
+  useEffect(() => {
+    if (users.length > 0) handleSubmit(users[0].userId);
+  }, [users]);
+
+  const handleSubmit = (id: string) => {
+    const selectedUserList = [id];
+    const _onChannelCreated = onChannelCreated ?? onCreateChannel;
+    const _onCreateChannelClick = onCreateChannelClick ?? overrideInviteUser;
+
+    if (typeof _onCreateChannelClick === 'function') {
+      _onCreateChannelClick({
+        users: selectedUserList,
+        onClose: onCancel ?? noop,
+        channelType: type,
+      });
+      return;
+    }
+
+    if (onBeforeCreateChannel) {
+      const params = onBeforeCreateChannel(selectedUserList);
+      setChannelType(params, type);
+      createChannel(params).then((channel) => _onChannelCreated?.(channel));
+    } else {
+      const params: GroupChannelCreateParams = {};
+      params.invitedUserIds = selectedUserList;
+      params.isDistinct = true;
+      if (userId) {
+        params.operatorUserIds = [userId];
+      }
+      setChannelType(params, type);
+      // do not have custom params
+      createChannel(params).then((channel) => _onChannelCreated?.(channel));
+    }
+    onCancel?.();
+  };
+
+  return users.length > 1 ? (
     <Modal isFullScreenOnMobile titleText={titleText} onCancel={onCancel} hideFooter>
       <div
         className="sendbird-create-channel--scroll"
@@ -83,47 +116,11 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery }: In
       >
         {users.map(
           (user) =>
-            !filterUser(idsToFilter)(user.userId) && (
-              <UserListItem
-                key={user.userId}
-                user={user}
-                onSubmit={(item) => {
-                  const selectedUserList = [item];
-                  const _onChannelCreated = onChannelCreated ?? onCreateChannel;
-                  const _onCreateChannelClick = onCreateChannelClick ?? overrideInviteUser;
-
-                  if (typeof _onCreateChannelClick === 'function') {
-                    _onCreateChannelClick({
-                      users: selectedUserList,
-                      onClose: onCancel ?? noop,
-                      channelType: type,
-                    });
-                    return;
-                  }
-
-                  if (onBeforeCreateChannel) {
-                    const params = onBeforeCreateChannel(selectedUserList);
-                    setChannelType(params, type);
-                    createChannel(params).then((channel) => _onChannelCreated?.(channel));
-                  } else {
-                    const params: GroupChannelCreateParams = {};
-                    params.invitedUserIds = selectedUserList;
-                    params.isDistinct = true;
-                    if (userId) {
-                      params.operatorUserIds = [userId];
-                    }
-                    setChannelType(params, type);
-                    // do not have custom params
-                    createChannel(params).then((channel) => _onChannelCreated?.(channel));
-                  }
-                  onCancel?.();
-                }}
-              />
-            )
+            !filterUser(idsToFilter)(user.userId) && <UserListItem key={user.userId} user={user} onSubmit={(item) => handleSubmit(item)} />
         )}
       </div>
     </Modal>
-  );
+  ) : null;
 };
 
 export default InviteUsers;

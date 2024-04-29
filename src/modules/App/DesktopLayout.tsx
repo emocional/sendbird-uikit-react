@@ -39,6 +39,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     setThreadTargetMessage,
     enableLegacyChannelModules,
     userQuery,
+    showCreateChannel,
   } = props;
 
   const updateFocusedChannel = (channel: GroupChannelClass) => {
@@ -72,6 +73,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     onChannelCreated: updateFocusedChannel,
     onUserProfileUpdated: onProfileEditSuccess,
     userQuery,
+    showCreateChannel,
   };
 
   const channelProps = {
