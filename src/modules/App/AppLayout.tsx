@@ -19,7 +19,6 @@ export const AppLayout: React.FC<AppLayoutProps> = (props: AppLayoutProps) => {
     setCurrentChannel,
     enableLegacyChannelModules,
     userQuery,
-    showCreateChannel,
   } = props;
 
   const globalStore = useSendbirdStateContext();
@@ -87,7 +86,6 @@ export const AppLayout: React.FC<AppLayoutProps> = (props: AppLayoutProps) => {
           setStartingPoint={setStartingPoint}
           enableLegacyChannelModules={enableLegacyChannelModules}
           userQuery={userQuery}
-          showCreateChannel={showCreateChannel}
         />
       )}
     </>

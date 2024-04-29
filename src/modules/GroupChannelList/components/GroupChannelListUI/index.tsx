@@ -20,7 +20,6 @@ export interface GroupChannelListUIProps {
   renderPlaceHolderLoading?: (props: void) => React.ReactElement;
   renderPlaceHolderEmptyList?: (props: void) => React.ReactElement;
   userQuery?(): UserListQuery;
-  showCreateChannel?: boolean;
 }
 
 export const GroupChannelListUI = (props: GroupChannelListUIProps) => {

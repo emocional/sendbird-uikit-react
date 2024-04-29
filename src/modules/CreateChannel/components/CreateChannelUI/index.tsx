@@ -7,25 +7,25 @@ import InviteUsers from '../InviteUsers';
 
 export interface CreateChannelUIProps {
   onCancel?(): void;
-  renderStepOne?:(props: void) => React.ReactElement;
-  userQuery?(): UserListQuery
+  renderStepOne?: (props: void) => React.ReactElement;
+  userQuery?(): UserListQuery;
+  showCreateChannel?: boolean;
 }
 
 const CreateChannel: React.FC<CreateChannelUIProps> = (props: CreateChannelUIProps) => {
-  const { onCancel, userQuery } = props;
+  const { onCancel, userQuery, showCreateChannel } = props;
 
-  const {
-    userListQuery,
-  } = useCreateChannelContext();
+  const { userListQuery } = useCreateChannelContext();
 
   return (
     <>
-          <InviteUsers
-            userListQuery={userQuery || userListQuery}
-            onCancel={() => {
-              onCancel();
-            }}
-          />
+      <InviteUsers
+        userListQuery={userQuery || userListQuery}
+        showCreateChannel={showCreateChannel}
+        onCancel={() => {
+          onCancel();
+        }}
+      />
     </>
   );
 };

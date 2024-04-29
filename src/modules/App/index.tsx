@@ -60,7 +60,6 @@ interface AppProps {
   enableLegacyChannelModules?: boolean;
 
   userQuery?(): UserListQuery;
-  showCreateChannel?: boolean;
 }
 
 export default function App(props: AppProps) {
@@ -106,7 +105,6 @@ export default function App(props: AppProps) {
     isUserIdUsedForNickname = true,
     enableLegacyChannelModules = false,
     userQuery,
-    showCreateChannel = false,
   } = props;
   const [currentChannel, setCurrentChannel] = useState(null);
 
@@ -160,7 +158,6 @@ export default function App(props: AppProps) {
         setCurrentChannel={setCurrentChannel}
         enableLegacyChannelModules={enableLegacyChannelModules}
         userQuery={userQuery}
-        showCreateChannel={showCreateChannel}
       />
     </Sendbird>
   );

@@ -14,7 +14,7 @@ type Props = {
   onBeforeCreateChannel: CreateChannelProviderProps['onBeforeCreateChannel'];
   onCreateChannelClick: CreateChannelProviderProps['onCreateChannelClick'];
   onChannelCreated: CreateChannelProviderProps['onChannelCreated'];
-  userQuery?(): UserListQuery
+  userQuery?(): UserListQuery;
 };
 
 export const AddGroupChannelView = ({
@@ -29,31 +29,20 @@ export const AddGroupChannelView = ({
 
   return (
     <>
-      <IconButton
-        height={'32px'}
-        width={'32px'}
-        disabled={!config.isOnline}
-        onClick={() => onChangeCreateChannelVisible(true)}
-      >
-        <Icon
-          type={IconTypes.CREATE}
-          fillColor={IconColors.PRIMARY}
-          width={'24px'}
-          height={'24px'}
-        />
+      <IconButton height={'32px'} width={'32px'} disabled={!config.isOnline} onClick={() => onChangeCreateChannelVisible(true)}>
+        <Icon type={IconTypes.CREATE} fillColor={IconColors.PRIMARY} width={'24px'} height={'24px'} />
       </IconButton>
-      {createChannelVisible && (
-        <CreateChannel
-          onCancel={() => onChangeCreateChannelVisible(false)}
-          onChannelCreated={(channel) => {
-            onChannelCreated?.(channel);
-            onChangeCreateChannelVisible(false);
-          }}
-          onBeforeCreateChannel={onBeforeCreateChannel}
-          onCreateChannelClick={onCreateChannelClick}
-          userQuery={userQuery}
-        />
-      )}
+      <CreateChannel
+        onCancel={() => onChangeCreateChannelVisible(false)}
+        showCreateChannel={createChannelVisible}
+        onChannelCreated={(channel) => {
+          onChannelCreated?.(channel);
+          onChangeCreateChannelVisible(false);
+        }}
+        onBeforeCreateChannel={onBeforeCreateChannel}
+        onCreateChannelClick={onCreateChannelClick}
+        userQuery={userQuery}
+      />
     </>
   );
 };
