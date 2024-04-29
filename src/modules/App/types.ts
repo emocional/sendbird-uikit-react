@@ -1,12 +1,7 @@
 import type { User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { Locale } from 'date-fns';
-import {
-  ReplyType,
-  UserListQuery,
-  RenderUserProfileProps,
-  SendBirdProviderConfig,
-} from '../../types';
+import { ReplyType, UserListQuery, RenderUserProfileProps, SendBirdProviderConfig } from '../../types';
 import { CustomExtensionParams, SBUEventHandlers, SendbirdChatInitParams } from '../../lib/types';
 import { SendableMessageType } from '../../utils';
 
@@ -23,6 +18,7 @@ export interface AppLayoutProps {
   setCurrentChannel: React.Dispatch<GroupChannel | null>;
   enableLegacyChannelModules: boolean;
   userQuery?(): UserListQuery;
+  showCreateChannel?: boolean;
 }
 
 interface SubLayoutCommonProps {
@@ -34,7 +30,7 @@ interface SubLayoutCommonProps {
   setThreadTargetMessage: React.Dispatch<SendableMessageType>;
 }
 
-export interface MobileLayoutProps extends AppLayoutProps, SubLayoutCommonProps { }
+export interface MobileLayoutProps extends AppLayoutProps, SubLayoutCommonProps {}
 
 export interface DesktopLayoutProps extends AppLayoutProps, SubLayoutCommonProps {
   // modertion pannel
@@ -51,8 +47,8 @@ export default interface AppProps {
   appId: string;
   userId: string;
   accessToken?: string;
-  customApiHost?: string,
-  customWebSocketHost?: string,
+  customApiHost?: string;
+  customWebSocketHost?: string;
   theme?: 'light' | 'dark';
   userListQuery?(): UserListQuery;
   nickname?: string;
@@ -69,9 +65,9 @@ export default interface AppProps {
   stringSet?: Record<string, string>;
   colorSet?: Record<string, string>;
   imageCompression?: {
-    compressionRate?: number,
-    resizingWidth?: number | string,
-    resizingHeight?: number | string,
+    compressionRate?: number;
+    resizingWidth?: number | string;
+    resizingHeight?: number | string;
   };
   replyType?: ReplyType;
   disableAutoSelect?: boolean;
