@@ -100,15 +100,26 @@ export default function UserListItem({
           )
         }
       />
-      <Label
-        className="sendbird-user-list-item__title"
-        type={LabelTypography.SUBTITLE_1}
-        color={LabelColors.ONBACKGROUND_1}
-      >
-        {user?.metaData['professional'] ? '🧠 ' : ''}
+      <Label className="sendbird-user-list-item__title" type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
         {user.nickname || stringSet.NO_NAME}
         {currentUser === user.userId && stringSet.CHANNEL_SETTING__MEMBERS__YOU}
       </Label>
+      {user?.metaData['professional'] && (
+        <div
+          style={{
+            top: 17,
+            right: 17,
+            fontSize: 12,
+            color: 'black',
+            borderRadius: 99999,
+            position: 'absolute',
+            padding: '4px 8px 4px 8px',
+            backgroundColor: '#FAFAFAFF',
+          }}
+        >
+          Profesional
+        </div>
+      )}
       {
         // if there is now nickname, display userId
         !user.nickname && (
