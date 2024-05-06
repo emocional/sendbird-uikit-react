@@ -114,6 +114,7 @@ export interface SendbirdProviderProps extends CommonUIKitConfigProps, React.Pro
 
   // Customer provided callbacks
   eventHandlers?: SBUEventHandlers;
+  enableAutoChat?: boolean;
 }
 
 export function SendbirdProvider(props: SendbirdProviderProps) {
@@ -180,6 +181,7 @@ const SendbirdSDK = ({
   customExtensionParams,
   isMultipleFilesMessageEnabled = false,
   eventHandlers,
+  enableAutoChat = false,
 }: SendbirdProviderProps): React.ReactElement => {
   const {
     logLevel = '',
@@ -357,6 +359,7 @@ const SendbirdSDK = ({
           uikitUploadSizeLimit,
           uikitMultipleFilesMessageLimit,
           userListQuery,
+          enableAutoChat,
           logger,
           pubSub,
           imageCompression: {

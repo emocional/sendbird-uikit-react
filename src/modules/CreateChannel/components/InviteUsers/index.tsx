@@ -29,6 +29,7 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
   const globalStore = useSendbirdStateContext();
   const userId = globalStore?.config?.userId;
   const sdk = globalStore?.stores?.sdkStore?.sdk;
+  const createChatAuto = globalStore.config.enableAutoChat;
   const idsToFilter = [userId];
   const [users, setUsers] = useState<User[]>([]);
   const { stringSet } = useContext(LocalizationContext);
@@ -62,7 +63,11 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
   }, []);
 
   useEffect(() => {
-    if (users.length === 1) handleSubmit(users[0].userId);
+    if (!!createChatAuto) {
+      for (let i = 0; i < users.length; i++) {
+        handleSubmit(users[i].userId);
+      }
+    }
   }, [users]);
 
   const handleSubmit = (id: string) => {
