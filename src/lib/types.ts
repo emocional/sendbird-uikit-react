@@ -51,6 +51,7 @@ export interface SendBirdStateConfig {
   renderUserProfile?: (props: RenderUserProfileProps) => React.ReactElement;
   onUserProfileMessage?: (props: GroupChannel) => void;
   enableAutoChat?: boolean;
+  searcherFilter?: (v: string) => void;
   allowProfileEdit: boolean;
   isOnline: boolean;
   userId: string;

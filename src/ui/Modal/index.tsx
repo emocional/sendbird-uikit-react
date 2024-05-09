@@ -1,4 +1,4 @@
-import React, { ReactElement, ReactNode, useContext, MouseEvent } from 'react';
+import React, { ReactElement, ReactNode, useContext, MouseEvent, SetStateAction, Dispatch } from 'react';
 import { createPortal } from 'react-dom';
 
 import './index.scss';
@@ -15,25 +15,39 @@ import Label, { LabelTypography, LabelColors } from '../Label';
 
 export interface ModalHeaderProps {
   titleText: string;
+  setSearcher?: Dispatch<SetStateAction<string>>;
   onCloseClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
-export const ModalHeader = ({ titleText, onCloseClick }: ModalHeaderProps): ReactElement => (
+export const ModalHeader = ({ titleText, setSearcher, onCloseClick }: ModalHeaderProps): ReactElement => (
   <div className="sendbird-modal__header">
-    <Label type={LabelTypography.H_1} color={LabelColors.ONBACKGROUND_1}>
-      {titleText}
-    </Label>
+    {!setSearcher ? (
+      <Label type={LabelTypography.H_1} color={LabelColors.ONBACKGROUND_1}>
+        {titleText}
+      </Label>
+    ) : (
+      <input
+        placeholder="Buscar"
+        onChange={(e) => setSearcher(e.target.value)}
+        style={{
+          width: '100%',
+          maxWidth: 300,
+          outline: 'none',
+          borderRadius: 16,
+          padding: '8px 12px 8px 12px',
+          border: '1px solid #DEE1E6FF',
+        }}
+      />
+    )}
     <div className="sendbird-modal__close">
       <IconButton
         width="32px"
         height="32px"
-        onClick={onCloseClick}
+        onClick={(e) => {
+          onCloseClick(e);
+          if (setSearcher) setSearcher('');
+        }}
       >
-        <Icon
-          type={IconTypes.CLOSE}
-          fillColor={IconColors.DEFAULT}
-          width="24px"
-          height="24px"
-        />
+        <Icon type={IconTypes.CLOSE} fillColor={IconColors.DEFAULT} width="24px" height="24px" />
       </IconButton>
     </div>
   </div>
@@ -44,10 +58,7 @@ export interface ModalBodyProps {
 }
 export const ModalBody = ({ children }: ModalBodyProps): ReactElement => (
   <div className="sendbird-modal__body">
-    <Label
-      type={LabelTypography.SUBTITLE_1}
-      color={LabelColors.ONBACKGROUND_2}
-    >
+    <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_2}>
       {children}
     </Label>
   </div>
@@ -89,6 +100,7 @@ export const ModalFooter = ({
 export interface ModalProps {
   children?: ReactNode;
   className?: string;
+  setSearcher?: Dispatch<SetStateAction<string>>;
   contentClassName?: string | Array<string>;
   isCloseOnClickOutside?: boolean;
   isFullScreenOnMobile?: boolean;
@@ -117,6 +129,7 @@ export function Modal(props: ModalProps): ReactElement {
     submitText,
     disabled = false,
     hideFooter = false,
+    setSearcher,
     type = ButtonTypes.DANGER,
     /**
      * Do not use this! We will deprecate onCancel in v4.
@@ -130,32 +143,20 @@ export function Modal(props: ModalProps): ReactElement {
   const handleClose = onClose ?? onCancel;
 
   const { isMobile } = useMediaQueryContext();
-  return createPortal((
-    <div className={`
+  return createPortal(
+    <div
+      className={`
       sendbird-modal ${className}
-      ${(isFullScreenOnMobile && isMobile) ? 'sendbird-modal--full-mobile' : ''}
-    `}>
-      <div
-        className={[
-          'sendbird-modal__content',
-          ...(Array.isArray(contentClassName) ? contentClassName : [contentClassName]),
-        ].join(' ')}
-      >
-        {renderHeader?.() || (
-          <ModalHeader titleText={titleText ?? ''} onCloseClick={handleClose} />
-        )}
+      ${isFullScreenOnMobile && isMobile ? 'sendbird-modal--full-mobile' : ''}
+    `}
+    >
+      <div className={['sendbird-modal__content', ...(Array.isArray(contentClassName) ? contentClassName : [contentClassName])].join(' ')}>
+        {renderHeader?.() || <ModalHeader titleText={titleText ?? ''} onCloseClick={handleClose} setSearcher={setSearcher} />}
         <ModalBody>{children}</ModalBody>
-        {
-          !hideFooter && (customFooter ?? (
-            <ModalFooter
-              disabled={disabled}
-              onCancel={handleClose}
-              onSubmit={onSubmit}
-              submitText={submitText ?? ''}
-              type={type}
-            />
-          ))
-        }
+        {!hideFooter &&
+          (customFooter ?? (
+            <ModalFooter disabled={disabled} onCancel={handleClose} onSubmit={onSubmit} submitText={submitText ?? ''} type={type} />
+          ))}
       </div>
       <div
         className={`
@@ -169,7 +170,8 @@ export function Modal(props: ModalProps): ReactElement {
           }
         }}
       />
-    </div>
-  ), document.getElementById(MODAL_ROOT) as HTMLElement);
+    </div>,
+    document.getElementById(MODAL_ROOT) as HTMLElement
+  );
 }
 export default Modal;

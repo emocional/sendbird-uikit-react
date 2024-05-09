@@ -61,6 +61,7 @@ interface AppProps {
 
   userQuery?(): UserListQuery;
   enableAutoChat?: SendbirdProviderProps['enableAutoChat'];
+  searcherFilter?: SendbirdProviderProps['searcherFilter'];
 }
 
 export default function App(props: AppProps) {
@@ -107,6 +108,7 @@ export default function App(props: AppProps) {
     enableLegacyChannelModules = false,
     userQuery,
     enableAutoChat,
+    searcherFilter,
   } = props;
   const [currentChannel, setCurrentChannel] = useState(null);
 
@@ -139,6 +141,7 @@ export default function App(props: AppProps) {
         setCurrentChannel(channel);
       }}
       enableAutoChat={enableAutoChat}
+      searcherFilter={searcherFilter}
       isTypingIndicatorEnabledOnChannelList={isTypingIndicatorEnabledOnChannelList}
       isMessageReceiptStatusEnabledOnChannelList={isMessageReceiptStatusEnabledOnChannelList}
       replyType={replyType}
