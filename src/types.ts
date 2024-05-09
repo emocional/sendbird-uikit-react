@@ -23,6 +23,7 @@ export type SpaceFromTriggerType = {
 };
 
 export interface UserListQuery {
+  filterFn?: (user: User) => boolean;
   hasNext?: boolean;
   next(): Promise<Array<User>>;
   get isLoading(): boolean;

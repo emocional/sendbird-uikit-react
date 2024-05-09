@@ -46,6 +46,7 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
     // @ts-ignore
     if (!applicationUserListQuery?.isLoading && !!applicationUserListQuery?.hasNext) {
       applicationUserListQuery.next().then((users_) => {
+        if ('filterFn' in applicationUserListQuery) users_ = users_.filter((user) => applicationUserListQuery.filterFn(user));
         setUsers(users_);
       });
     }
