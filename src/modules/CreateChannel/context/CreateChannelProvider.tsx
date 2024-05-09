@@ -12,7 +12,9 @@ import { CHANNEL_TYPE } from '../types';
 
 const CreateChannelContext = React.createContext(undefined);
 
+// TODO: this interface is duplicated
 export interface UserListQuery {
+  filterFn?: (user: User) => boolean;
   hasNext?: boolean;
   next(): Promise<Array<User>>;
   get isLoading(): boolean;

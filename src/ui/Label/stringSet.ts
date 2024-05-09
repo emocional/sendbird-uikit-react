@@ -375,7 +375,7 @@ const stringSet = {
     BADGE__OVER: '+',
     NO_TITLE: 'Sin título',
     NO_NAME: '(Sin nombre)',
-    NO_MEMBERS: '(Sin miembros)',
+    NO_MEMBERS: 'Chat eliminado',
     LABEL__OPERATOR: 'Operador',
     // Menú Contextual
     MESSAGE_MENU__COPY: 'Copiar',

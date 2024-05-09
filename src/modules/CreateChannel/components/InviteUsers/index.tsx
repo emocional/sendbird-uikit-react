@@ -30,6 +30,7 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
   const userId = globalStore?.config?.userId;
   const sdk = globalStore?.stores?.sdkStore?.sdk;
   const createChatAuto = globalStore.config.enableAutoChat;
+  const searcherFilter = globalStore.config.searcherFilter;
   const idsToFilter = [userId];
   const [users, setUsers] = useState<User[]>([]);
   const { stringSet } = useContext(LocalizationContext);
@@ -46,10 +47,11 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
     // @ts-ignore
     if (!applicationUserListQuery?.isLoading && !!applicationUserListQuery?.hasNext) {
       applicationUserListQuery.next().then((users_) => {
+        if ('filterFn' in applicationUserListQuery) users_ = users_.filter((user) => applicationUserListQuery.filterFn(user));
         setUsers(users_);
       });
     }
-  }, [userQueryCreator?.hasNext]);
+  }, [userQueryCreator]);
 
   // To fix navbar break in mobile we set dynamic height to the scrollable area
   useEffect(() => {
@@ -102,8 +104,8 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
     onCancel?.();
   };
 
-  return users.length > 0 && !!showCreateChannel ? (
-    <Modal isFullScreenOnMobile titleText={titleText} onCancel={onCancel} hideFooter>
+  return !!showCreateChannel ? (
+    <Modal isFullScreenOnMobile titleText={titleText} onCancel={onCancel} hideFooter setSearcher={searcherFilter}>
       <div
         className="sendbird-create-channel--scroll"
         style={isMobile ? { height: `calc(${scrollableAreaHeight}px - 200px)` } : {}}

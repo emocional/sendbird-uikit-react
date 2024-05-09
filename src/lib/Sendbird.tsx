@@ -58,6 +58,7 @@ import { EmojiReactionListRoot, MenuRoot } from '../ui/ContextMenu';
 export { useSendbirdStateContext } from '../hooks/useSendbirdStateContext';
 
 export type UserListQueryType = {
+  filterFn?: (user: User) => boolean;
   hasNext?: boolean;
   next: () => Promise<Array<User>>;
   get isLoading(): boolean;
@@ -115,6 +116,7 @@ export interface SendbirdProviderProps extends CommonUIKitConfigProps, React.Pro
   // Customer provided callbacks
   eventHandlers?: SBUEventHandlers;
   enableAutoChat?: boolean;
+  searcherFilter?: (v: string) => void; 
 }
 
 export function SendbirdProvider(props: SendbirdProviderProps) {
@@ -182,6 +184,7 @@ const SendbirdSDK = ({
   isMultipleFilesMessageEnabled = false,
   eventHandlers,
   enableAutoChat = false,
+  searcherFilter,
 }: SendbirdProviderProps): React.ReactElement => {
   const {
     logLevel = '',
@@ -360,6 +363,7 @@ const SendbirdSDK = ({
           uikitMultipleFilesMessageLimit,
           userListQuery,
           enableAutoChat,
+          searcherFilter,
           logger,
           pubSub,
           imageCompression: {
