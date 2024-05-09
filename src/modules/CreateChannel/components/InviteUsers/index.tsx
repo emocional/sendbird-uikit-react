@@ -47,7 +47,9 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
     // @ts-ignore
     if (!applicationUserListQuery?.isLoading && !!applicationUserListQuery?.hasNext) {
       applicationUserListQuery.next().then((users_) => {
-        if ('filterFn' in applicationUserListQuery) users_ = users_.filter((user) => applicationUserListQuery.filterFn(user));
+        if ('filterFn' in applicationUserListQuery && applicationUserListQuery.filterFn !== undefined) {
+          users_ = users_.filter(applicationUserListQuery.filterFn);
+        }
         setUsers(users_);
       });
     }
@@ -117,6 +119,9 @@ const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, show
 
           if (hasNext && fetchMore && !isLoading) {
             usersDataSource.next().then((usersBatch) => {
+              if ('filterFn' in usersDataSource && usersDataSource.filterFn !== undefined) {
+                usersBatch = usersBatch.filter(usersDataSource.filterFn);
+              }
               setUsers([...users, ...usersBatch]);
             });
           }
