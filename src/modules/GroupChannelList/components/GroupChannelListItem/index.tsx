@@ -24,14 +24,16 @@ export const GroupChannelListItem = ({
   const { isTypingIndicatorEnabled = false, isMessageReceiptStatusEnabled = false } = useGroupChannelListContext();
 
   const userId = config.userId;
-  const isMessageStatusEnabled = isMessageReceiptStatusEnabled
-      && (!channel.lastMessage?.isAdminMessage())
-      && (channel.lastMessage as SendableMessageType)?.sender?.userId === userId;
+  const isMessageStatusEnabled =
+    isMessageReceiptStatusEnabled &&
+    !channel.lastMessage?.isAdminMessage() &&
+    (channel.lastMessage as SendableMessageType)?.sender?.userId === userId;
 
   return (
     <GroupChannelListItemView
       channel={channel}
       tabIndex={tabIndex}
+      userTeam={utils.getUserTeam(channel, userId)}
       channelName={utils.getChannelTitle(channel, userId, stringSet)}
       isTyping={isTypingIndicatorEnabled && isTyping}
       isSelected={isSelected}

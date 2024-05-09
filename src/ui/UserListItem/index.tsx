@@ -11,6 +11,7 @@ import Checkbox from '../Checkbox';
 import UserProfile from '../UserProfile';
 import ContextMenu, { MenuItems } from '../ContextMenu';
 import Label, { LabelTypography, LabelColors } from '../Label';
+import { getGlobalUserTag } from './utils';
 
 export interface UserListItemProps {
   user: User | Member;
@@ -108,7 +109,7 @@ export default function UserListItem({
         <div
           style={{
             top: 17,
-            right: 17,
+            right: 25,
             fontSize: 12,
             color: 'black',
             borderRadius: 99999,
@@ -117,7 +118,7 @@ export default function UserListItem({
             backgroundColor: '#FAFAFAFF',
           }}
         >
-          Profesional
+          {getGlobalUserTag(user.metaData['professional'])}
         </div>
       )}
       {

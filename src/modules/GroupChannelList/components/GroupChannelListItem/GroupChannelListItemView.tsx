@@ -37,13 +37,14 @@ export interface GroupChannelListItemBasicProps {
 
 export interface GroupChannelListItemViewProps extends GroupChannelListItemBasicProps {
   channelName: string;
+  userTeam?: string;
   isMessageStatusEnabled?: boolean;
 }
 
 export const GroupChannelListItemView = ({
   channel,
   tabIndex,
-  isTyping,
+  userTeam,
   isSelected,
   channelName,
   isMessageStatusEnabled = true,
@@ -90,13 +91,31 @@ export const GroupChannelListItemView = ({
                   <Icon type={IconTypes.BROADCAST} fillColor={IconColors.SECONDARY} height="16px" width="16px" />
                 </div>
               )}
-              <Label
-                className="sendbird-channel-preview__content__upper__header__channel-name"
-                type={LabelTypography.SUBTITLE_2}
-                color={LabelColors.ONBACKGROUND_1}
-              >
-                {channelName}
-              </Label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Label
+                  className="sendbird-channel-preview__content__upper__header__channel-name"
+                  type={LabelTypography.SUBTITLE_2}
+                  color={LabelColors.ONBACKGROUND_1}
+                >
+                  {channelName}
+                </Label>
+                {!!userTeam && (
+                  <div
+                    style={{
+                      fontSize: 12,
+                      color: 'black',
+                      borderRadius: 12,
+                      textAlign: 'center',
+                      width: 'min-content',
+                      whiteSpace: 'nowrap',
+                      padding: '2px 6px 2px 6px',
+                      backgroundColor: '#FAFAFAFF',
+                    }}
+                  >
+                    {userTeam}
+                  </div>
+                )}
+              </div>
               {channel.isFrozen && (
                 <div title="Frozen" className="sendbird-channel-preview__content__upper__header__frozen-icon">
                   <Icon type={IconTypes.FREEZE} fillColor={IconColors.PRIMARY} height={12} width={12} />
