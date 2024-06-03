@@ -25,18 +25,7 @@ export const ModalHeader = ({ titleText, setSearcher, onCloseClick }: ModalHeade
         {titleText}
       </Label>
     ) : (
-      <input
-        placeholder="Buscar"
-        onChange={(e) => setSearcher(e.target.value)}
-        style={{
-          width: '100%',
-          maxWidth: 300,
-          outline: 'none',
-          borderRadius: 16,
-          padding: '8px 12px 8px 12px',
-          border: '1px solid #DEE1E6FF',
-        }}
-      />
+      <input placeholder="Buscar" onChange={(e) => setSearcher(e.target.value)} className="sendbird-modal__search" />
     )}
     <div className="sendbird-modal__close">
       <IconButton
