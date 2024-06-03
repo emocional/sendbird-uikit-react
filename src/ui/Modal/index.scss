@@ -55,6 +55,21 @@
     }
   }
 
+  .sendbird-modal__search {
+    width: 100%;
+    max-width: 280px;
+    outline: none;
+    border-radius: 16px;
+    padding: 8px 12px;
+    border: 1px solid #dee1e6;
+  }
+
+  @media only screen and (max-width: 475px) {
+    .custom-class {
+      max-width: 300px;
+    }
+  }
+
   .sendbird-modal__header {
     margin-bottom: 16px;
   }
