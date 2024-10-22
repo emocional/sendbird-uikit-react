@@ -18,14 +18,15 @@
   text-overflow: ellipsis;
   box-sizing: border-box;
   @include themed() {
-    border-bottom: 1px solid t(on-bg-4);
+    border-bottom: 1px solid #dee1e580;
     background-color: t(bg-0);
   }
 
   &__left {
     margin-right: 24px;
   }
-  &__left, &__right {
+  &__left,
+  &__right {
     overflow: hidden;
     display: flex;
     flex-direction: row;

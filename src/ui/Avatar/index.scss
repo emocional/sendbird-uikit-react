@@ -19,7 +19,7 @@
     top: 50%;
     transform: translate(-50%, -50%);
     @include themed() {
-      background-color: t(bg--3-3);
+      background-color: #fafafbff;
     }
   }
 
@@ -80,7 +80,7 @@
     display: flex;
     justify-content: center;
     @include themed() {
-      background-color: t(bg--3-3);
+      background-color: #dee1e5ff;
     }
     &.text {
       @include themed() {

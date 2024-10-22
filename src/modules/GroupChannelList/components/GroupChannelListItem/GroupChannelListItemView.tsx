@@ -109,7 +109,7 @@ export const GroupChannelListItemView = ({
                       width: 'min-content',
                       whiteSpace: 'nowrap',
                       padding: '2px 6px 2px 6px',
-                      backgroundColor: '#FAFAFAFF',
+                      backgroundColor: isSelected ? 'white' : '#FAFAFAFF',
                     }}
                   >
                     {userTeam}

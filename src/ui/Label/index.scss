@@ -7,7 +7,7 @@
   }
 }
 
-[class*=sendbird-label] {
+[class*='sendbird-label'] {
   font-family: var(--sendbird-font-family-default);
 }
 
@@ -116,6 +116,12 @@
   font-style: normal;
   line-height: 1;
   letter-spacing: normal;
+}
+
+.sendbird-label--color-emocional_border {
+  @include themed() {
+    color: #c2c7ccff;
+  }
 }
 
 .sendbird-label--color-onbackground-1 {

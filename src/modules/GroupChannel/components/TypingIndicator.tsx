@@ -21,7 +21,7 @@ export const TypingIndicatorText = ({ members }: TypingIndicatorTextProps) => {
     if (members && members.length === 1) {
       return (
         <>
-          <span style={{ color: '#4a1ca6ff', fontWeight: 600 }}>{members[0].nickname}</span> {stringSet.TYPING_INDICATOR__IS_TYPING}
+          <span style={{ color: '#dee1e580', fontWeight: 600 }}>{members[0].nickname}</span> {stringSet.TYPING_INDICATOR__IS_TYPING}
         </>
       );
     }

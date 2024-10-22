@@ -15,7 +15,7 @@
   padding: 8px 64px 8px 8px;
   box-sizing: border-box;
   @include themed() {
-    border-bottom: 1px solid t(on-bg-4);
+    border-bottom: 1px solid #dee1e580;
     background-color: t(bg-0);
   }
   @include mobile() {
