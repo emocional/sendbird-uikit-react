@@ -30,7 +30,7 @@ export const AddGroupChannelView = ({
   return (
     <>
       <IconButton height={'32px'} width={'32px'} disabled={!config.isOnline} onClick={() => onChangeCreateChannelVisible(true)}>
-        <Icon type={IconTypes.PLUS} fillColor={IconColors.PRIMARY} width={'24px'} height={'24px'} />
+        <Icon type={IconTypes.PLUS} fillColor={IconColors.EMOCIONAL} width={'24px'} height={'24px'} />
       </IconButton>
       <CreateChannel
         onCancel={() => onChangeCreateChannelVisible(false)}

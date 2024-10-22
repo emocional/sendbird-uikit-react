@@ -32,6 +32,12 @@
   }
 }
 
+.sendbird-icon-color--emocional [class*='fill'] {
+  @include themed() {
+    fill: #d4d4d8ff;
+  }
+}
+
 .sendbird-icon-color--content [class*='fill'] {
   @include themed() {
     fill: t(on-content-1);
