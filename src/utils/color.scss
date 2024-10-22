@@ -1,5 +1,16 @@
 @import '../styles/variables';
 
+.sendbird-color--emocional_border {
+  @include themed() {
+    color: #dee1e580;
+  }
+  &--background-color {
+    @include themed() {
+      background-color: #dee1e580;
+    }
+  }
+}
+
 .sendbird-color--onbackground-1 {
   @include themed() {
     color: t(on-bg-1);

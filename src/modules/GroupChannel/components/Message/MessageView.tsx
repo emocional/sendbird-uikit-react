@@ -386,7 +386,7 @@ const MessageView = (props: MessageViewProps) => {
       {hasSeparator &&
         (renderedCustomSeparator || (
           <DateSeparator>
-            <Label type={LabelTypography.CAPTION_2} color={LabelColors.ONBACKGROUND_2}>
+            <Label type={LabelTypography.CAPTION_2} color={LabelColors.EMOCIONAL_BORDER}>
               {format(message.createdAt, stringSet.DATE_FORMAT__MESSAGE_LIST__DATE_SEPARATOR, {
                 locale: es,
               })}
