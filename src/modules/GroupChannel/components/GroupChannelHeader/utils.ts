@@ -1,11 +1,7 @@
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import { LabelStringSet } from '../../../../ui/Label';
 
-export const getChannelTitle = (
-  channel: GroupChannel,
-  currentUserId: string,
-  stringSet: { [label: string]: string },
-): string => {
+export const getChannelTitle = (channel: GroupChannel, currentUserId: string, stringSet: { [label: string]: string }): string => {
   const LABEL_STRING_SET: { [label: string]: string } = stringSet || LabelStringSet;
   if (!channel?.name && !channel?.members) {
     return LABEL_STRING_SET.NO_TITLE;
@@ -20,6 +16,12 @@ export const getChannelTitle = (
 
   return channel?.members
     .filter(({ userId }) => userId !== currentUserId)
-    .map(({ nickname }) => (nickname || LABEL_STRING_SET.NO_NAME))
+    .map(({ nickname }) => nickname || LABEL_STRING_SET.NO_NAME)
     .join(', ');
+};
+
+export const getUserCompany = (channel: GroupChannel, currentUserId: string): string | null => {
+  const currentUser = channel?.members?.find(({ userId }) => userId === currentUserId);
+  const company = currentUser?.metaData['company_name'];
+  return !!company ? (company as string) : null;
 };
