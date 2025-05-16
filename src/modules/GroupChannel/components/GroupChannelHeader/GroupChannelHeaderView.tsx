@@ -6,7 +6,7 @@ import IconButton from '../../../../ui/IconButton';
 import Icon, { IconColors, IconTypes } from '../../../../ui/Icon';
 import Label, { LabelColors, LabelTypography } from '../../../../ui/Label';
 import ChannelAvatar from '../../../../ui/ChannelAvatar';
-import { getChannelTitle } from './utils';
+import { getChannelTitle, getUserCompany } from './utils';
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useLocalization } from '../../../../lib/LocalizationContext';
@@ -35,6 +35,7 @@ export const GroupChannelHeaderView = ({
 
   const isMuted = currentChannel?.myMutedState === 'muted';
   const subTitle = currentChannel?.members && currentChannel?.members?.length !== 2;
+  const userCompany: string | null = getUserCompany(currentChannel, userId);
 
   return (
     <div className={`sendbird-chat-header ${className}`} style={{ borderTopRightRadius: 16, borderTopLeftRadius: 16 }}>
@@ -50,9 +51,16 @@ export const GroupChannelHeaderView = ({
           />
         )}
         <ChannelAvatar theme={theme} channel={currentChannel} userId={userId} height={32} width={32} />
-        <Label className="sendbird-chat-header__left__title" type={LabelTypography.H_2} color={LabelColors.ONBACKGROUND_1}>
-          {getChannelTitle(currentChannel, userId, stringSet)}
-        </Label>
+        <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+          <Label className="sendbird-chat-header__left__title" type={LabelTypography.H_2} color={LabelColors.ONBACKGROUND_1}>
+            {getChannelTitle(currentChannel, userId, stringSet)}
+          </Label>
+          {!!userCompany && (
+            <div style={{ backgroundColor: '#FAFAFBFF', fontSize: 14, padding: '6px 10px 6px 10px', borderRadius: 12, fontWeight: 500 }}>
+              {userCompany}
+            </div>
+          )}
+        </div>
         <Label className="sendbird-chat-header__left__subtitle" type={LabelTypography.BODY_1} color={LabelColors.ONBACKGROUND_2}>
           {subTitle}
         </Label>
