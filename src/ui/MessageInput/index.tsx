@@ -395,7 +395,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       if (isEdit && messageId && textField) {
         const { messageText, mentionTemplate } = extractTextAndMentions(textField.childNodes);
         if (messageText.trim().length === 0) return;
-        const params = { messageId, message: messageText, mentionTemplate };
+        const params = { messageId, message: messageText, mentionTemplate: sanitizeString(mentionTemplate) };
         onUpdateMessage(params);
         resetInput(internalRef);
       }

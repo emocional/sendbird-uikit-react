@@ -379,7 +379,7 @@ const MessageView = (props: MessageViewProps) => {
             disabled={editInputDisabled}
             ref={editMessageInputRef}
             mentionSelectedUser={selectedUser}
-            isMentionEnabled={groupChannel.enableMention}
+            isMentionEnabled={false}
             message={message}
             onStartTyping={() => {
               channel?.startTyping?.();
