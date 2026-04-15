@@ -73,7 +73,7 @@ export default function useHandleChannelEvents({
         },
         onUserBanned(channel, user) {
           logger.info('Thread | useHandleChannelEvents: onUserBanned', { channel, user });
-          onUserBanned();
+          onUserBanned(channel as GroupChannel, user);
         },
         onUserUnbanned(channel, user) {
           logger.info('Thread | useHandleChannelEvents: onUserUnbanned', { channel, user });

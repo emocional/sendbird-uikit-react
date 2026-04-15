@@ -458,19 +458,33 @@ const useThread = () => {
       };
     }), [store]),
 
-    onUserBanned: useCallback(() => store.setState(state => {
-      return {
-        ...state,
-        channelState: ChannelStateTypes.NIL,
-        threadListState: ThreadListStateTypes.NIL,
-        parentMessageState: ParentMessageStateTypes.NIL,
-        currentChannel: null,
-        parentMessage: null,
-        allThreadMessages: [],
-        hasMorePrev: false,
-        hasMoreNext: false,
-      };
-    }), [store]),
+    onUserBanned: useCallback((channel: GroupChannel, user: User) => {
+      store.setState(state => {
+        if (state.currentChannel?.url !== channel?.url) {
+          return state;
+        }
+        // Only reset state when the current user is banned
+        if (state.currentUserId === user?.userId) {
+          return {
+            ...state,
+            channelState: ChannelStateTypes.NIL,
+            threadListState: ThreadListStateTypes.NIL,
+            parentMessageState: ParentMessageStateTypes.NIL,
+            currentChannel: null,
+            parentMessage: null,
+            allThreadMessages: [],
+            hasMorePrev: false,
+            hasMoreNext: false,
+          };
+        }
+        // Another user banned: update channel info and nicknames map
+        return {
+          ...state,
+          currentChannel: channel,
+          nicknamesMap: getNicknamesMapFromMembers(channel?.members),
+        };
+      });
+    }, [store]),
 
     onUserUnbanned: useCallback(() => store.setState(state => {
       return {

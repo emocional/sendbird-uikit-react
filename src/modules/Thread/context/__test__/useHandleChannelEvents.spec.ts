@@ -154,6 +154,20 @@ describe('useHandleChannelEvents', () => {
     );
   });
 
+  it('should pass channel and user to onUserBanned handler', () => {
+    const mockAddHandler = jest.fn();
+    const sdk = createMockSdk(mockAddHandler);
+    const channel = createMockChannel();
+    const bannedUser = { userId: 'banned-user' } as User;
+
+    renderChannelEventsHook({ sdk, currentChannel: channel });
+
+    const handler = mockAddHandler.mock.calls[0][1];
+    handler.onUserBanned(channel, bannedUser);
+
+    expect(mockThreadActions.onUserBanned).toHaveBeenCalledWith(channel, bannedUser);
+  });
+
   it('should pass channel and user to onUserLeft handler', () => {
     const mockAddHandler = jest.fn();
     const sdk = createMockSdk(mockAddHandler);
