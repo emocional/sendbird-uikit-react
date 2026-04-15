@@ -81,7 +81,7 @@ export default function useHandleChannelEvents({
         },
         onUserLeft(channel, user) {
           logger.info('Thread | useHandleChannelEvents: onUserLeft', { channel, user });
-          onUserLeft();
+          onUserLeft(channel as GroupChannel, user);
         },
         // channel status change
         onChannelFrozen(channel) {

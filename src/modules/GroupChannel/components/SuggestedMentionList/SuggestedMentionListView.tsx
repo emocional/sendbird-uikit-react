@@ -121,6 +121,8 @@ export const SuggestedMentionListView = (props: SuggestedMentionListViewProps) =
   }, [
     currentChannel?.url,
     // We have to be specific like this or React would not recognize the changes in instances.
+    currentChannel?.members?.length,
+    currentChannel?.members.map((member: Member) => member.userId).join(),
     currentChannel?.members.map((member: Member) => member.nickname).join(),
     currentChannel?.members.map((member: Member) => member.isActive).join(),
     searchString,
@@ -130,7 +132,7 @@ export const SuggestedMentionListView = (props: SuggestedMentionListViewProps) =
     lastSearchString,
   ]);
 
-  if (!ableAddMention && currentMemberList.length === 0) {
+  if (currentMemberList.length === 0) {
     return null;
   }
 

@@ -154,6 +154,20 @@ describe('useHandleChannelEvents', () => {
     );
   });
 
+  it('should pass channel and user to onUserLeft handler', () => {
+    const mockAddHandler = jest.fn();
+    const sdk = createMockSdk(mockAddHandler);
+    const channel = createMockChannel();
+    const leavingUser = { userId: 'leaving-user' } as User;
+
+    renderChannelEventsHook({ sdk, currentChannel: channel });
+
+    const handler = mockAddHandler.mock.calls[0][1];
+    handler.onUserLeft(channel, leavingUser);
+
+    expect(mockThreadActions.onUserLeft).toHaveBeenCalledWith(channel, leavingUser);
+  });
+
   it('should not add handler when sdk or currentChannel is missing', async () => {
     const mockAddHandler = jest.fn();
     const sdk = createMockSdk(mockAddHandler);
