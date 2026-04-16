@@ -63,6 +63,11 @@ jobs:
           git switch main
           git pull origin main
 
+      - name: Rebuild after merge
+        run: |
+          yarn install --immutable
+          yarn build
+
       - name: Publish to npm
         run: |
           cd ./dist
