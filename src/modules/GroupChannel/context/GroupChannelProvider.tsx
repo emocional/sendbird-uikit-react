@@ -330,7 +330,8 @@ const GroupChannelManager :React.FC<React.PropsWithChildren<GroupChannelProvider
       const el = document.querySelector(`[data-sb-message-id="${_animatedMessageId}"] .sendbird-message-content`);
       if (el) {
         el.classList.remove('sendbird-msg-hoc__bounce');
-        void el.offsetHeight;
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        el.offsetHeight;
         el.classList.add('sendbird-msg-hoc__bounce');
         animatedEl = el;
         cleanupTimerId = setTimeout(() => {
