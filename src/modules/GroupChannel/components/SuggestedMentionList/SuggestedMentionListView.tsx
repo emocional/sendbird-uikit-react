@@ -132,7 +132,7 @@ export const SuggestedMentionListView = (props: SuggestedMentionListViewProps) =
     lastSearchString,
   ]);
 
-  if (currentMemberList.length === 0) {
+  if (!ableAddMention && currentMemberList.length === 0) {
     return null;
   }
 
