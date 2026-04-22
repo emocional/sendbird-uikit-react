@@ -546,7 +546,7 @@ describe('useThread', () => {
     });
   });
 
-  it('handles onUserBanned action correctly', async () => {
+  it('handles onUserBanned action correctly when current user is banned', async () => {
     const wrapper = ({ children }) => (
       <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
     );
@@ -562,13 +562,38 @@ describe('useThread', () => {
     const { onUserBanned } = result.current.actions;
 
     await act(() => {
-      onUserBanned();
+      onUserBanned(mockChannel, { userId: 'test-user-id' });
     });
 
     await waitFor(() => {
       expect(result.current.state.channelState).toBe(ChannelStateTypes.NIL);
       expect(result.current.state.threadListState).toBe(ThreadListStateTypes.NIL);
       expect(result.current.state.parentMessageState).toBe(ParentMessageStateTypes.NIL);
+    });
+  });
+
+  it('handles onUserBanned action correctly when another user is banned', async () => {
+    const wrapper = ({ children }) => (
+      <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
+    );
+
+    let result;
+    await act(async () => {
+      result = renderHook(() => useThread(), { wrapper }).result;
+
+      waitFor(() => {
+        expect(result.current.state.currentChannel).not.toBe(undefined);
+      });
+    });
+    const { onUserBanned } = result.current.actions;
+
+    await act(() => {
+      onUserBanned(mockChannel, { userId: 'other-user-id' });
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.channelState).not.toBe(ChannelStateTypes.NIL);
+      expect(result.current.state.currentChannel).not.toBeNull();
     });
   });
 
@@ -592,7 +617,7 @@ describe('useThread', () => {
     });
   });
 
-  it('handles onUserLeft action correctly', async () => {
+  it('handles onUserLeft action correctly when current user has left', async () => {
     const wrapper = ({ children }) => (
       <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
     );
@@ -608,13 +633,38 @@ describe('useThread', () => {
     const { onUserLeft } = result.current.actions;
 
     await act(() => {
-      onUserLeft();
+      onUserLeft(mockChannel, { userId: 'test-user-id' });
     });
 
     await waitFor(() => {
       expect(result.current.state.channelState).toBe(ChannelStateTypes.NIL);
       expect(result.current.state.threadListState).toBe(ThreadListStateTypes.NIL);
       expect(result.current.state.parentMessageState).toBe(ParentMessageStateTypes.NIL);
+    });
+  });
+
+  it('handles onUserLeft action correctly when another user has left', async () => {
+    const wrapper = ({ children }) => (
+      <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
+    );
+
+    let result;
+    await act(async () => {
+      result = renderHook(() => useThread(), { wrapper }).result;
+
+      waitFor(() => {
+        expect(result.current.state.currentChannel).not.toBe(undefined);
+      });
+    });
+    const { onUserLeft } = result.current.actions;
+
+    await act(() => {
+      onUserLeft(mockChannel, { userId: 'other-user-id' });
+    });
+
+    await waitFor(() => {
+      expect(result.current.state.channelState).not.toBe(ChannelStateTypes.NIL);
+      expect(result.current.state.currentChannel).not.toBeNull();
     });
   });
 
