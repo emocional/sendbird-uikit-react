@@ -300,62 +300,18 @@ const GroupChannelManager :React.FC<React.PropsWithChildren<GroupChannelProvider
     };
   }, [messageDataSource.initialized, state.currentChannel?.url]);
 
-  // Starting point handling
+  // Starting point handling — skip when animated message handles scroll
   useEffect(() => {
-    if (typeof startingPoint === 'number' && state.initialized) {
+    if (typeof startingPoint === 'number' && state.initialized && !_animatedMessageId) {
       actions.scrollToMessage(startingPoint, 0, false, false);
     }
   }, [state.initialized, startingPoint]);
 
-  // Animated message handling — scroll to message and apply bounce animation via DOM
-  const lastScrolledStartingPointRef = useRef<number | null>(null);
+  // Animated message handling — scroll + animation
   useEffect(() => {
-    if (!_animatedMessageId) return;
-
-    // Scroll only on re-click (startingPoint unchanged); first click is handled by the effect above
-    if (typeof startingPoint === 'number' && lastScrolledStartingPointRef.current === startingPoint) {
-      actions.scrollToMessage(startingPoint, 0, false, false);
+    if (_animatedMessageId && typeof startingPoint === 'number') {
+      actions.scrollToMessage(startingPoint, _animatedMessageId, true, false);
     }
-    lastScrolledStartingPointRef.current = startingPoint ?? null;
-
-    let cleanupTimerId: ReturnType<typeof setTimeout> | null = null;
-    let animatedEl: Element | null = null;
-    let cancelled = false;
-
-    const maxWait = 5000;
-    const startTime = Date.now();
-
-    const tryAnimate = () => {
-      if (cancelled) return;
-      const el = document.querySelector<HTMLElement>(`[data-sb-message-id="${_animatedMessageId}"] .sendbird-message-content`);
-      if (el) {
-        el.classList.remove('sendbird-msg-hoc__bounce');
-        // Force reflow to restart CSS animation on re-click
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        el.offsetHeight;
-        el.classList.add('sendbird-msg-hoc__bounce');
-        animatedEl = el;
-        cleanupTimerId = setTimeout(() => {
-          el.classList.remove('sendbird-msg-hoc__bounce');
-          onMessageAnimated?.();
-        }, 1100);
-      } else if (Date.now() - startTime < maxWait) {
-        requestAnimationFrame(tryAnimate);
-      }
-      // If timeout expires without finding the element, stop polling silently.
-      // The parent highlight state remains set but will be cleared on next user interaction
-      // (re-click, channel change, or new search). This avoids prematurely discarding the
-      // animation opportunity when messages are still loading from a slow network fetch.
-    };
-
-    const timerId = setTimeout(tryAnimate, 500);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timerId);
-      if (cleanupTimerId) clearTimeout(cleanupTimerId);
-      if (animatedEl) animatedEl.classList.remove('sendbird-msg-hoc__bounce');
-    };
   }, [_animatedMessageId]);
 
   // State update effect
