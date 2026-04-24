@@ -309,8 +309,14 @@ const GroupChannelManager :React.FC<React.PropsWithChildren<GroupChannelProvider
 
   // Animated message handling — scroll + animation
   useEffect(() => {
-    if (_animatedMessageId && typeof startingPoint === 'number') {
-      actions.scrollToMessage(startingPoint, _animatedMessageId, true, false);
+    if (_animatedMessageId) {
+      if (typeof startingPoint === 'number') {
+        // Search result click: scroll to message and animate
+        actions.scrollToMessage(startingPoint, _animatedMessageId, true, false);
+      } else {
+        // Thread parent jump: scroll already handled by startingPoint effect, just animate
+        actions.setAnimatedMessageId(_animatedMessageId);
+      }
     }
   }, [_animatedMessageId]);
 
