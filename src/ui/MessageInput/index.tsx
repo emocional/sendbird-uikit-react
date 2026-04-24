@@ -84,7 +84,7 @@ type MessageInputProps = {
   maxLength?: number;
   onFileUpload?: (file: File[]) => void;
   onSendMessage?: (params: { message: string; mentionTemplate: string }) => void;
-  onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string }) => void;
+  onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string; mentionedUserIds?: string[] }) => void;
   onCancelEdit?: () => void;
   onStartTyping?: () => void;
   channelUrl?: string;
@@ -393,9 +393,19 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       const textField = internalRef?.current;
       const messageId = message?.messageId;
       if (isEdit && messageId && textField) {
-        const { messageText, mentionTemplate } = extractTextAndMentions(textField.childNodes);
+        const { messageText, mentionTemplate, isMentionedMessage } = extractTextAndMentions(textField.childNodes);
         if (messageText.trim().length === 0) return;
-        const params = { messageId, message: messageText, mentionTemplate: sanitizeString(mentionTemplate) };
+        const currentMentionedUserIds = isMentionEnabled
+          ? Array.from(textField.getElementsByClassName('sendbird-mention-user-label'))
+            .map((node) => (node as HTMLElement).dataset?.userid)
+            .filter((id): id is string => Boolean(id))
+          : [];
+        const params = {
+          messageId,
+          message: messageText,
+          mentionTemplate: isMentionedMessage ? sanitizeString(mentionTemplate) : messageText,
+          mentionedUserIds: currentMentionedUserIds,
+        };
         onUpdateMessage(params);
         resetInput(internalRef);
       }

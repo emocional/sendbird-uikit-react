@@ -379,15 +379,15 @@ const MessageView = (props: MessageViewProps) => {
             disabled={editInputDisabled}
             ref={editMessageInputRef}
             mentionSelectedUser={selectedUser}
-            isMentionEnabled={false}
+            isMentionEnabled={groupChannel.enableMention}
             message={message}
             onStartTyping={() => {
               channel?.startTyping?.();
             }}
-            onUpdateMessage={({ messageId, message, mentionTemplate }) => {
+            onUpdateMessage={({ messageId, message: editedMessage, mentionTemplate, mentionedUserIds: currentMentionedUserIds }) => {
               updateUserMessage(messageId, {
-                message,
-                mentionedUsers,
+                message: editedMessage,
+                mentionedUserIds: currentMentionedUserIds ?? [],
                 mentionedMessageTemplate: mentionTemplate,
               });
               setShowEdit(false);
