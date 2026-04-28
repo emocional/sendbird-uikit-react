@@ -21,26 +21,30 @@ export function useTypingLifecycle(
   channel: TypingChannel,
   active: boolean = true,
 ): { startTyping: () => void; stopTyping: () => void } {
-  const isTypingRef = useRef(false);
+  // Holds the channel that startTyping was last invoked on. Storing the
+  // actual reference (rather than a boolean flag) ensures endTyping is sent
+  // on the same channel instance that received startTyping, even if the
+  // channel object is re-instantiated under the same URL.
+  const typingChannelRef = useRef<TypingChannel>(null);
 
   const startTyping = useCallback(() => {
     channel?.startTyping?.();
-    isTypingRef.current = true;
+    typingChannelRef.current = channel ?? null;
   }, [channel]);
 
   const stopTyping = useCallback(() => {
-    channel?.endTyping?.();
-    isTypingRef.current = false;
-  }, [channel]);
+    typingChannelRef.current?.endTyping?.();
+    typingChannelRef.current = null;
+  }, []);
 
-  // Send endTyping on channel change, active toggle, or unmount
-  // (uses the captured channel reference so the previous channel is notified).
+  // Run cleanup on channel URL change, active toggle, or unmount.
+  // Reads typingChannelRef so endTyping is sent on the channel where
+  // startTyping was actually invoked.
   useEffect(() => {
-    const ch = channel;
     return () => {
-      if (isTypingRef.current) {
-        ch?.endTyping?.();
-        isTypingRef.current = false;
+      if (typingChannelRef.current) {
+        typingChannelRef.current.endTyping?.();
+        typingChannelRef.current = null;
       }
     };
   }, [channel?.url, active]);

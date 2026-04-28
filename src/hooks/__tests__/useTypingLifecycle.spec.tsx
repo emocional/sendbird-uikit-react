@@ -112,4 +112,66 @@ describe('useTypingLifecycle', () => {
       unmount();
     }).not.toThrow();
   });
+
+  describe('same-URL channel re-instantiation', () => {
+    it('cleans up on the latest instance when typing starts after re-instantiation', () => {
+      const original = makeChannel('a');
+      const refreshed = makeChannel('a');
+
+      const { result, rerender, unmount } = renderHook(
+        ({ channel }) => useTypingLifecycle(channel),
+        { initialProps: { channel: original } },
+      );
+
+      rerender({ channel: refreshed });
+      act(() => result.current.startTyping());
+
+      expect(refreshed.startTyping).toHaveBeenCalledTimes(1);
+      expect(original.startTyping).not.toHaveBeenCalled();
+
+      unmount();
+
+      expect(refreshed.endTyping).toHaveBeenCalledTimes(1);
+      expect(original.endTyping).not.toHaveBeenCalled();
+    });
+
+    it('cleans up on the original instance if typing started before re-instantiation', () => {
+      const original = makeChannel('a');
+      const refreshed = makeChannel('a');
+
+      const { result, rerender, unmount } = renderHook(
+        ({ channel }) => useTypingLifecycle(channel),
+        { initialProps: { channel: original } },
+      );
+
+      act(() => result.current.startTyping());
+      rerender({ channel: refreshed });
+      unmount();
+
+      expect(original.endTyping).toHaveBeenCalledTimes(1);
+      expect(refreshed.endTyping).not.toHaveBeenCalled();
+    });
+
+    it('uses the latest instance for endTyping when typing is restarted after re-instantiation', () => {
+      const original = makeChannel('a');
+      const refreshed = makeChannel('a');
+
+      const { result, rerender, unmount } = renderHook(
+        ({ channel }) => useTypingLifecycle(channel),
+        { initialProps: { channel: original } },
+      );
+
+      act(() => result.current.startTyping());
+      rerender({ channel: refreshed });
+      act(() => result.current.startTyping());
+      unmount();
+
+      expect(original.startTyping).toHaveBeenCalledTimes(1);
+      expect(refreshed.startTyping).toHaveBeenCalledTimes(1);
+      // endTyping should hit only the refreshed instance (the most recent
+      // startTyping target), not the original.
+      expect(original.endTyping).not.toHaveBeenCalled();
+      expect(refreshed.endTyping).toHaveBeenCalledTimes(1);
+    });
+  });
 });
