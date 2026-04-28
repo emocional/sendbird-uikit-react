@@ -1,5 +1,6 @@
 import './index.scss';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import type { User } from '@sendbird/chat';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import type {
@@ -129,25 +130,7 @@ export const MessageInputWrapperView = React.forwardRef((
     setShowVoiceMessageInput(false);
   }, [currentChannel?.url]);
 
-  const isTypingRef = useRef(false);
-  const startTyping = useCallback(() => {
-    currentChannel?.startTyping?.();
-    isTypingRef.current = true;
-  }, [currentChannel]);
-  const stopTyping = useCallback(() => {
-    currentChannel?.endTyping?.();
-    isTypingRef.current = false;
-  }, [currentChannel]);
-  // Send endTyping on channel change or unmount (uses captured channel reference)
-  useEffect(() => {
-    const channel = currentChannel;
-    return () => {
-      if (isTypingRef.current) {
-        channel?.endTyping?.();
-        isTypingRef.current = false;
-      }
-    };
-  }, [currentChannel?.url]);
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
   useEffect(() => {
     setMentionedUsers(
       mentionedUsers.filter(({ userId }) => {

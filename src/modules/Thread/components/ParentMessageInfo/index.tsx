@@ -1,4 +1,5 @@
-import React, { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import format from 'date-fns/format';
 import { FileMessage } from '@sendbird/chat/message';
 
@@ -132,25 +133,7 @@ export default function ParentMessageInfo({
     }));
   }, [mentionedUserIds]);
 
-  const isTypingRef = useRef(false);
-  const startTyping = useCallback(() => {
-    currentChannel?.startTyping?.();
-    isTypingRef.current = true;
-  }, [currentChannel]);
-  const stopTyping = useCallback(() => {
-    currentChannel?.endTyping?.();
-    isTypingRef.current = false;
-  }, [currentChannel]);
-  // Send endTyping on edit close, channel change, or unmount (uses captured channel reference)
-  useEffect(() => {
-    const channel = currentChannel;
-    return () => {
-      if (isTypingRef.current) {
-        channel?.endTyping?.();
-        isTypingRef.current = false;
-      }
-    };
-  }, [showEditInput, currentChannel?.url]);
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel, showEditInput);
 
   const handleOnDownloadClick = async (e: React.MouseEvent) => {
     if (!onBeforeDownloadFileMessage) return;
