@@ -47,7 +47,7 @@ jobs:
             exit 1
           fi
           if [ -n "$NPM_TAG" ]; then
-            if ! printf '%s' "$NPM_TAG" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+            if ! printf '%s' "$NPM_TAG" | grep -qE '^[0-9A-Za-z.-]+$'; then
               echo "Invalid npm_tag: '$NPM_TAG'"
               exit 1
             fi
@@ -57,7 +57,7 @@ jobs:
             fi
           fi
           if [ -n "$TAG_SUFFIX" ]; then
-            if ! printf '%s' "$TAG_SUFFIX" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+            if ! printf '%s' "$TAG_SUFFIX" | grep -qE '^[0-9A-Za-z.-]+$'; then
               echo "Invalid tag_suffix: '$TAG_SUFFIX'"
               exit 1
             fi
