@@ -53,6 +53,11 @@ jobs:
           release_version=$(python3 ~/sdk-deployment/scripts/v1.2/extract_version.py --branch_name "$BRANCH_NAME")
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
+      - name: Validate CHANGELOG_DRAFT.md is fresh
+        run: |
+          export VERSION="$RELEASE_VERSION"
+          node scripts/check-changelog-draft.js
+
       - name: Finalize CHANGELOG.md date on release branch
         run: |
           DATE=$(date -u '+%b %d %Y' | tr '[:lower:]' '[:upper:]')
