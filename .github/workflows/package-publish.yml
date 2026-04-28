@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
+      contents: write
     env:
       SKIP_REST: '' # Set to 'true' when npm_tag is provided
       VERSION: ${{ github.event.inputs.version }}
