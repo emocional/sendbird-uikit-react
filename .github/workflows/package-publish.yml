@@ -94,7 +94,7 @@ jobs:
           git config --global user.email "sha.sdk_deployment@sendbird.com"
       - name: Install and Build
         run: |
-          yarn install
+          yarn install --immutable
           yarn build
       - name: Publish to npm
         run: |
