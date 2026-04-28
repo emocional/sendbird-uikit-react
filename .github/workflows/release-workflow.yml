@@ -86,6 +86,9 @@ jobs:
         env:
           GH_TOKEN: ${{ env.BOT_GH_TOKEN }}
         run: |
+          # Give GitHub a moment to register the workflow run for the finalize commit
+          # before watching, otherwise --watch may see no checks and exit 0 immediately.
+          sleep 15
           gh pr checks "$BRANCH_NAME" --watch --required
 
       - name: Merge release branch to main
