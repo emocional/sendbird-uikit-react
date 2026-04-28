@@ -1,5 +1,5 @@
 import type { EveryMessage, RenderCustomSeparatorProps, RenderMessageParamsType, ReplyType } from '../../../../types';
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { type EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { FileMessage, UserMessage, UserMessageCreateParams, UserMessageUpdateParams } from '@sendbird/chat/message';
@@ -220,6 +220,26 @@ const MessageView = (props: MessageViewProps) => {
     );
   }, [mentionedUserIds]);
 
+  const isTypingRef = useRef(false);
+  const startTyping = useCallback(() => {
+    channel?.startTyping?.();
+    isTypingRef.current = true;
+  }, [channel]);
+  const stopTyping = useCallback(() => {
+    channel?.endTyping?.();
+    isTypingRef.current = false;
+  }, [channel]);
+  // Send endTyping on edit close, channel change, or unmount (uses captured channel reference)
+  useEffect(() => {
+    const ch = channel;
+    return () => {
+      if (isTypingRef.current) {
+        ch?.endTyping?.();
+        isTypingRef.current = false;
+      }
+    };
+  }, [showEdit, channel?.url]);
+
   // Side effect: scroll position update when showEdit is toggled or reactions updated
   useDidMountEffect(() => {
     handleScroll?.();
@@ -381,9 +401,8 @@ const MessageView = (props: MessageViewProps) => {
             mentionSelectedUser={selectedUser}
             isMentionEnabled={groupChannel.enableMention}
             message={message}
-            onStartTyping={() => {
-              channel?.startTyping?.();
-            }}
+            onStartTyping={startTyping}
+            onStopTyping={stopTyping}
             onUpdateMessage={({ messageId, message, mentionTemplate }) => {
               updateUserMessage(messageId, {
                 message,

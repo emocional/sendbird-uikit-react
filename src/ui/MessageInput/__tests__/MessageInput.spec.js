@@ -259,6 +259,66 @@ describe('ui/MessageInput', () => {
       container.getElementsByClassName('sendbird-message-input--edit-action').length
     ).toBe(1);
   });
+
+  describe('typing indicator callbacks', () => {
+    it('should call onStartTyping when input has text', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hello';
+      fireEvent.input(input);
+
+      expect(onStartTyping).toHaveBeenCalled();
+      expect(onStopTyping).not.toHaveBeenCalled();
+    });
+
+    it('should call onStopTyping when input becomes empty after typing', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hello';
+      fireEvent.input(input);
+      input.textContent = '';
+      fireEvent.input(input);
+
+      expect(onStartTyping).toHaveBeenCalled();
+      expect(onStopTyping).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call onStopTyping when input is empty without prior typing', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = '';
+      fireEvent.input(input);
+      fireEvent.input(input);
+
+      expect(onStartTyping).not.toHaveBeenCalled();
+      expect(onStopTyping).not.toHaveBeenCalled();
+    });
+
+    it('should call onStopTyping only once when backspacing repeatedly on empty input', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hi';
+      fireEvent.input(input);
+      input.textContent = '';
+      fireEvent.input(input);
+      fireEvent.input(input);
+      fireEvent.input(input);
+
+      expect(onStopTyping).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe('MessageInput error handling', () => {

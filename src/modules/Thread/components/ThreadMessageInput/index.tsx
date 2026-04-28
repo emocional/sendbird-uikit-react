@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MutedState } from '@sendbird/chat/groupChannel';
 
 import './index.scss';
@@ -101,6 +101,26 @@ const ThreadMessageInput = (
     setShowVoiceMessageInput(false);
   }, [currentChannel?.url]);
 
+  const isTypingRef = useRef(false);
+  const startTyping = useCallback(() => {
+    currentChannel?.startTyping?.();
+    isTypingRef.current = true;
+  }, [currentChannel]);
+  const stopTyping = useCallback(() => {
+    currentChannel?.endTyping?.();
+    isTypingRef.current = false;
+  }, [currentChannel]);
+  // Send endTyping on channel change or unmount (uses captured channel reference)
+  useEffect(() => {
+    const channel = currentChannel;
+    return () => {
+      if (isTypingRef.current) {
+        channel?.endTyping?.();
+        isTypingRef.current = false;
+      }
+    };
+  }, [currentChannel?.url]);
+
   const mentionNodes = useDirtyGetMentions({ ref: ref || messageInputRef }, { logger });
   const ableMention = mentionNodes?.length < userMention?.maxMentionCount;
 
@@ -191,9 +211,8 @@ const ThreadMessageInput = (
                   : stringSet.THREAD__INPUT__REPLY_IN_THREAD
                 )
               }
-              onStartTyping={() => {
-                currentChannel?.startTyping?.();
-              }}
+              onStartTyping={startTyping}
+              onStopTyping={stopTyping}
               onSendMessage={({ message, mentionTemplate }) => {
                 sendMessage({
                   message: message,
@@ -203,7 +222,7 @@ const ThreadMessageInput = (
                 });
                 setMentionNickname('');
                 setMentionedUsers([]);
-                currentChannel?.endTyping?.();
+                stopTyping();
               }}
               onFileUpload={handleUploadFiles}
               onUserMentioned={(user) => {

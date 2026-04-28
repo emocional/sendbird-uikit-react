@@ -87,6 +87,7 @@ type MessageInputProps = {
   onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string }) => void;
   onCancelEdit?: () => void;
   onStartTyping?: () => void;
+  onStopTyping?: () => void;
   channelUrl?: string;
   mentionSelectedUser?: null | User;
   onUserMentioned?: (user: User) => void;
@@ -120,6 +121,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     onUpdateMessage = noop,
     onCancelEdit = noop,
     onStartTyping = noop,
+    onStopTyping = noop,
     channelUrl = '',
     mentionSelectedUser = null,
     onUserMentioned = noop,
@@ -137,6 +139,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
 
   const internalRef = (externalRef && 'current' in externalRef) ? externalRef : useRef(null);
   const ghostInputRef = useRef<HTMLInputElement>(null);
+  const wasTypingRef = useRef(false);
 
   const textFieldId = messageFieldId || TEXT_FIELD_ID;
   const { stringSet } = useLocalization();
@@ -520,7 +523,16 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
             useMentionInputDetection();
           }}
           onInput={() => {
-            onStartTyping();
+            const isEmpty = getTextContentWithoutZeroWidthSpace(internalRef?.current) === '';
+            if (isEmpty) {
+              if (wasTypingRef.current) {
+                onStopTyping();
+                wasTypingRef.current = false;
+              }
+            } else {
+              onStartTyping();
+              wasTypingRef.current = true;
+            }
             setIsInput(hasTextContentWithoutZeroWidthSpace(internalRef?.current));
             useMentionedLabelDetection();
           }}

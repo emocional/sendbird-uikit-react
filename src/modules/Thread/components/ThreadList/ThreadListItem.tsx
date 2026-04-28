@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useRef, useEffect, useLayoutEffect } from 'react';
+import React, { useCallback, useMemo, useState, useRef, useEffect, useLayoutEffect } from 'react';
 import format from 'date-fns/format';
 import type { FileMessage, MultipleFilesMessage } from '@sendbird/chat/message';
 
@@ -118,6 +118,26 @@ export default function ThreadListItem(props: ThreadListItemProps): React.ReactE
     }));
   }, [mentionedUserIds]);
 
+  const isTypingRef = useRef(false);
+  const startTyping = useCallback(() => {
+    currentChannel?.startTyping?.();
+    isTypingRef.current = true;
+  }, [currentChannel]);
+  const stopTyping = useCallback(() => {
+    currentChannel?.endTyping?.();
+    isTypingRef.current = false;
+  }, [currentChannel]);
+  // Send endTyping on edit close, channel change, or unmount (uses captured channel reference)
+  useEffect(() => {
+    const channel = currentChannel;
+    return () => {
+      if (isTypingRef.current) {
+        channel?.endTyping?.();
+        isTypingRef.current = false;
+      }
+    };
+  }, [showEdit, currentChannel?.url]);
+
   // edit input
   const disabled = !(threadListState === ThreadListStateTypes.INITIALIZED)
     || !isOnline
@@ -169,9 +189,8 @@ export default function ThreadListItem(props: ThreadListItemProps): React.ReactE
           mentionSelectedUser={selectedUser}
           isMentionEnabled={isMentionEnabled}
           message={message}
-          onStartTyping={() => {
-            currentChannel?.startTyping?.();
-          }}
+          onStartTyping={startTyping}
+          onStopTyping={stopTyping}
           onUpdateMessage={({ messageId, message, mentionTemplate }) => {
             updateMessage({
               messageId,

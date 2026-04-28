@@ -1,5 +1,5 @@
 import './index.scss';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import type { User } from '@sendbird/chat';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import type {
@@ -128,6 +128,26 @@ export const MessageInputWrapperView = React.forwardRef((
     setMessageInputEvent(null);
     setShowVoiceMessageInput(false);
   }, [currentChannel?.url]);
+
+  const isTypingRef = useRef(false);
+  const startTyping = useCallback(() => {
+    currentChannel?.startTyping?.();
+    isTypingRef.current = true;
+  }, [currentChannel]);
+  const stopTyping = useCallback(() => {
+    currentChannel?.endTyping?.();
+    isTypingRef.current = false;
+  }, [currentChannel]);
+  // Send endTyping on channel change or unmount (uses captured channel reference)
+  useEffect(() => {
+    const channel = currentChannel;
+    return () => {
+      if (isTypingRef.current) {
+        channel?.endTyping?.();
+        isTypingRef.current = false;
+      }
+    };
+  }, [currentChannel?.url]);
   useEffect(() => {
     setMentionedUsers(
       mentionedUsers.filter(({ userId }) => {
@@ -234,9 +254,8 @@ export const MessageInputWrapperView = React.forwardRef((
           renderFileUploadIcon={renderFileUploadIcon}
           renderSendMessageIcon={renderSendMessageIcon}
           renderVoiceMessageIcon={renderVoiceMessageIcon}
-          onStartTyping={() => {
-            currentChannel?.startTyping();
-          }}
+          onStartTyping={startTyping}
+          onStopTyping={stopTyping}
           onSendMessage={({ message, mentionTemplate }) => {
             sendUserMessage({
               message,
@@ -247,7 +266,7 @@ export const MessageInputWrapperView = React.forwardRef((
             setMentionNickname('');
             setMentionedUsers([]);
             setQuoteMessage(null);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onFileUpload={(fileList) => {
             handleUploadFiles(fileList);
