@@ -42,26 +42,14 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Skip if draft is empty template
-        if: steps.skip-bot.outputs.skip != 'true'
-        id: skip-template
-        run: |
-          template=$'### Features\n- Added ...\n\n### Fixes\n- Fixed a bug where ...'
-          if [ "$(cat CHANGELOG_DRAFT.md)" = "$template" ]; then
-            echo "Draft is empty template; skipping."
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Setup Node.js
-        if: steps.skip-bot.outputs.skip != 'true' && steps.skip-template.outputs.skip != 'true'
+        if: steps.skip-bot.outputs.skip != 'true'
         uses: actions/setup-node@v6
         with:
           node-version: '24'
 
       - name: Update CHANGELOG.md
-        if: steps.skip-bot.outputs.skip != 'true' && steps.skip-template.outputs.skip != 'true'
+        if: steps.skip-bot.outputs.skip != 'true'
         run: |
           VERSION="${BRANCH_NAME#release/v}"
           DATE=$(date -u '+%b %d %Y' | tr '[:lower:]' '[:upper:]')
@@ -69,7 +57,7 @@ jobs:
           node scripts/update-changelog.js
 
       - name: Commit and push CHANGELOG.md
-        if: steps.skip-bot.outputs.skip != 'true' && steps.skip-template.outputs.skip != 'true'
+        if: steps.skip-bot.outputs.skip != 'true'
         run: |
           if git diff --quiet CHANGELOG.md; then
             echo "CHANGELOG.md unchanged; nothing to commit."
