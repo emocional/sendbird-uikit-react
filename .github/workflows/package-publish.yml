@@ -52,6 +52,18 @@ jobs:
             echo "Invalid tag_suffix: '$TAG_SUFFIX'"
             exit 1
           fi
+          # When npm_tag is empty the publish goes to the default 'latest' dist-tag,
+          # so disallow prerelease versions and tag_suffix in that path.
+          if [ -z "$NPM_TAG" ]; then
+            if printf '%s' "$VERSION" | grep -q '-'; then
+              echo "Cannot publish prerelease version '$VERSION' to the 'latest' dist-tag. Provide npm_tag (e.g., beta, rc)."
+              exit 1
+            fi
+            if [ -n "$TAG_SUFFIX" ]; then
+              echo "tag_suffix requires npm_tag. Provide npm_tag (e.g., beta) or remove tag_suffix."
+              exit 1
+            fi
+          fi
       - name: Validate dispatch ref matches release branch
         run: |
           expected="release/v$VERSION"
