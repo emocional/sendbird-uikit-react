@@ -32,24 +32,32 @@ function getFailedTestFiles(xmlPath) {
   const xml = readFileSync(xmlPath, 'utf-8');
   const failedFiles = new Set();
 
-  // <testsuite name="..." failures="N" ... file="path/to/test.spec.ts">
-  const testsuiteRegex = /<testsuite[^>]*failures="(\d+)"[^>]*file="([^"]+)"[^>]*>/g;
+  // <testsuite ... failures="N" ... file="path/to/test.spec.ts" ...>
+  // attribute order is not guaranteed, so try both orderings
+  const testsuiteRegexes = [
+    /<testsuite[^>]*failures="(\d+)"[^>]*file="([^"]+)"[^>]*>/g,
+    /<testsuite[^>]*file="([^"]+)"[^>]*failures="(\d+)"[^>]*>/g,
+  ];
   let match;
-
-  while ((match = testsuiteRegex.exec(xml)) !== null) {
-    const failures = parseInt(match[1], 10);
-    const file = match[2];
-    if (failures > 0 && file) {
-      failedFiles.add(file);
+  for (let i = 0; i < testsuiteRegexes.length; i += 1) {
+    const re = testsuiteRegexes[i];
+    while ((match = re.exec(xml)) !== null) {
+      const failures = parseInt(i === 0 ? match[1] : match[2], 10);
+      const file = i === 0 ? match[2] : match[1];
+      if (failures > 0 && file) {
+        failedFiles.add(file);
+      }
     }
   }
 
-  // file이 failures 앞에 올 수도 있으므로 역순도 체크
-  const testsuiteRegex2 = /<testsuite[^>]*file="([^"]+)"[^>]*failures="(\d+)"[^>]*>/g;
-  while ((match = testsuiteRegex2.exec(xml)) !== null) {
+  // Fallback: <testcase file="..."> ... <failure/> or <error/> ... </testcase>
+  // jest-junit's addFileAttribute behavior varies by version; some attach the
+  // file attribute to <testcase> rather than <testsuite>.
+  const testcaseRegex = /<testcase[^>]*file="([^"]+)"[^>]*>([\s\S]*?)<\/testcase>/g;
+  while ((match = testcaseRegex.exec(xml)) !== null) {
     const file = match[1];
-    const failures = parseInt(match[2], 10);
-    if (failures > 0 && file) {
+    const inner = match[2];
+    if (file && /<(failure|error)\b/.test(inner)) {
       failedFiles.add(file);
     }
   }

@@ -66,6 +66,26 @@ jobs:
               exit 1
             fi
           fi
+          # npm dist-tag cannot be parseable as a semver range (e.g. 1.0, v1.4)
+          if [ -n "$NPM_TAG" ] && printf '%s' "$NPM_TAG" | grep -qE '^v?[0-9]+(\.[0-9]+)*$'; then
+            echo "npm_tag '$NPM_TAG' looks like a semver range; npm rejects such dist-tags."
+            exit 1
+          fi
+          # Validate the constructed npm version against semver 2.0 (catches things like
+          # beta.01 → 3.18.0-beta.01, which is rejected by the spec for leading zeros)
+          candidate_version="$VERSION"
+          if [ -n "$NPM_TAG" ]; then
+            if [ -z "$TAG_SUFFIX" ]; then
+              candidate_version="$VERSION-$NPM_TAG"
+            else
+              candidate_version="$VERSION-$NPM_TAG-$TAG_SUFFIX"
+            fi
+          fi
+          semver_re='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*)?$'
+          if ! printf '%s' "$candidate_version" | grep -qE "$semver_re"; then
+            echo "Constructed npm version '$candidate_version' is not valid semver 2.0."
+            exit 1
+          fi
       - name: Validate dispatch ref matches release branch
         run: |
           expected="release/v$VERSION"

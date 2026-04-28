@@ -29,6 +29,12 @@ if (!version) {
 const draft = fs.readFileSync('CHANGELOG_DRAFT.md', 'utf8').trim();
 const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
 
+if (!draft) {
+  console.error('CHANGELOG_DRAFT.md is empty.');
+  console.error(`Fill it in with release notes for v${version}.`);
+  process.exit(1);
+}
+
 if (draft === TEMPLATE) {
   console.error('CHANGELOG_DRAFT.md is the empty placeholder template.');
   console.error(`Fill it in with release notes for v${version}.`);
