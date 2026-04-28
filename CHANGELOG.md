@@ -1,4 +1,5 @@
 # Changelog - v3
+
 ## [v3.17.11] (MAR 12 2026)
 ### Fixes
 - Fix a security vulnerability by upgrading dompurify to v3.3.2 (CVE range: >=3.1.3, <=3.3.1)
@@ -19,7 +20,6 @@
 - Fixed a bug where the input field disappeared when a new message arrived while composing a quote message
 - Fixed a bug MenuItem is over-place when app area is narrow
 - Fixed a bug where the `markAsUnread` menu was not displayed correctly when replyType was set to thread 
-
 
 ## [v3.17.8] (JAN 20 2026)
 ### Fixes

@@ -1,0 +1,83 @@
+name: Prepare CHANGELOG
+
+on:
+  push:
+    branches:
+      - 'release/v*'
+    paths:
+      - 'CHANGELOG_DRAFT.md'
+      - 'package.json'
+
+concurrency:
+  group: prepare-changelog-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    env:
+      BRANCH_NAME: ${{ github.ref_name }}
+      BOT_EMAIL: 'sha.sdk_deployment@sendbird.com'
+      BOT_NAME: 'sendbird-sdk-deployment'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.SDK_GH_BOT1_TOKEN }}
+          fetch-depth: 2
+          ref: ${{ github.ref_name }}
+
+      - name: Skip if last commit was made by the release bot
+        id: skip-bot
+        run: |
+          last_author=$(git log -1 --pretty=%ae)
+          if [ "$last_author" = "$BOT_EMAIL" ]; then
+            echo "Last commit author is the release bot ($BOT_EMAIL); skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Skip if draft is empty template
+        if: steps.skip-bot.outputs.skip != 'true'
+        id: skip-template
+        run: |
+          template=$'### Features\n- Added ...\n\n### Fixes\n- Fixed a bug where ...'
+          if [ "$(cat CHANGELOG_DRAFT.md)" = "$template" ]; then
+            echo "Draft is empty template; skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        if: steps.skip-bot.outputs.skip != 'true' && steps.skip-template.outputs.skip != 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Update CHANGELOG.md
+        if: steps.skip-bot.outputs.skip != 'true' && steps.skip-template.outputs.skip != 'true'
+        run: |
+          VERSION="${BRANCH_NAME#release/v}"
+          DATE=$(date -u '+%b %d %Y' | tr '[:lower:]' '[:upper:]')
+          export VERSION DATE
+          node scripts/update-changelog.js
+
+      - name: Commit and push CHANGELOG.md
+        if: steps.skip-bot.outputs.skip != 'true' && steps.skip-template.outputs.skip != 'true'
+        run: |
+          if git diff --quiet CHANGELOG.md; then
+            echo "CHANGELOG.md unchanged; nothing to commit."
+            exit 0
+          fi
+          VERSION="${BRANCH_NAME#release/v}"
+          git config user.email "$BOT_EMAIL"
+          git config user.name "$BOT_NAME"
+          git add CHANGELOG.md
+          git commit -m "chore: prepare CHANGELOG.md for v${VERSION}"
+          git push origin "$BRANCH_NAME"

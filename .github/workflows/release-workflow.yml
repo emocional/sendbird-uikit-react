@@ -53,6 +53,23 @@ jobs:
           release_version=$(python3 ~/sdk-deployment/scripts/v1.2/extract_version.py --branch_name "$BRANCH_NAME")
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
+      - name: Finalize CHANGELOG.md date on release branch
+        continue-on-error: true
+        run: |
+          DATE=$(date -u '+%b %d %Y' | tr '[:lower:]' '[:upper:]')
+          export VERSION="$RELEASE_VERSION"
+          export DATE
+          node scripts/update-changelog.js
+          if git diff --quiet CHANGELOG.md; then
+            echo "CHANGELOG.md date already up to date; skipping commit."
+            exit 0
+          fi
+          git config user.email "sha.sdk_deployment@sendbird.com"
+          git config user.name "sendbird-sdk-deployment"
+          git add CHANGELOG.md
+          git commit -m "chore: finalize CHANGELOG.md date for v$RELEASE_VERSION"
+          git push origin "$BRANCH_NAME"
+
       - name: Merge release branch to main
         run: |
           python3 ~/sdk-deployment/scripts/v1.2/github_pr_merge.py \
