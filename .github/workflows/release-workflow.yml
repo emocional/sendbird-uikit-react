@@ -54,7 +54,6 @@ jobs:
           echo "RELEASE_VERSION=$release_version" >> $GITHUB_ENV
 
       - name: Finalize CHANGELOG.md date on release branch
-        continue-on-error: true
         run: |
           DATE=$(date -u '+%b %d %Y' | tr '[:lower:]' '[:upper:]')
           export VERSION="$RELEASE_VERSION"
