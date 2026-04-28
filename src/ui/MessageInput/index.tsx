@@ -526,17 +526,15 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
             useMentionInputDetection();
           }}
           onInput={() => {
-            const isEmpty = getTextContentWithoutZeroWidthSpace(internalRef?.current) === '';
-            if (isEmpty) {
-              if (wasTypingRef.current) {
-                onStopTyping();
-                wasTypingRef.current = false;
-              }
-            } else {
+            const hasContent = hasTextContentWithoutZeroWidthSpace(internalRef?.current);
+            if (hasContent) {
               onStartTyping();
               wasTypingRef.current = true;
+            } else if (wasTypingRef.current) {
+              onStopTyping();
+              wasTypingRef.current = false;
             }
-            setIsInput(hasTextContentWithoutZeroWidthSpace(internalRef?.current));
+            setIsInput(hasContent);
             useMentionedLabelDetection();
           }}
           onPaste={(e) => {

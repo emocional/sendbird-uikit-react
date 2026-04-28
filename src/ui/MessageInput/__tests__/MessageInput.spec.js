@@ -318,6 +318,33 @@ describe('ui/MessageInput', () => {
 
       expect(onStopTyping).toHaveBeenCalledTimes(1);
     });
+
+    it('should call onStopTyping when input becomes whitespace-only after typing', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hello';
+      fireEvent.input(input);
+      input.textContent = '   ';
+      fireEvent.input(input);
+
+      expect(onStopTyping).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call onStartTyping when input contains only whitespace', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = '   ';
+      fireEvent.input(input);
+
+      expect(onStartTyping).not.toHaveBeenCalled();
+      expect(onStopTyping).not.toHaveBeenCalled();
+    });
   });
 });
 
