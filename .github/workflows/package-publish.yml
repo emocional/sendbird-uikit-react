@@ -66,9 +66,11 @@ jobs:
               exit 1
             fi
           fi
-          # npm dist-tag cannot be parseable as a semver range (e.g. 1.0, v1.4)
-          if [ -n "$NPM_TAG" ] && printf '%s' "$NPM_TAG" | grep -qE '^v?[0-9]+(\.[0-9]+)*$'; then
-            echo "npm_tag '$NPM_TAG' looks like a semver range; npm rejects such dist-tags."
+          # npm rejects dist-tags that can be parsed as a semver version or range
+          # (e.g. 1.0, v1.4, 1.x, 1.2.x, 1.2.3-beta). The simplest way to cover
+          # all of these is to forbid leading digits and a leading v/V.
+          if [ -n "$NPM_TAG" ] && printf '%s' "$NPM_TAG" | grep -qE '^([0-9]|[vV])'; then
+            echo "npm_tag '$NPM_TAG' starts with a digit or v/V; npm rejects such dist-tags (interpreted as a semver version/range)."
             exit 1
           fi
           # Validate the constructed npm version against semver 2.0 (catches things like
