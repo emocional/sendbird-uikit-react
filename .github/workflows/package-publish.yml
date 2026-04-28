@@ -48,10 +48,8 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-node@v6
         with:
-          node-version: 18.x
+          node-version: '24'
           cache: 'yarn'
-      - name: Update npm to latest
-        run: npm install -g npm@latest
       - name: Check if the release branch exists
         run: |
           set -x
