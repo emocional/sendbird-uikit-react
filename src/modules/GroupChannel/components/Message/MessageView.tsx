@@ -410,7 +410,7 @@ const MessageView = (props: MessageViewProps) => {
                 mentionedMessageTemplate: mentionTemplate,
               });
               setShowEdit(false);
-              channel?.endTyping?.();
+              stopTyping();
             }}
             onCancelEdit={() => {
               setMentionNickname('');
@@ -418,7 +418,7 @@ const MessageView = (props: MessageViewProps) => {
               setMentionedUserIds([]);
               setMentionSuggestedUsers([]);
               setShowEdit(false);
-              channel?.endTyping?.();
+              stopTyping();
             }}
             onUserMentioned={(user) => {
               if (selectedUser?.userId === user?.userId) {

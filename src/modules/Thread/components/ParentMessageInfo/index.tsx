@@ -218,7 +218,7 @@ export default function ParentMessageInfo({
               mentionTemplate,
             });
             setShowEditInput(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onCancelEdit={() => {
             setMentionNickname('');
@@ -226,7 +226,7 @@ export default function ParentMessageInfo({
             setMentionedUserIds([]);
             setMentionSuggestedUsers([]);
             setShowEditInput(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onUserMentioned={(user) => {
             if (selectedUser?.userId === user?.userId) {

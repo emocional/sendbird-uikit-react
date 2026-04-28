@@ -170,6 +170,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     if (!isEdit) {
       setIsInput(false);
       resetInput(internalRef);
+      wasTypingRef.current = false;
     }
   }, [channelUrl]);
 
@@ -372,6 +373,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         if (!isMentionedMessage) params.mentionTemplate = '';
         onSendMessage(params);
         resetInput(internalRef);
+        wasTypingRef.current = false;
         /**
          * Note: contentEditable does not work as expected in mobile WebKit (Safari).
          * @see https://github.com/sendbird/sendbird-uikit-react/pull/1108
@@ -401,6 +403,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         const params = { messageId, message: messageText, mentionTemplate };
         onUpdateMessage(params);
         resetInput(internalRef);
+        wasTypingRef.current = false;
       }
     } catch (error) {
       eventHandlers?.message?.onUpdateMessageFailed?.(message, error);

@@ -199,7 +199,7 @@ export default function ThreadListItem(props: ThreadListItemProps): React.ReactE
               mentionTemplate,
             });
             setShowEdit(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onCancelEdit={() => {
             setMentionNickname('');
@@ -207,7 +207,7 @@ export default function ThreadListItem(props: ThreadListItemProps): React.ReactE
             setMentionedUserIds([]);
             setMentionSuggestedUsers([]);
             setShowEdit(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onUserMentioned={(user) => {
             if (selectedUser?.userId === user?.userId) {
