@@ -36,6 +36,7 @@ jobs:
       VERSION: ${{ github.event.inputs.version }}
       NPM_TAG: ${{ github.event.inputs.npm_tag }}
       TAG_SUFFIX: ${{ github.event.inputs.tag_suffix }}
+      BRANCH_NAME: ${{ github.ref_name }}
     steps:
       - name: Validate dispatch inputs
         run: |
@@ -49,6 +50,14 @@ jobs:
           fi
           if [ -n "$TAG_SUFFIX" ] && ! printf '%s' "$TAG_SUFFIX" | grep -qE '^[a-zA-Z0-9._-]+$'; then
             echo "Invalid tag_suffix: '$TAG_SUFFIX'"
+            exit 1
+          fi
+      - name: Validate dispatch ref matches release branch
+        run: |
+          expected="release/v$VERSION"
+          if [ "$BRANCH_NAME" != "$expected" ]; then
+            echo "Dispatched from '$BRANCH_NAME' but version input is $VERSION."
+            echo "Re-dispatch this workflow with the correct ref ($expected) selected in the GitHub Actions UI."
             exit 1
           fi
       - uses: actions/checkout@v6
