@@ -40,26 +40,28 @@ jobs:
     steps:
       - name: Validate dispatch inputs
         run: |
-          if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$'; then
-            echo "Invalid version: '$VERSION' (expected X.Y.Z or X.Y.Z-prerelease)"
+          # VERSION must be stable X.Y.Z. Prerelease versions are built up via
+          # npm_tag (+ optional tag_suffix), e.g., 3.18.0 + beta + 0 => 3.18.0-beta-0.
+          if ! printf '%s' "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Invalid version: '$VERSION' (expected stable X.Y.Z; use npm_tag for prerelease)"
             exit 1
           fi
-          if [ -n "$NPM_TAG" ] && ! printf '%s' "$NPM_TAG" | grep -qE '^[a-zA-Z0-9._-]+$'; then
-            echo "Invalid npm_tag: '$NPM_TAG'"
-            exit 1
-          fi
-          if [ -n "$TAG_SUFFIX" ] && ! printf '%s' "$TAG_SUFFIX" | grep -qE '^[a-zA-Z0-9._-]+$'; then
-            echo "Invalid tag_suffix: '$TAG_SUFFIX'"
-            exit 1
-          fi
-          # When npm_tag is empty the publish goes to the default 'latest' dist-tag,
-          # so disallow prerelease versions and tag_suffix in that path.
-          if [ -z "$NPM_TAG" ]; then
-            if printf '%s' "$VERSION" | grep -q '-'; then
-              echo "Cannot publish prerelease version '$VERSION' to the 'latest' dist-tag. Provide npm_tag (e.g., beta, rc)."
+          if [ -n "$NPM_TAG" ]; then
+            if ! printf '%s' "$NPM_TAG" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+              echo "Invalid npm_tag: '$NPM_TAG'"
               exit 1
             fi
-            if [ -n "$TAG_SUFFIX" ]; then
+            if [ "$NPM_TAG" = "latest" ]; then
+              echo "npm_tag 'latest' is not allowed; leave npm_tag empty for a stable publish."
+              exit 1
+            fi
+          fi
+          if [ -n "$TAG_SUFFIX" ]; then
+            if ! printf '%s' "$TAG_SUFFIX" | grep -qE '^[a-zA-Z0-9._-]+$'; then
+              echo "Invalid tag_suffix: '$TAG_SUFFIX'"
+              exit 1
+            fi
+            if [ -z "$NPM_TAG" ]; then
               echo "tag_suffix requires npm_tag. Provide npm_tag (e.g., beta) or remove tag_suffix."
               exit 1
             fi
