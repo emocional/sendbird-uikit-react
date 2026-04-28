@@ -1,3 +1,12 @@
+# Manual publish workflow (typically for beta/RC releases).
+#
+# IMPORTANT: npm OIDC trusted publishing allows only one publisher
+# configuration per package. The default is set to release-workflow.yml.
+# Before dispatching this workflow:
+#   1. Open the package on npmjs.com → Settings → "Trusted publisher"
+#   2. Change the workflow filename to "package-publish.yml"
+#   3. Run this workflow
+#   4. Restore the workflow filename to "release-workflow.yml"
 name: Package build and publish
 
 on:
