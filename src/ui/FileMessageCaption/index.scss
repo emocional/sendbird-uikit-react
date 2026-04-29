@@ -1,0 +1,25 @@
+@import '../../styles/variables';
+
+.sendbird-file-message-caption {
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  border-radius: 16px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  max-width: 100%;
+  box-sizing: border-box;
+
+  &.incoming {
+    @include themed() {
+      background-color: t(bg-2);
+      color: t(on-bg-1);
+    }
+  }
+
+  &.outgoing {
+    @include themed() {
+      background-color: t(primary-3);
+      color: t(on-content-1);
+    }
+  }
+}

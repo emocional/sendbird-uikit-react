@@ -28,6 +28,10 @@ interface LocalFileMessage extends FileMessage {
 export interface SendFileMessageExtraParams {
   /** Optional text body. Attached to params.message when onBeforeSendFileMessage did not already set one. */
   message?: string;
+  /** Optional mentioned users. Carried for push notification + UI attribution. */
+  mentionedUsers?: import('@sendbird/chat').User[];
+  /** Optional mention template; SDK type omits this on FileMessage but server accepts it. */
+  mentionedMessageTemplate?: string;
 }
 
 export type SendFileMessageFunctionType = (
@@ -58,6 +62,10 @@ export default function useSendFileMessageCallback({
       };
       const params = onBeforeSendFileMessage?.(file, quoteMessage) ?? createParamsDefault();
       if (extraParams?.message && !params.message) params.message = extraParams.message;
+      if (extraParams?.mentionedUsers && !params.mentionedUsers) params.mentionedUsers = extraParams.mentionedUsers;
+      if (extraParams?.mentionedMessageTemplate) {
+        (params as FileMessageCreateParams & { mentionedMessageTemplate?: string }).mentionedMessageTemplate = extraParams.mentionedMessageTemplate;
+      }
       logger.info('Thread | useSendFileMessageCallback: Sending file message start.', params);
 
       if (currentChannel == null) {

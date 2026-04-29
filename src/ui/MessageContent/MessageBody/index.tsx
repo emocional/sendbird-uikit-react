@@ -10,6 +10,7 @@ import { BaseMessage, FileMessage, MultipleFilesMessage, UserMessage } from '@se
 import OGMessageItemBody from '../../OGMessageItemBody';
 import TextMessageItemBody from '../../TextMessageItemBody';
 import FileMessageItemBody from '../../FileMessageItemBody';
+import FileMessageCaption from '../../FileMessageCaption';
 import MultipleFilesMessageItemBody from '../../MultipleFilesMessageItemBody';
 import VoiceMessageItemBody from '../../VoiceMessageItemBody';
 import ThumbnailMessageItemBody from '../../ThumbnailMessageItemBody';
@@ -134,27 +135,43 @@ export const MessageBody = (props: MessageBodyProps) => {
       />
     ))
     .when((message) => getUIKitMessageType(message) === messageTypes.FILE, () => (
-      <FileMessageItemBody
-        className={className}
-        message={message as FileMessage}
-        isByMe={isByMe}
-        mouseHover={mouseHover}
-        isReactionEnabled={isReactionEnabledInChannel}
-        onBeforeDownloadFileMessage={onBeforeDownloadFileMessage}
-      />
+      <>
+        <FileMessageCaption
+          message={message as FileMessage}
+          isByMe={isByMe}
+          isMentionEnabled={config.groupChannel.enableMention ?? false}
+          isMarkdownEnabled={config.groupChannel.enableMarkdownForUserMessage}
+        />
+        <FileMessageItemBody
+          className={className}
+          message={message as FileMessage}
+          isByMe={isByMe}
+          mouseHover={mouseHover}
+          isReactionEnabled={isReactionEnabledInChannel}
+          onBeforeDownloadFileMessage={onBeforeDownloadFileMessage}
+        />
+      </>
     ))
     .when(isMultipleFilesMessage, () => (
-      <MultipleFilesMessageItemBody
-        className={className}
-        message={message as MultipleFilesMessage}
-        isByMe={isByMe}
-        mouseHover={mouseHover}
-        isReactionEnabled={isReactionEnabledInChannel}
-        threadMessageKindKey={threadMessageKindKey}
-        statefulFileInfoList={statefulFileInfoList}
-        onBeforeDownloadFileMessage={onBeforeDownloadFileMessage}
-        {...customSubcomponentsProps['MultipleFilesMessageItemBody'] ?? {}}
-      />
+      <>
+        <FileMessageCaption
+          message={message as MultipleFilesMessage}
+          isByMe={isByMe}
+          isMentionEnabled={config.groupChannel.enableMention ?? false}
+          isMarkdownEnabled={config.groupChannel.enableMarkdownForUserMessage}
+        />
+        <MultipleFilesMessageItemBody
+          className={className}
+          message={message as MultipleFilesMessage}
+          isByMe={isByMe}
+          mouseHover={mouseHover}
+          isReactionEnabled={isReactionEnabledInChannel}
+          threadMessageKindKey={threadMessageKindKey}
+          statefulFileInfoList={statefulFileInfoList}
+          onBeforeDownloadFileMessage={onBeforeDownloadFileMessage}
+          {...customSubcomponentsProps['MultipleFilesMessageItemBody'] ?? {}}
+        />
+      </>
     ))
     .when(isVoiceMessage, () => (
       <VoiceMessageItemBody
@@ -166,16 +183,24 @@ export const MessageBody = (props: MessageBodyProps) => {
       />
     ))
     .when(isThumbnailMessage, () => (
-      <ThumbnailMessageItemBody
-        className={className}
-        message={message as FileMessage}
-        isByMe={isByMe}
-        mouseHover={mouseHover}
-        isReactionEnabled={isReactionEnabledInChannel}
-        showFileViewer={showFileViewer}
-        style={isMobile ? { width: '100%' } : {}}
-        {...customSubcomponentsProps['ThumbnailMessageItemBody'] ?? {}}
-      />
+      <>
+        <FileMessageCaption
+          message={message as FileMessage}
+          isByMe={isByMe}
+          isMentionEnabled={config.groupChannel.enableMention ?? false}
+          isMarkdownEnabled={config.groupChannel.enableMarkdownForUserMessage}
+        />
+        <ThumbnailMessageItemBody
+          className={className}
+          message={message as FileMessage}
+          isByMe={isByMe}
+          mouseHover={mouseHover}
+          isReactionEnabled={isReactionEnabledInChannel}
+          showFileViewer={showFileViewer}
+          style={isMobile ? { width: '100%' } : {}}
+          {...customSubcomponentsProps['ThumbnailMessageItemBody'] ?? {}}
+        />
+      </>
     ))
     .otherwise(() => {
       return renderUnknownMessageItemBody();

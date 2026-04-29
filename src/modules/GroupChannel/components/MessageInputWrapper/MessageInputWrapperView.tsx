@@ -199,50 +199,74 @@ export const MessageInputWrapperView = React.forwardRef((
       });
 
       let bodyConsumed = false;
-      const takeBody = (): string | undefined => {
-        if (bodyConsumed) return undefined;
+      // Body text + mention metadata both ride the FIRST send only. The SDK's
+      // FileMessage/MFM types omit mentionedMessageTemplate but the server
+      // accepts it; we cast through to attach it.
+      const takeFirstSendExtras = (): { message?: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } => {
+        if (bodyConsumed) return {};
         bodyConsumed = true;
-        return trimmed.length > 0 ? message : undefined;
+        if (trimmed.length === 0) return {};
+        const extras: { message: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } = { message };
+        if (mentionedUsers.length > 0) extras.mentionedUsers = mentionedUsers;
+        if (mentionTemplate) extras.mentionedMessageTemplate = mentionTemplate;
+        return extras;
       };
 
-      let chain: Promise<unknown> = Promise.resolve();
-      // MFM only when feature flag is on AND 2+ images. Otherwise dispatch each
-      // image individually so isMultipleFilesMessageEnabled=false is respected
-      // even when DnD/paste deliver multiple files.
+      // Sequential dispatcher built upfront so per-step error isolation does
+      // not affect ordering. The body extras are captured at queue time so the
+      // first task — whatever shape — gets them.
+      const tasks: Array<() => Promise<unknown>> = [];
       const useMFMBatch = isMultipleFilesMessageEnabled && compressedImageFiles.length > 1;
       if (useMFMBatch) {
-        chain = Promise.resolve(sendMultipleFilesMessage({
+        const extras = takeFirstSendExtras();
+        tasks.push(() => sendMultipleFilesMessage({
           fileInfoList: compressedImageFiles.map((file) => ({
             file,
             fileName: file.name,
             fileSize: file.size,
             mimeType: file.type,
           })),
-          message: takeBody(),
           parentMessageId,
-        }));
+          ...extras,
+        } as MultipleFilesMessageCreateParams));
       } else if (compressedImageFiles.length === 1) {
-        chain = Promise.resolve(sendFileMessage({
-          file: compressedImageFiles[0],
-          message: takeBody(),
+        const extras = takeFirstSendExtras();
+        const file = compressedImageFiles[0];
+        tasks.push(() => sendFileMessage({
+          file,
           parentMessageId,
-        }));
+          ...extras,
+        } as FileMessageCreateParams));
       } else if (compressedImageFiles.length > 1) {
         compressedImageFiles.forEach((file) => {
-          chain = chain.then(() => sendFileMessage({
+          const extras = takeFirstSendExtras();
+          tasks.push(() => sendFileMessage({
             file,
-            message: takeBody(),
             parentMessageId,
-          }));
+            ...extras,
+          } as FileMessageCreateParams));
         });
       }
       otherFiles.forEach((file) => {
-        chain = chain.then(() => sendFileMessage({
+        const extras = takeFirstSendExtras();
+        tasks.push(() => sendFileMessage({
           file,
-          message: takeBody(),
           parentMessageId,
-        }));
+          ...extras,
+        } as FileMessageCreateParams));
       });
+
+      // Sequential dispatch with per-task error isolation: one failure must not
+      // break the rest of the batch. Fire-and-forget so UI cleanup runs now.
+      (async () => {
+        for (const task of tasks) {
+          try {
+            await task();
+          } catch (error) {
+            logger.warning?.('GroupChannel|composer: file send failed', error);
+          }
+        }
+      })();
     }
 
     setMentionNickname('');

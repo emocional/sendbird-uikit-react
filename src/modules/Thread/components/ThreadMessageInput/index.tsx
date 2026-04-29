@@ -131,31 +131,50 @@ const ThreadMessageInput = (
       });
 
       let bodyConsumed = false;
-      const takeBody = (): { message?: string } => {
-        if (bodyConsumed || trimmed.length === 0) return {};
+      // Body text + mentions ride the FIRST send only.
+      const takeFirstSendExtras = (): { message?: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } => {
+        if (bodyConsumed) return {};
         bodyConsumed = true;
-        return { message };
+        if (trimmed.length === 0) return {};
+        const extras: { message?: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } = { message };
+        if (mentionedUsers.length > 0) extras.mentionedUsers = mentionedUsers;
+        if (mentionTemplate) extras.mentionedMessageTemplate = mentionTemplate;
+        return extras;
       };
 
-      let chain: Promise<unknown> = Promise.resolve();
-      // MFM only when feature flag is on AND 2+ images.
+      const tasks: Array<() => Promise<unknown>> = [];
       const useMFMBatch = isMultipleFilesMessageEnabled && compressedImageFiles.length > 1;
       if (useMFMBatch) {
-        chain = Promise.resolve(sendMultipleFilesMessage(
+        const extras = takeFirstSendExtras();
+        tasks.push(() => sendMultipleFilesMessage(
           compressedImageFiles,
           parentMessage ?? undefined,
-          takeBody(),
+          extras,
         ));
       } else if (compressedImageFiles.length === 1) {
-        chain = Promise.resolve(sendFileMessage(compressedImageFiles[0], parentMessage ?? undefined, takeBody()));
+        const extras = takeFirstSendExtras();
+        tasks.push(() => sendFileMessage(compressedImageFiles[0], parentMessage ?? undefined, extras));
       } else if (compressedImageFiles.length > 1) {
         compressedImageFiles.forEach((file) => {
-          chain = chain.then(() => sendFileMessage(file, parentMessage ?? undefined, takeBody()));
+          const extras = takeFirstSendExtras();
+          tasks.push(() => sendFileMessage(file, parentMessage ?? undefined, extras));
         });
       }
       otherFiles.forEach((file) => {
-        chain = chain.then(() => sendFileMessage(file, parentMessage ?? undefined, takeBody()));
+        const extras = takeFirstSendExtras();
+        tasks.push(() => sendFileMessage(file, parentMessage ?? undefined, extras));
       });
+
+      // Sequential dispatch with per-task error isolation.
+      (async () => {
+        for (const task of tasks) {
+          try {
+            await task();
+          } catch (error) {
+            logger.warning?.('Thread|composer: file send failed', error);
+          }
+        }
+      })();
     }
 
     setMentionNickname('');

@@ -41,6 +41,10 @@ export interface FileUploadedPayload {
 export interface SendMFMExtraParams {
   /** Optional text body. Attached to messageParams.message when onBeforeSendMultipleFilesMessage did not already set one. */
   message?: string;
+  /** Optional mentioned users. Carried for push notification + UI attribution. */
+  mentionedUsers?: import('@sendbird/chat').User[];
+  /** Optional mention template; SDK type omits this on MFM but server accepts it. */
+  mentionedMessageTemplate?: string;
 }
 
 export type SendMFMFunctionType = (
@@ -93,6 +97,12 @@ export const useSendMultipleFilesMessage = ({
       }
       if (extraParams?.message && !messageParams.message) {
         messageParams.message = extraParams.message;
+      }
+      if (extraParams?.mentionedUsers && !messageParams.mentionedUsers) {
+        messageParams.mentionedUsers = extraParams.mentionedUsers;
+      }
+      if (extraParams?.mentionedMessageTemplate) {
+        (messageParams as MultipleFilesMessageCreateParams & { mentionedMessageTemplate?: string }).mentionedMessageTemplate = extraParams.mentionedMessageTemplate;
       }
       logger.info('Channel: Start sending MFM', { messageParams });
       try {

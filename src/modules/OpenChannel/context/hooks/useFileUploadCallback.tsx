@@ -29,6 +29,10 @@ interface StaticParams {
 export interface FileUploadOptions {
   /** Optional text body. Attached to the FIRST file's params.message when onBeforeSendFileMessage did not already set one. */
   message?: string;
+  /** Optional mentioned users. Attached to the FIRST file send. */
+  mentionedUsers?: import('@sendbird/chat').User[];
+  /** Optional mention template; SDK type omits this on FileMessage but server accepts it. */
+  mentionedMessageTemplate?: string;
 }
 
 type CallbackReturn = (files: Array<File> | File, options?: FileUploadOptions) => Promise<void>;
@@ -93,9 +97,17 @@ function useFileUploadCallback({
         logger.info('OpenChannel | useFileUploadCallback: Creating params using onBeforeSendFileMessage', onBeforeSendFileMessage);
       }
       const params = onBeforeSendFileMessage ? onBeforeSendFileMessage(compressedFile) : createParamsDefault(compressedFile);
-      // Attach text body to the first send only.
-      if (i === 0 && options?.message && !params.message) {
-        params.message = options.message;
+      // Attach text body + mention metadata to the first send only.
+      if (i === 0) {
+        if (options?.message && !params.message) {
+          params.message = options.message;
+        }
+        if (options?.mentionedUsers && !params.mentionedUsers) {
+          params.mentionedUsers = options.mentionedUsers;
+        }
+        if (options?.mentionedMessageTemplate) {
+          (params as FileMessageCreateParams & { mentionedMessageTemplate?: string }).mentionedMessageTemplate = options.mentionedMessageTemplate;
+        }
       }
       logger.info('OpenChannel | useFileUploadCallback: Uploading file message start', params);
 
