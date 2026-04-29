@@ -1,5 +1,5 @@
 import './index.scss';
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import type { User } from '@sendbird/chat';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
@@ -20,15 +20,17 @@ import {
   isDisabledBecauseMessageForm,
 } from '../../context/utils';
 import { useLocalization } from '../../../../lib/LocalizationContext';
+import { useGlobalModalContext } from '../../../../hooks/useModal';
 import SuggestedMentionList from '../SuggestedMentionList';
 import { useDirtyGetMentions } from '../../../Message/hooks/useDirtyGetMentions';
 import { SendableMessageType } from '../../../../utils';
 import QuoteMessageInput from '../../../../ui/QuoteMessageInput';
 import VoiceMessageInputWrapper from './VoiceMessageInputWrapper';
 import MessageInput from '../../../../ui/MessageInput';
+import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
+import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
-import { useHandleUploadFiles } from './useHandleUploadFiles';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface MessageInputWrapperViewProps {
@@ -81,11 +83,13 @@ export const MessageInputWrapperView = React.forwardRef((
   } = props;
   const { stringSet } = useLocalization();
   const { isMobile } = useMediaQueryContext();
+  const { openModal } = useGlobalModalContext();
   const { state } = useSendbird();
   const { stores, config } = state;
   const { isOnline, userMention, logger, groupChannel } = config;
   const sdk = stores.sdkStore.sdk;
   const { maxMentionCount, maxSuggestionCount } = userMention;
+  const { uikitUploadSizeLimit, uikitMultipleFilesMessageLimit } = config;
 
   const isBroadcast = currentChannel?.isBroadcast;
   const isOperator = currentChannel?.myRole === 'operator';
@@ -119,6 +123,21 @@ export const MessageInputWrapperView = React.forwardRef((
   const mentionNodes = useDirtyGetMentions({ ref: (ref || messageInputRef) as any }, { logger });
   const ableMention = mentionNodes?.length < maxMentionCount;
 
+  // Composer staging — file picker, drag-drop, and clipboard paste all feed
+  // into pendingFiles. The submit handler drains them along with any text body.
+  const {
+    pendingFiles,
+    addFiles,
+    removeFile,
+    clear: clearPendingFiles,
+  } = usePendingFiles({
+    uikitUploadSizeLimit,
+    uikitMultipleFilesMessageLimit,
+    openModal,
+    stringSet,
+    logger,
+  });
+
   // Operate states
   useEffect(() => {
     setMentionNickname('');
@@ -128,6 +147,7 @@ export const MessageInputWrapperView = React.forwardRef((
     setMentionSuggestedUsers([]);
     setMessageInputEvent(null);
     setShowVoiceMessageInput(false);
+    clearPendingFiles();
   }, [currentChannel?.url]);
 
   const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
@@ -145,12 +165,84 @@ export const MessageInputWrapperView = React.forwardRef((
     );
   }, [mentionedUserIds]);
 
-  // Callbacks
-  const handleUploadFiles = useHandleUploadFiles({
+  // Submit handler: drains pendingFiles + text body in one transaction.
+  // Body-text placement rule (per spec): attached to the FIRST send only.
+  // - text only -> sendUserMessage
+  // - 2+ images present -> body rides MFM (fired first), other files follow
+  // - 1 image only -> body rides that single sendFileMessage
+  // - non-images only -> body rides the first sendFileMessage
+  const handleSubmit = useCallback(({
+    message,
+    mentionTemplate,
+    files,
+  }: { message: string; mentionTemplate: string; files: PendingFile[] }) => {
+    const trimmed = message.trim();
+    const parentMessageId = quoteMessage?.messageId;
+
+    if (files.length === 0) {
+      if (trimmed.length === 0) return;
+      sendUserMessage({
+        message,
+        mentionedUsers,
+        mentionedMessageTemplate: mentionTemplate,
+        parentMessageId,
+      });
+    } else {
+      const imageEntries = files.filter((entry) => entry.isImage);
+      const otherEntries = files.filter((entry) => !entry.isImage);
+
+      let bodyConsumed = false;
+      const takeBody = (): string | undefined => {
+        if (bodyConsumed) return undefined;
+        bodyConsumed = true;
+        return trimmed.length > 0 ? message : undefined;
+      };
+
+      let chain: Promise<unknown> = Promise.resolve();
+      if (imageEntries.length === 1) {
+        const entry = imageEntries[0];
+        chain = Promise.resolve(sendFileMessage({
+          file: entry.file,
+          message: takeBody(),
+          parentMessageId,
+        }));
+      } else if (imageEntries.length > 1) {
+        chain = Promise.resolve(sendMultipleFilesMessage({
+          fileInfoList: imageEntries.map(({ file }) => ({
+            file,
+            fileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type,
+          })),
+          message: takeBody(),
+          parentMessageId,
+        }));
+      }
+      otherEntries.forEach((entry) => {
+        chain = chain.then(() => sendFileMessage({
+          file: entry.file,
+          message: takeBody(),
+          parentMessageId,
+        }));
+      });
+    }
+
+    setMentionNickname('');
+    setMentionedUsers([]);
+    setQuoteMessage(null);
+    stopTyping();
+    clearPendingFiles();
+  }, [
+    sendUserMessage,
     sendFileMessage,
     sendMultipleFilesMessage,
-    quoteMessage: quoteMessage ?? undefined,
-  }, { logger });
+    mentionedUsers,
+    quoteMessage,
+    setQuoteMessage,
+    currentChannel,
+    stopTyping,
+    clearPendingFiles,
+  ]);
 
   if (isBroadcast && !isOperator) {
     /* Only `Operator` can send messages in the Broadcast channel */
@@ -239,22 +331,10 @@ export const MessageInputWrapperView = React.forwardRef((
           renderVoiceMessageIcon={renderVoiceMessageIcon}
           onStartTyping={startTyping}
           onStopTyping={stopTyping}
-          onSendMessage={({ message, mentionTemplate }) => {
-            sendUserMessage({
-              message,
-              mentionedUsers,
-              mentionedMessageTemplate: mentionTemplate,
-              parentMessageId: quoteMessage?.messageId,
-            });
-            setMentionNickname('');
-            setMentionedUsers([]);
-            setQuoteMessage(null);
-            stopTyping();
-          }}
-          onFileUpload={(fileList) => {
-            handleUploadFiles(fileList);
-            setQuoteMessage(null);
-          }}
+          pendingFiles={pendingFiles}
+          onAddFiles={addFiles}
+          onRemoveFile={removeFile}
+          onSubmit={handleSubmit}
           onUserMentioned={(user) => {
             if (selectedUser?.userId === user?.userId) {
               setSelectedUser(null);

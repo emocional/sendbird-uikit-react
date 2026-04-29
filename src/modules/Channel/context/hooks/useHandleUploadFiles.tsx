@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { Logger } from '../../../../lib/Sendbird/types';
 import { SendMFMFunctionType } from './useSendMultipleFilesMessage';
@@ -6,13 +6,11 @@ import { SendableMessageType, isImage } from '../../../../utils';
 // TODO: get SendFileMessageFunctionType from Channel
 import { SendFileMessageFunctionType } from '../../../Thread/context/hooks/useSendFileMessage';
 import { useGlobalModalContext } from '../../../../hooks/useModal';
-import { ButtonTypes } from '../../../../ui/Button';
 import { useLocalization } from '../../../../lib/LocalizationContext';
-import { ModalFooter } from '../../../../ui/Modal';
 import { FileMessage, MultipleFilesMessage } from '@sendbird/chat/message';
 import { compressImages } from '../../../../utils/compressImages';
-import { ONE_MiB } from '../../../../utils/consts';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { validateFilesForUpload } from '../../../../utils/fileValidation';
 
 /**
  * The handleUploadFiles is a function sending a FileMessage and MultipleFilesMessage
@@ -48,53 +46,17 @@ export const useHandleUploadFiles = ({
       logger.warning('Channel|useHandleUploadFiles: required functions are undefined', { sendFileMessage, sendMultipleFilesMessage });
       return;
     }
-    if (files.length === 0) {
-      logger.warning('Channel|useHandleUploadFiles: given file list is empty.', { files });
-      return;
-    }
-    if (files.length > uikitMultipleFilesMessageLimit) {
-      logger.info(`Channel|useHandleUploadFiles: Cannot upload files more than ${uikitMultipleFilesMessageLimit}`);
-      openModal({
-        modalProps: {
-          titleText: stringSet.FILE_UPLOAD_NOTIFICATION__COUNT_LIMIT.replace('%d', `${uikitMultipleFilesMessageLimit}`),
-          hideFooter: true,
-        },
-        childElement: ({ closeModal }) => (
-          <ModalFooter
-            type={ButtonTypes.PRIMARY}
-            submitText={stringSet.BUTTON__OK}
-            hideCancelButton
-            onCancel={closeModal}
-            onSubmit={closeModal}
-          />
-        ),
-      });
-      return;
-    }
 
-    /**
-     * Validate file sizes
-     * The default value of uikitUploadSizeLimit is 25MiB
-     */
-    if (files.some((file: File) => file.size > uikitUploadSizeLimit)) {
-      logger.info(`Channel|useHandleUploadFiles: Cannot upload file size exceeding ${uikitUploadSizeLimit}`);
-      openModal({
-        modalProps: {
-          titleText: stringSet.FILE_UPLOAD_NOTIFICATION__SIZE_LIMIT.replace('%d', `${Math.floor(uikitUploadSizeLimit / ONE_MiB)}`),
-          hideFooter: true,
-        },
-        childElement: ({ closeModal }) => (
-          <ModalFooter
-            type={ButtonTypes.PRIMARY}
-            submitText={stringSet.BUTTON__OK}
-            hideCancelButton
-            onCancel={closeModal}
-            onSubmit={closeModal}
-          />
-        ),
-      });
-      return;
-    }
+    const isValid = validateFilesForUpload({
+      files,
+      uikitUploadSizeLimit,
+      uikitMultipleFilesMessageLimit,
+      openModal,
+      stringSet,
+      logger,
+      logTag: 'Channel|useHandleUploadFiles',
+    });
+    if (!isValid) return;
 
     // Image Compression
     const { compressedFiles } = await compressImages({

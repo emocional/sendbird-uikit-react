@@ -25,7 +25,16 @@ interface LocalFileMessage extends FileMessage {
   file: File;
 }
 
-export type SendFileMessageFunctionType = (file: File, quoteMessage?: SendableMessageType) => Promise<FileMessage>;
+export interface SendFileMessageExtraParams {
+  /** Optional text body. Attached to params.message when onBeforeSendFileMessage did not already set one. */
+  message?: string;
+}
+
+export type SendFileMessageFunctionType = (
+  file: File,
+  quoteMessage?: SendableMessageType,
+  extraParams?: SendFileMessageExtraParams,
+) => Promise<FileMessage>;
 
 export default function useSendFileMessageCallback({
   currentChannel,
@@ -36,7 +45,7 @@ export default function useSendFileMessageCallback({
   logger,
   pubSub,
 }: StaticProps): SendFileMessageFunctionType {
-  return useCallback((file, quoteMessage): Promise<FileMessage> => {
+  return useCallback((file, quoteMessage, extraParams): Promise<FileMessage> => {
     return new Promise((resolve, reject) => {
       const createParamsDefault = () => {
         const params = {} as FileMessageCreateParams;
@@ -48,6 +57,7 @@ export default function useSendFileMessageCallback({
         return params;
       };
       const params = onBeforeSendFileMessage?.(file, quoteMessage) ?? createParamsDefault();
+      if (extraParams?.message && !params.message) params.message = extraParams.message;
       logger.info('Thread | useSendFileMessageCallback: Sending file message start.', params);
 
       if (currentChannel == null) {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import { MutedState } from '@sendbird/chat/groupChannel';
 
@@ -6,15 +6,17 @@ import './index.scss';
 
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { useLocalization } from '../../../../lib/LocalizationContext';
+import { useGlobalModalContext } from '../../../../hooks/useModal';
 
 import MessageInput from '../../../../ui/MessageInput';
+import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
+import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
 import { SuggestedMentionList } from '../SuggestedMentionList';
 import { VoiceMessageInputWrapper } from '../../../GroupChannel/components/MessageInputWrapper';
 import { Role } from '../../../../lib/Sendbird/types';
 
 import { useDirtyGetMentions } from '../../../Message/hooks/useDirtyGetMentions';
-import { useHandleUploadFiles } from '../../../Channel/context/hooks/useHandleUploadFiles';
 import { isDisabledBecauseFrozen, isDisabledBecauseMuted } from '../../../Channel/context/utils';
 import { User } from '@sendbird/chat';
 import { classnames } from '../../../../utils/utils';
@@ -73,15 +75,6 @@ const ThreadMessageInput = (
     || isMuted
     || (!(currentChannel?.myRole === Role.OPERATOR) && isChannelFrozen) || parentMessage === null;
 
-  // MFM
-  const handleUploadFiles = useHandleUploadFiles({
-    sendFileMessage,
-    sendMultipleFilesMessage,
-    quoteMessage: parentMessage,
-  }, {
-    logger,
-  });
-
   // mention
   const [mentionNickname, setMentionNickname] = useState('');
   const [mentionedUsers, setMentionedUsers] = useState<User[]>([]);
@@ -90,6 +83,83 @@ const ThreadMessageInput = (
   const [mentionSuggestedUsers, setMentionSuggestedUsers] = useState<User[]>([]);
   const [messageInputEvent, setMessageInputEvent] = useState<React.KeyboardEvent<HTMLDivElement> | null>(null);
   const [showVoiceMessageInput, setShowVoiceMessageInput] = useState(false);
+
+  // Composer staging
+  const { openModal } = useGlobalModalContext();
+  const { uikitUploadSizeLimit, uikitMultipleFilesMessageLimit } = config;
+  const {
+    pendingFiles,
+    addFiles,
+    removeFile,
+    clear: clearPendingFiles,
+  } = usePendingFiles({
+    uikitUploadSizeLimit,
+    uikitMultipleFilesMessageLimit,
+    openModal,
+    stringSet,
+    logger,
+  });
+
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
+
+  // Submit handler. Body-text rule mirrors GroupChannel: text rides the
+  // FIRST send only. parentMessage is always the thread parent, so each send
+  // automatically threads correctly.
+  const handleSubmit = useCallback(({
+    message,
+    mentionTemplate,
+    files,
+  }: { message: string; mentionTemplate: string; files: PendingFile[] }) => {
+    const trimmed = message.trim();
+
+    if (files.length === 0) {
+      if (trimmed.length === 0) return;
+      sendMessage({
+        message,
+        mentionedUsers,
+        mentionTemplate,
+        quoteMessage: parentMessage,
+      });
+    } else {
+      const imageEntries = files.filter((entry) => entry.isImage);
+      const otherEntries = files.filter((entry) => !entry.isImage);
+
+      let bodyConsumed = false;
+      const takeBody = (): { message?: string } => {
+        if (bodyConsumed || trimmed.length === 0) return {};
+        bodyConsumed = true;
+        return { message };
+      };
+
+      let chain: Promise<unknown> = Promise.resolve();
+      if (imageEntries.length === 1) {
+        chain = Promise.resolve(sendFileMessage(imageEntries[0].file, parentMessage ?? undefined, takeBody()));
+      } else if (imageEntries.length > 1) {
+        chain = Promise.resolve(sendMultipleFilesMessage(
+          imageEntries.map(({ file }) => file),
+          parentMessage ?? undefined,
+          takeBody(),
+        ));
+      }
+      otherEntries.forEach((entry) => {
+        chain = chain.then(() => sendFileMessage(entry.file, parentMessage ?? undefined, takeBody()));
+      });
+    }
+
+    setMentionNickname('');
+    setMentionedUsers([]);
+    stopTyping();
+    clearPendingFiles();
+  }, [
+    sendMessage,
+    sendFileMessage,
+    sendMultipleFilesMessage,
+    mentionedUsers,
+    parentMessage,
+    currentChannel,
+    stopTyping,
+    clearPendingFiles,
+  ]);
   const displaySuggestedMentionList = isOnline
     && isMentionEnabled
     && mentionNickname.length > 0
@@ -100,9 +170,8 @@ const ThreadMessageInput = (
   // Reset when changing channel
   useEffect(() => {
     setShowVoiceMessageInput(false);
+    clearPendingFiles();
   }, [currentChannel?.url]);
-
-  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
 
   const mentionNodes = useDirtyGetMentions({ ref: ref || messageInputRef }, { logger });
   const ableMention = mentionNodes?.length < userMention?.maxMentionCount;
@@ -196,18 +265,10 @@ const ThreadMessageInput = (
               }
               onStartTyping={startTyping}
               onStopTyping={stopTyping}
-              onSendMessage={({ message, mentionTemplate }) => {
-                sendMessage({
-                  message: message,
-                  mentionedUsers,
-                  mentionTemplate: mentionTemplate,
-                  quoteMessage: parentMessage,
-                });
-                setMentionNickname('');
-                setMentionedUsers([]);
-                stopTyping();
-              }}
-              onFileUpload={handleUploadFiles}
+              pendingFiles={pendingFiles}
+              onAddFiles={addFiles}
+              onRemoveFile={removeFile}
+              onSubmit={handleSubmit}
               onUserMentioned={(user) => {
                 if (selectedUser?.userId === user?.userId) {
                   setSelectedUser(null);

@@ -38,7 +38,16 @@ export interface FileUploadedPayload {
   uploadableFileInfo: UploadableFileInfo,
   error: Error,
 }
-export type SendMFMFunctionType = (files: Array<File>, quoteMessage?: SendableMessageType) => Promise<MultipleFilesMessage>;
+export interface SendMFMExtraParams {
+  /** Optional text body. Attached to messageParams.message when onBeforeSendMultipleFilesMessage did not already set one. */
+  message?: string;
+}
+
+export type SendMFMFunctionType = (
+  files: Array<File>,
+  quoteMessage?: SendableMessageType,
+  extraParams?: SendMFMExtraParams,
+) => Promise<MultipleFilesMessage>;
 
 /**
  * pubSub is used instead of messagesDispatcher to avoid redundantly calling
@@ -56,6 +65,7 @@ export const useSendMultipleFilesMessage = ({
   const sendMessage = useCallback((
     files: Array<File>,
     quoteMessage?: SendableMessageType,
+    extraParams?: SendMFMExtraParams,
   ): Promise<MultipleFilesMessage> => {
     return new Promise((resolve, reject) => {
       if (!currentChannel) {
@@ -80,6 +90,9 @@ export const useSendMultipleFilesMessage = ({
       }
       if (typeof onBeforeSendMultipleFilesMessage === 'function') {
         messageParams = onBeforeSendMultipleFilesMessage(files, quoteMessage);
+      }
+      if (extraParams?.message && !messageParams.message) {
+        messageParams.message = extraParams.message;
       }
       logger.info('Channel: Start sending MFM', { messageParams });
       try {

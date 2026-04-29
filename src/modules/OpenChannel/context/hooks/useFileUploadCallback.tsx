@@ -26,7 +26,12 @@ interface StaticParams {
   scrollRef: React.RefObject<HTMLElement>;
 }
 
-type CallbackReturn = (files: Array<File> | File) => void;
+export interface FileUploadOptions {
+  /** Optional text body. Attached to the FIRST file's params.message when onBeforeSendFileMessage did not already set one. */
+  message?: string;
+}
+
+type CallbackReturn = (files: Array<File> | File, options?: FileUploadOptions) => Promise<void>;
 
 function useFileUploadCallback({
   currentOpenChannel,
@@ -39,25 +44,22 @@ function useFileUploadCallback({
   const { openModal } = useGlobalModalContext();
   const { state: { config: { uikitUploadSizeLimit } } } = useSendbird();
 
-  return useCallback(async (files) => {
-    if (sdk) {
-      /**
-       * OpenChannel does not currently support file lists.
-       * However, this change is made to maintain interface consistency with group channels.
-       */
-      const file = Array.isArray(files) ? files[0] : files;
-      const createCustomParams = onBeforeSendFileMessage && typeof onBeforeSendFileMessage === 'function';
+  return useCallback(async (files, options) => {
+    if (!sdk) return;
+    const fileList = Array.isArray(files) ? files : [files];
 
-      const createParamsDefault = (file: File): FileMessageCreateParams => {
-        const params: FileMessageCreateParams = {};
-        params.file = file;
-        return params;
-      };
+    const createCustomParams = onBeforeSendFileMessage && typeof onBeforeSendFileMessage === 'function';
 
-      /**
-       * Validate file sizes
-       * The default value of uikitUploadSizeLimit is 25MiB
-       */
+    const createParamsDefault = (file: File): FileMessageCreateParams => {
+      const params: FileMessageCreateParams = {};
+      params.file = file;
+      return params;
+    };
+
+    for (let i = 0; i < fileList.length; i += 1) {
+      const file = fileList[i];
+
+      // Validate file size
       if (file.size > uikitUploadSizeLimit) {
         logger.info(`OpenChannel | useFileUploadCallback: Cannot upload file size exceeding ${uikitUploadSizeLimit}`);
         openModal({
@@ -79,6 +81,7 @@ function useFileUploadCallback({
       }
 
       // Image compression
+      // eslint-disable-next-line no-await-in-loop
       const { compressedFiles } = await compressImages({
         files: [file],
         imageCompression,
@@ -86,11 +89,14 @@ function useFileUploadCallback({
       });
       const [compressedFile] = compressedFiles;
 
-      // Send FileMessage
       if (createCustomParams) {
         logger.info('OpenChannel | useFileUploadCallback: Creating params using onBeforeSendFileMessage', onBeforeSendFileMessage);
       }
       const params = onBeforeSendFileMessage ? onBeforeSendFileMessage(compressedFile) : createParamsDefault(compressedFile);
+      // Attach text body to the first send only.
+      if (i === 0 && options?.message && !params.message) {
+        params.message = options.message;
+      }
       logger.info('OpenChannel | useFileUploadCallback: Uploading file message start', params);
 
       currentOpenChannel?.sendFileMessage(params)

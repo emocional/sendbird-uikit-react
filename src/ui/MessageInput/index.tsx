@@ -20,6 +20,10 @@ import {
 } from './utils';
 import { arrayEqual, getMimeTypesUIKitAccepts } from '../../utils';
 import { usePaste } from './hooks/usePaste';
+import { useDragAndDrop } from './hooks/useDragAndDrop';
+import type { PendingFile } from './hooks/usePendingFiles';
+import PendingFilesPreview from './composer/PendingFilesPreview';
+import DropZoneOverlay from './composer/DropZoneOverlay';
 import { tokenizeMessage } from '../../modules/Message/utils/tokens/tokenize';
 import { USER_MENTION_PREFIX } from '../../modules/Message/consts';
 import { TOKEN_TYPES } from '../../modules/Message/utils/tokens/types';
@@ -82,8 +86,34 @@ type MessageInputProps = {
   disabled?: boolean;
   placeholder?: string;
   maxLength?: number;
+  /**
+   * @deprecated Pass `onAddFiles` + `onSubmit` for the composer flow. When
+   * `onAddFiles` is undefined, files from the picker are routed here for
+   * immediate send (legacy behavior).
+   */
   onFileUpload?: (file: File[]) => void;
   onSendMessage?: (params: { message: string; mentionTemplate: string }) => void;
+  /**
+   * Composer mode: files staged for send. When defined and non-empty, the
+   * preview strip renders above the textarea and the send button activates
+   * regardless of text input state.
+   */
+  pendingFiles?: PendingFile[];
+  /**
+   * Composer mode: routes files from the picker, drag-drop, and clipboard
+   * paste to the staging hook. When defined, takes precedence over
+   * `onFileUpload`.
+   */
+  onAddFiles?: (files: File[]) => void;
+  /**
+   * Composer mode: removes a staged file by id from the preview strip.
+   */
+  onRemoveFile?: (id: string) => void;
+  /**
+   * Composer mode: unified send action. When defined, takes precedence over
+   * `onSendMessage` for the click and Enter-key paths.
+   */
+  onSubmit?: (params: { message: string; mentionTemplate: string; files: PendingFile[] }) => void;
   onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string; mentionedUserIds?: string[] }) => void;
   onCancelEdit?: () => void;
   onStartTyping?: () => void;
@@ -135,7 +165,13 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     renderSendMessageIcon = noop,
     setMentionedUsers = noop,
     acceptableMimeTypes,
+    pendingFiles,
+    onAddFiles,
+    onRemoveFile,
+    onSubmit,
   } = props;
+  const isComposerMode = typeof onAddFiles === 'function';
+  const hasPendingFiles = (pendingFiles?.length ?? 0) > 0;
 
   const internalRef = (externalRef && 'current' in externalRef) ? externalRef : useRef(null);
   const ghostInputRef = useRef<HTMLInputElement>(null);
@@ -368,12 +404,18 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       const textField = internalRef?.current;
       if (!isEdit && textField) {
         const { messageText, mentionTemplate, isMentionedMessage } = extractTextAndMentions(textField.childNodes);
-        if (messageText.trim().length === 0) return;
+        const trimmedText = messageText.trim();
+        // Composer mode: empty text is OK if files are staged.
+        if (trimmedText.length === 0 && !hasPendingFiles) return;
         const params = {
           message: messageText,
           mentionTemplate: isMentionedMessage ? sanitizeString(mentionTemplate) : '',
         };
-        onSendMessage(params);
+        if (isComposerMode && onSubmit) {
+          onSubmit({ ...params, files: pendingFiles ?? [] });
+        } else {
+          onSendMessage(params);
+        }
         resetInput(internalRef);
         wasTypingRef.current = false;
         /**
@@ -421,13 +463,24 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     setMentionedUsers,
     channel,
     setIsInput,
+    onAddFiles,
+  });
+
+  const { isDragging, handlers: dndHandlers } = useDragAndDrop({
+    onAddFiles: onAddFiles ?? (() => {}),
+    disabled: !isComposerMode || disabled || isMobile,
   });
 
   const uploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = event.currentTarget;
     try {
       if (files) {
-        onFileUpload(Array.from(files));
+        const fileArray = Array.from(files);
+        if (isComposerMode && onAddFiles) {
+          onAddFiles(fileArray);
+        } else {
+          onFileUpload(fileArray);
+        }
       }
     } catch (error) {
       eventHandlers?.message?.onFileUploadFailed?.(error);
@@ -466,11 +519,21 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
   };
 
   return (
-    <form className={classnames(
-      ...(Array.isArray(className) ? className : [className]),
-      isEdit && 'sendbird-message-input__edit',
-      disabled && 'sendbird-message-input-form__disabled',
-    )}>
+    <form
+      className={classnames(
+        ...(Array.isArray(className) ? className : [className]),
+        isEdit && 'sendbird-message-input__edit',
+        disabled && 'sendbird-message-input-form__disabled',
+        isComposerMode && 'sendbird-message-input--composer',
+      )}
+      onDragEnter={dndHandlers.onDragEnter}
+      onDragOver={dndHandlers.onDragOver}
+      onDragLeave={dndHandlers.onDragLeave}
+      onDrop={dndHandlers.onDrop}
+    >
+      {isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (
+        <PendingFilesPreview pendingFiles={pendingFiles} onRemove={onRemoveFile} />
+      )}
       <div className={classnames('sendbird-message-input', disabled && 'sendbird-message-input__disabled')} data-testid="sendbird-message-input">
         {isMobileIOS(navigator.userAgent) && (
           <input
@@ -499,7 +562,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
                 !e.shiftKey
                 && e.key === MessageInputKeys.Enter
                 && !isMobile
-                && hasTextContentWithoutZeroWidthSpace(internalRef?.current)
+                && (hasTextContentWithoutZeroWidthSpace(internalRef?.current) || hasPendingFiles)
                 && e?.nativeEvent?.isComposing !== true
                 /**
                  * NOTE: What isComposing does?
@@ -556,11 +619,14 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
             type={LabelTypography.BODY_1}
             color={disabled ? LabelColors.ONBACKGROUND_4 : LabelColors.ONBACKGROUND_3}
           >
-            {placeholder || stringSet.MESSAGE_INPUT__PLACE_HOLDER}
+            {placeholder
+              || (hasPendingFiles
+                ? stringSet.MESSAGE_INPUT__PLACE_HOLDER__WITH_FILES
+                : stringSet.MESSAGE_INPUT__PLACE_HOLDER)}
           </Label>
         )}
         {/* send icon */}
-        {!isEdit && isInput && (
+        {!isEdit && (isInput || hasPendingFiles) && (
           <IconButton className="sendbird-message-input--send" height="32px" width="32px" onClick={() => sendMessage()} testID="sendbird-message-input-send-button">
             {renderSendMessageIcon?.() || (
               <Icon
@@ -575,6 +641,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         {/* file upload icon */}
         {!isEdit
           && !isInput
+          && !hasPendingFiles
           && (renderFileUploadIcon?.()
             // UIKit Dashboard configuration should have lower priority than
             // renderFileUploadIcon which is set in code level
@@ -606,7 +673,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
               </IconButton>
             )))}
         {/* voice message input trigger */}
-        {isVoiceMessageEnabled && !isEdit && !isInput && (
+        {isVoiceMessageEnabled && !isEdit && !isInput && !hasPendingFiles && (
           <IconButton
             className="sendbird-message-input--voice-message"
             width="32px"
@@ -624,6 +691,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
           </IconButton>
         )}
       </div>
+      <DropZoneOverlay visible={isDragging} />
       {/* Edit */}
       {isEdit && (
         <div className="sendbird-message-input--edit-action" data-testid="sendbird-message-input--edit-action">

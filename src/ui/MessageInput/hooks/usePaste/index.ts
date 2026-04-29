@@ -39,8 +39,19 @@ export function usePaste({
   setIsInput,
   channel,
   setMentionedUsers,
+  onAddFiles,
 }: DynamicProps): (e: React.ClipboardEvent<HTMLDivElement>) => void {
   return useCallback((e) => {
+    // 0. File paste (e.g. screenshot copy): route to composer and skip text branch.
+    if (onAddFiles) {
+      const clipboardFiles = extractClipboardFiles(e);
+      if (clipboardFiles.length > 0) {
+        e.preventDefault();
+        onAddFiles(clipboardFiles);
+        return;
+      }
+    }
+
     e.preventDefault();
 
     const html = e.clipboardData.getData('text/html');
@@ -76,7 +87,31 @@ export function usePaste({
     pasteNode.remove();
 
     setIsInput(true);
-  }, [ref, setIsInput, channel, setMentionedUsers]);
+  }, [ref, setIsInput, channel, setMentionedUsers, onAddFiles]);
+}
+
+/**
+ * Pull File entries out of a clipboard event, robust across browsers.
+ * Safari can leave clipboardData.files empty while populating items.
+ */
+function extractClipboardFiles(e: React.ClipboardEvent<HTMLDivElement>): File[] {
+  const files: File[] = [];
+  const items = e.clipboardData?.items;
+  if (items) {
+    for (let i = 0; i < items.length; i += 1) {
+      const item = items[i];
+      if (item.kind === 'file') {
+        const file = item.getAsFile();
+        if (file) files.push(file);
+      }
+    }
+  }
+  if (files.length === 0 && e.clipboardData?.files) {
+    for (let i = 0; i < e.clipboardData.files.length; i += 1) {
+      files.push(e.clipboardData.files[i]);
+    }
+  }
+  return files;
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/API/HTML_Drag_and_Drop_API/Recommended_drag_types#dragging_links

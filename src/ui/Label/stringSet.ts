@@ -149,6 +149,9 @@ const stringSet = {
     MESSAGE_INPUT__PLACE_HOLDER__MUTED: 'Chat is unavailable because you\'re muted',
     MESSAGE_INPUT__PLACE_HOLDER__MUTED_SHORT: 'You\'re muted',
     MESSAGE_INPUT__QUOTE_REPLY__PLACE_HOLDER: 'Reply to message',
+    MESSAGE_INPUT__PLACE_HOLDER__WITH_FILES: 'Add a message, or send',
+    MESSAGE_INPUT__DROP_ZONE__LABEL: 'Drop files here to attach',
+    MESSAGE_INPUT__PENDING_FILE__REMOVE: 'Remove file',
     // Common UI
     BUTTON__SUBMIT: 'Submit',
     BUTTON__CANCEL: 'Cancel',
