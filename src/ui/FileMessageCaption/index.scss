@@ -1,13 +1,13 @@
 @import '../../styles/variables';
 
 .sendbird-file-message-caption {
-  padding: 8px 12px;
-  margin-bottom: 4px;
   border-radius: 16px;
-  word-break: break-word;
-  white-space: pre-wrap;
-  max-width: 100%;
   box-sizing: border-box;
+  margin-bottom: 4px;
+  max-width: 100%;
+  padding: 8px 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
 
   &.incoming {
     @include themed() {

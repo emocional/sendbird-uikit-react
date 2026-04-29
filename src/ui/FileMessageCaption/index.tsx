@@ -55,16 +55,16 @@ export default function FileMessageCaption({
   if (body.length === 0) return null;
 
   return (
-    <Label
-      type={LabelTypography.BODY_1}
-      color={isByMe ? LabelColors.ONCONTENT_1 : LabelColors.ONBACKGROUND_1}
+    <div
+      className={`sendbird-file-message-caption ${isByMe ? 'outgoing' : 'incoming'}`}
+      data-testid="sendbird-file-message-caption"
     >
-      <div
-        className={`sendbird-file-message-caption ${isByMe ? 'outgoing' : 'incoming'}`}
-        data-testid="sendbird-file-message-caption"
+      <Label
+        type={LabelTypography.BODY_1}
+        color={isByMe ? LabelColors.ONCONTENT_1 : LabelColors.ONBACKGROUND_1}
       >
-        <TextFragment tokens={tokens} />
-      </div>
-    </Label>
+        <TextFragment tokens={tokens} isByMe={isByMe} />
+      </Label>
+    </div>
   );
 }
