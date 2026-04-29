@@ -186,6 +186,15 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     config,
   });
 
+  // Gate paste/DnD/picker on the same enableDocument flag that hides the
+  // attach icon — otherwise feature-flag-disabled environments leak files in.
+  const fileProducerEnabled = isComposerMode && isFileUploadEnabled && !disabled;
+  const guardedAddFiles = useCallback((incoming: File[]) => {
+    if (!fileProducerEnabled || !onAddFiles) return;
+    if (incoming.length === 0) return;
+    onAddFiles(incoming);
+  }, [fileProducerEnabled, onAddFiles]);
+
   const fileInputRef = useRef<HTMLInputElement>();
   const [isInput, setIsInput] = useState(false);
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
@@ -463,12 +472,12 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     setMentionedUsers,
     channel,
     setIsInput,
-    onAddFiles,
+    onAddFiles: fileProducerEnabled ? guardedAddFiles : undefined,
   });
 
   const { isDragging, handlers: dndHandlers } = useDragAndDrop({
-    onAddFiles: onAddFiles ?? (() => {}),
-    disabled: !isComposerMode || disabled || isMobile,
+    onAddFiles: guardedAddFiles,
+    disabled: !fileProducerEnabled || isMobile,
   });
 
   const uploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -476,9 +485,9 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     try {
       if (files) {
         const fileArray = Array.from(files);
-        if (isComposerMode && onAddFiles) {
-          onAddFiles(fileArray);
-        } else {
+        if (fileProducerEnabled) {
+          guardedAddFiles(fileArray);
+        } else if (!isComposerMode) {
           onFileUpload(fileArray);
         }
       }

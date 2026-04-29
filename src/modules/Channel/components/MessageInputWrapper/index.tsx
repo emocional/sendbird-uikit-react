@@ -37,13 +37,21 @@ export const MessageInputWrapper = (props: MessageInputWrapperProps) => {
         });
       }}
       sendFileMessage={(params) => {
-        return sendFileMessage(params.file as File, quoteMessage ?? undefined);
+        return sendFileMessage(
+          params.file as File,
+          quoteMessage ?? undefined,
+          params.message ? { message: params.message } : undefined,
+        );
       }}
       sendVoiceMessage={({ file }, duration) => {
         return sendVoiceMessage(file as File, duration, quoteMessage ?? undefined);
       }}
-      sendMultipleFilesMessage={({ fileInfoList }) => {
-        return sendMultipleFilesMessage(fileInfoList.map((fileInfo) => fileInfo.file) as File[], quoteMessage ?? undefined);
+      sendMultipleFilesMessage={({ fileInfoList, message }) => {
+        return sendMultipleFilesMessage(
+          fileInfoList.map((fileInfo) => fileInfo.file) as File[],
+          quoteMessage ?? undefined,
+          message ? { message } : undefined,
+        );
       }}
     />
   );

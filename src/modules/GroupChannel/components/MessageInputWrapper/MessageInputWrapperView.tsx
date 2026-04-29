@@ -32,6 +32,7 @@ import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFil
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { compressImages } from '../../../../utils/compressImages';
 
 export interface MessageInputWrapperViewProps {
   // Basic
@@ -86,7 +87,7 @@ export const MessageInputWrapperView = React.forwardRef((
   const { openModal } = useGlobalModalContext();
   const { state } = useSendbird();
   const { stores, config } = state;
-  const { isOnline, userMention, logger, groupChannel } = config;
+  const { isOnline, userMention, logger, groupChannel, imageCompression } = config;
   const sdk = stores.sdkStore.sdk;
   const { maxMentionCount, maxSuggestionCount } = userMention;
   const { uikitUploadSizeLimit, uikitMultipleFilesMessageLimit } = config;
@@ -171,7 +172,7 @@ export const MessageInputWrapperView = React.forwardRef((
   // - 2+ images present -> body rides MFM (fired first), other files follow
   // - 1 image only -> body rides that single sendFileMessage
   // - non-images only -> body rides the first sendFileMessage
-  const handleSubmit = useCallback(({
+  const handleSubmit = useCallback(async ({
     message,
     mentionTemplate,
     files,
@@ -188,8 +189,14 @@ export const MessageInputWrapperView = React.forwardRef((
         parentMessageId,
       });
     } else {
-      const imageEntries = files.filter((entry) => entry.isImage);
-      const otherEntries = files.filter((entry) => !entry.isImage);
+      // Compress images before send (matches legacy useHandleUploadFiles behavior).
+      const rawImageFiles = files.filter((entry) => entry.isImage).map((entry) => entry.file);
+      const otherFiles = files.filter((entry) => !entry.isImage).map((entry) => entry.file);
+      const { compressedFiles: compressedImageFiles } = await compressImages({
+        files: rawImageFiles,
+        imageCompression,
+        logger,
+      });
 
       let bodyConsumed = false;
       const takeBody = (): string | undefined => {
@@ -199,16 +206,13 @@ export const MessageInputWrapperView = React.forwardRef((
       };
 
       let chain: Promise<unknown> = Promise.resolve();
-      if (imageEntries.length === 1) {
-        const entry = imageEntries[0];
-        chain = Promise.resolve(sendFileMessage({
-          file: entry.file,
-          message: takeBody(),
-          parentMessageId,
-        }));
-      } else if (imageEntries.length > 1) {
+      // MFM only when feature flag is on AND 2+ images. Otherwise dispatch each
+      // image individually so isMultipleFilesMessageEnabled=false is respected
+      // even when DnD/paste deliver multiple files.
+      const useMFMBatch = isMultipleFilesMessageEnabled && compressedImageFiles.length > 1;
+      if (useMFMBatch) {
         chain = Promise.resolve(sendMultipleFilesMessage({
-          fileInfoList: imageEntries.map(({ file }) => ({
+          fileInfoList: compressedImageFiles.map((file) => ({
             file,
             fileName: file.name,
             fileSize: file.size,
@@ -217,10 +221,24 @@ export const MessageInputWrapperView = React.forwardRef((
           message: takeBody(),
           parentMessageId,
         }));
+      } else if (compressedImageFiles.length === 1) {
+        chain = Promise.resolve(sendFileMessage({
+          file: compressedImageFiles[0],
+          message: takeBody(),
+          parentMessageId,
+        }));
+      } else if (compressedImageFiles.length > 1) {
+        compressedImageFiles.forEach((file) => {
+          chain = chain.then(() => sendFileMessage({
+            file,
+            message: takeBody(),
+            parentMessageId,
+          }));
+        });
       }
-      otherEntries.forEach((entry) => {
+      otherFiles.forEach((file) => {
         chain = chain.then(() => sendFileMessage({
-          file: entry.file,
+          file,
           message: takeBody(),
           parentMessageId,
         }));
@@ -242,6 +260,9 @@ export const MessageInputWrapperView = React.forwardRef((
     currentChannel,
     stopTyping,
     clearPendingFiles,
+    isMultipleFilesMessageEnabled,
+    imageCompression,
+    logger,
   ]);
 
   if (isBroadcast && !isOperator) {

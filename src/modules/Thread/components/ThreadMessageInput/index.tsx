@@ -22,6 +22,7 @@ import { User } from '@sendbird/chat';
 import { classnames } from '../../../../utils/utils';
 import useThread from '../../context/useThread';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { compressImages } from '../../../../utils/compressImages';
 
 export interface ThreadMessageInputProps {
   className?: string;
@@ -47,7 +48,7 @@ const ThreadMessageInput = (
   const { state: { config } } = useSendbird();
   const { isMobile } = useMediaQueryContext();
   const { stringSet } = useLocalization();
-  const { isOnline, userMention, logger, groupChannel } = config;
+  const { isOnline, userMention, logger, groupChannel, imageCompression } = config;
   const threadContext = useThread();
   const {
     state: {
@@ -105,7 +106,7 @@ const ThreadMessageInput = (
   // Submit handler. Body-text rule mirrors GroupChannel: text rides the
   // FIRST send only. parentMessage is always the thread parent, so each send
   // automatically threads correctly.
-  const handleSubmit = useCallback(({
+  const handleSubmit = useCallback(async ({
     message,
     mentionTemplate,
     files,
@@ -121,8 +122,13 @@ const ThreadMessageInput = (
         quoteMessage: parentMessage,
       });
     } else {
-      const imageEntries = files.filter((entry) => entry.isImage);
-      const otherEntries = files.filter((entry) => !entry.isImage);
+      const rawImageFiles = files.filter((entry) => entry.isImage).map((entry) => entry.file);
+      const otherFiles = files.filter((entry) => !entry.isImage).map((entry) => entry.file);
+      const { compressedFiles: compressedImageFiles } = await compressImages({
+        files: rawImageFiles,
+        imageCompression,
+        logger,
+      });
 
       let bodyConsumed = false;
       const takeBody = (): { message?: string } => {
@@ -132,17 +138,23 @@ const ThreadMessageInput = (
       };
 
       let chain: Promise<unknown> = Promise.resolve();
-      if (imageEntries.length === 1) {
-        chain = Promise.resolve(sendFileMessage(imageEntries[0].file, parentMessage ?? undefined, takeBody()));
-      } else if (imageEntries.length > 1) {
+      // MFM only when feature flag is on AND 2+ images.
+      const useMFMBatch = isMultipleFilesMessageEnabled && compressedImageFiles.length > 1;
+      if (useMFMBatch) {
         chain = Promise.resolve(sendMultipleFilesMessage(
-          imageEntries.map(({ file }) => file),
+          compressedImageFiles,
           parentMessage ?? undefined,
           takeBody(),
         ));
+      } else if (compressedImageFiles.length === 1) {
+        chain = Promise.resolve(sendFileMessage(compressedImageFiles[0], parentMessage ?? undefined, takeBody()));
+      } else if (compressedImageFiles.length > 1) {
+        compressedImageFiles.forEach((file) => {
+          chain = chain.then(() => sendFileMessage(file, parentMessage ?? undefined, takeBody()));
+        });
       }
-      otherEntries.forEach((entry) => {
-        chain = chain.then(() => sendFileMessage(entry.file, parentMessage ?? undefined, takeBody()));
+      otherFiles.forEach((file) => {
+        chain = chain.then(() => sendFileMessage(file, parentMessage ?? undefined, takeBody()));
       });
     }
 
@@ -159,6 +171,9 @@ const ThreadMessageInput = (
     currentChannel,
     stopTyping,
     clearPendingFiles,
+    isMultipleFilesMessageEnabled,
+    imageCompression,
+    logger,
   ]);
   const displaySuggestedMentionList = isOnline
     && isMentionEnabled

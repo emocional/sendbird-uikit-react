@@ -28,7 +28,11 @@ export default function useSendFileMessageCallback(
   { logger, pubSub, scrollRef, messagesDispatcher }: UseSendFileMessageCallbackParams,
 ) {
   const sendMessage = useCallback(
-    (compressedFile: File, quoteMessage?: SendableMessageType) => new Promise<FileMessage>((resolve, reject) => {
+    (
+      compressedFile: File,
+      quoteMessage?: SendableMessageType,
+      extraParams?: { message?: string },
+    ) => new Promise<FileMessage>((resolve, reject) => {
       // Create FileMessageParams
       let params = onBeforeSendFileMessage?.(compressedFile, quoteMessage);
       if (!params) {
@@ -38,6 +42,7 @@ export default function useSendFileMessageCallback(
           params.parentMessageId = quoteMessage.messageId;
         }
       }
+      if (extraParams?.message && !params.message) params.message = extraParams.message;
 
       // Send FileMessage
       logger.info('Channel: Uploading file message start!', params);
