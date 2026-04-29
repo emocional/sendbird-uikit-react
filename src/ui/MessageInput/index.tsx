@@ -188,7 +188,10 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
 
   // Gate paste/DnD/picker on the same enableDocument flag that hides the
   // attach icon — otherwise feature-flag-disabled environments leak files in.
-  const fileProducerEnabled = isComposerMode && isFileUploadEnabled && !disabled;
+  // Also gate on !isEdit: today no edit-mode caller passes composer props, but
+  // if one did, staged files would have nowhere to go (Send is replaced by
+  // Cancel/Save). Belt-and-suspenders.
+  const fileProducerEnabled = isComposerMode && isFileUploadEnabled && !disabled && !isEdit;
   const guardedAddFiles = useCallback((incoming: File[]) => {
     if (!fileProducerEnabled || !onAddFiles) return;
     if (incoming.length === 0) return;
@@ -540,7 +543,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       onDragLeave={dndHandlers.onDragLeave}
       onDrop={dndHandlers.onDrop}
     >
-      {isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (
+      {!isEdit && isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (
         <PendingFilesPreview pendingFiles={pendingFiles} onRemove={onRemoveFile} />
       )}
       <div className={classnames('sendbird-message-input', disabled && 'sendbird-message-input__disabled')} data-testid="sendbird-message-input">
