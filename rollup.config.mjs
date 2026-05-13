@@ -11,12 +11,16 @@ import copy from "rollup-plugin-copy";
 import nodePolyfills from "rollup-plugin-polyfill-node";
 import {visualizer} from "rollup-plugin-visualizer";
 import ts2 from "rollup-plugin-typescript2"
+import { createRequire } from "module";
 
-// config from package.json
-import pkg from "./package.json" assert {type: "json"};
 import inputs from "./rollup.module-exports.mjs";
 import { readFileSync, writeFileSync } from 'fs';
 import postcssRTLOptions from "./postcssRtlOptions.mjs";
+
+// Read package.json without `with { type: "json" }` import attributes:
+// that syntax only works on Node 18.20.0+/20.10.0+ but engines.node in
+// package.json declares >=18, so older 18.x would crash here at parse time.
+const pkg = createRequire(import.meta.url)("./package.json");
 
 const APP_VERSION_STRING = "__react_dev_mode__";
 

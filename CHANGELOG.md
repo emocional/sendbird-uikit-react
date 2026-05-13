@@ -1,4 +1,5 @@
 # Changelog - v3
+
 ## [v3.17.12] (MAR 26 2026)
 ### Fixes
 - Fixed a bug where invisible zero-width spaces inserted during paste in `MessageInput` could be included in sent or updated messages
@@ -23,7 +24,6 @@
 - Fixed a bug where the input field disappeared when a new message arrived while composing a quote message
 - Fixed a bug MenuItem is over-place when app area is narrow
 - Fixed a bug where the `markAsUnread` menu was not displayed correctly when replyType was set to thread 
-
 
 ## [v3.17.8] (JAN 20 2026)
 ### Fixes
