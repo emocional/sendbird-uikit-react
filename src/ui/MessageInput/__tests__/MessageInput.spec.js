@@ -372,11 +372,178 @@ describe('MessageInput error handling', () => {
     render(<MessageInput onFileUpload={onFileUpload} />);
 
     const fileInput = document.getElementsByClassName('sendbird-message-input--attach-input')[0];
-  
+
     fireEvent.change(fileInput, { currentTarget: { files: [file] } });
 
     expect(onFileUpload).toThrow(mockErrorMessage);
     expect(eventHandlers.message.onFileUploadFailed).toHaveBeenCalled();
+  });
+});
+
+describe('MessageInput sendMessage sanitization (CLNP-6501)', () => {
+  beforeEach(() => {
+    const stateContextValue = {
+      state: {
+        config: {
+          groupChannel: {
+            enableDocument: true,
+          },
+        },
+      },
+    };
+    const localeContextValue = {
+      stringSet: {},
+    };
+
+    useSendbird.mockReturnValue(stateContextValue);
+    useLocalization.mockReturnValue(localeContextValue);
+
+    renderHook(() => useSendbird());
+    renderHook(() => useLocalization());
+  });
+
+  it('should sanitize HTML angle brackets in message field on send', () => {
+    const onSendMessage = jest.fn();
+
+    render(<MessageInput onSendMessage={onSendMessage} />);
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'Hi <b>bold</b>';
+    fireEvent.input(input);
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onSendMessage).toHaveBeenCalledTimes(1);
+    const params = onSendMessage.mock.calls[0][0];
+    expect(params.message).toBe('Hi &#60;b&#62;bold&#60;/b&#62;');
+    // No mention -> mentionTemplate stays empty.
+    expect(params.mentionTemplate).toBe('');
+  });
+
+  it('should sanitize XSS payload on send', () => {
+    const onSendMessage = jest.fn();
+
+    render(<MessageInput onSendMessage={onSendMessage} />);
+
+    const input = screen.getByRole('textbox');
+    input.textContent = '<img src=x onerror=alert(1)>';
+    fireEvent.input(input);
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onSendMessage).toHaveBeenCalledTimes(1);
+    const params = onSendMessage.mock.calls[0][0];
+    expect(params.message).not.toContain('<');
+    expect(params.message).not.toContain('>');
+    expect(params.message).toBe('&#60;img src=x onerror=alert(1)&#62;');
+  });
+});
+
+describe('MessageInput editMessage sanitization (CLNP-6501)', () => {
+  beforeEach(() => {
+    const stateContextValue = {
+      state: {
+        config: {
+          groupChannel: {
+            enableDocument: true,
+          },
+        },
+      },
+    };
+    const localeContextValue = {
+      stringSet: {},
+    };
+
+    useSendbird.mockReturnValue(stateContextValue);
+    useLocalization.mockReturnValue(localeContextValue);
+
+    renderHook(() => useSendbird());
+    renderHook(() => useLocalization());
+  });
+
+  const clickSave = () => {
+    const editButton = document.getElementsByClassName('sendbird-message-input--edit-action__save')[0];
+    fireEvent.click(editButton);
+  };
+
+  it('should sanitize HTML angle brackets in message field when editing without mentions', () => {
+    const onUpdateMessage = jest.fn();
+    const messageId = 123;
+
+    render(
+      <MessageInput
+        isEdit
+        message={{ messageId }}
+        onUpdateMessage={onUpdateMessage}
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'Hi <b>bold</b>';
+    fireEvent.input(input);
+
+    clickSave();
+
+    expect(onUpdateMessage).toHaveBeenCalledTimes(1);
+    const params = onUpdateMessage.mock.calls[0][0];
+    expect(params.messageId).toBe(messageId);
+    expect(params.message).toBe('Hi &#60;b&#62;bold&#60;/b&#62;');
+    expect(params.mentionTemplate).toBe('Hi &#60;b&#62;bold&#60;/b&#62;');
+    expect(params.mentionedUserIds).toEqual([]);
+  });
+
+  it('should sanitize XSS payload in mentionTemplate even when isMentionedMessage is false', () => {
+    // Reviewer-reported scenario: original message had a mention, user removes
+    // the mention leaving only a raw HTML payload.
+    const onUpdateMessage = jest.fn();
+    const messageId = 456;
+
+    render(
+      <MessageInput
+        isEdit
+        message={{ messageId }}
+        onUpdateMessage={onUpdateMessage}
+        isMentionEnabled
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'Hi <img src=x onerror=alert(1)>';
+    fireEvent.input(input);
+
+    clickSave();
+
+    expect(onUpdateMessage).toHaveBeenCalledTimes(1);
+    const params = onUpdateMessage.mock.calls[0][0];
+    expect(params.message).not.toContain('<');
+    expect(params.message).not.toContain('>');
+    expect(params.mentionTemplate).not.toContain('<');
+    expect(params.mentionTemplate).not.toContain('>');
+    expect(params.mentionTemplate).toBe('Hi &#60;img src=x onerror=alert(1)&#62;');
+    expect(params.mentionedUserIds).toEqual([]);
+  });
+
+  it('should return an empty mentionedUserIds array when isMentionEnabled is false', () => {
+    const onUpdateMessage = jest.fn();
+    const messageId = 789;
+
+    render(
+      <MessageInput
+        isEdit
+        message={{ messageId }}
+        onUpdateMessage={onUpdateMessage}
+        // isMentionEnabled is intentionally omitted (defaults to false)
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'plain text';
+    fireEvent.input(input);
+
+    clickSave();
+
+    expect(onUpdateMessage).toHaveBeenCalledTimes(1);
+    expect(onUpdateMessage.mock.calls[0][0].mentionedUserIds).toEqual([]);
   });
 });
 

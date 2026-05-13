@@ -114,6 +114,45 @@ describe('Utils/extractTextAndMentions', () => {
       isMentionedMessage: false,
       mentionTemplate: 'HelloWorld',
       messageText: 'HelloWorld',
+      mentionedUserIds: [],
     });
+  });
+
+  it('should collect userid from mention spans into mentionedUserIds', () => {
+    const dom = new jsdom.JSDOM(
+      '<div id="root">Hi <span data-userid="user-1">@Alice</span> and <span data-userid="user-2">@Bob</span></div>',
+    );
+    const root = dom.window.document.getElementById('root');
+    if (!root) throw new Error('root element not found');
+
+    const result = extractTextAndMentions(root.childNodes);
+
+    expect(result.isMentionedMessage).toBe(true);
+    expect(result.mentionedUserIds).toEqual(['user-1', 'user-2']);
+  });
+
+  it('should not include userid for spans without data-userid', () => {
+    const dom = new jsdom.JSDOM('<div id="root">Hi <span>not a mention</span></div>');
+    const root = dom.window.document.getElementById('root');
+    if (!root) throw new Error('root element not found');
+
+    const result = extractTextAndMentions(root.childNodes);
+
+    expect(result.isMentionedMessage).toBe(false);
+    expect(result.mentionedUserIds).toEqual([]);
+  });
+
+  it('should leave HTML-tag-like text in messageText/mentionTemplate raw (sanitize happens at the caller)', () => {
+    // contentEditable can hold typed angle-bracket text as a plain text node.
+    const dom = new jsdom.JSDOM('<div id="root">Hi &lt;b&gt;bold&lt;/b&gt;</div>');
+    const root = dom.window.document.getElementById('root');
+    if (!root) throw new Error('root element not found');
+
+    const result = extractTextAndMentions(root.childNodes);
+
+    expect(result.messageText).toBe('Hi <b>bold</b>');
+    expect(result.mentionTemplate).toBe('Hi <b>bold</b>');
+    expect(result.isMentionedMessage).toBe(false);
+    expect(result.mentionedUserIds).toEqual([]);
   });
 });

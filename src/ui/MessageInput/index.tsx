@@ -365,8 +365,10 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       if (!isEdit && textField) {
         const { messageText, mentionTemplate, isMentionedMessage } = extractTextAndMentions(textField.childNodes);
         if (messageText.trim().length === 0) return;
-        const params = { message: messageText, mentionTemplate };
-        if (!isMentionedMessage) params.mentionTemplate = '';
+        const params = {
+          message: sanitizeString(messageText),
+          mentionTemplate: isMentionedMessage ? sanitizeString(mentionTemplate) : '',
+        };
         onSendMessage(params);
         resetInput(internalRef);
         /**
@@ -393,18 +395,13 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       const textField = internalRef?.current;
       const messageId = message?.messageId;
       if (isEdit && messageId && textField) {
-        const { messageText, mentionTemplate, isMentionedMessage } = extractTextAndMentions(textField.childNodes);
+        const { messageText, mentionTemplate, isMentionedMessage, mentionedUserIds } = extractTextAndMentions(textField.childNodes);
         if (messageText.trim().length === 0) return;
-        const currentMentionedUserIds = isMentionEnabled
-          ? Array.from(textField.getElementsByClassName('sendbird-mention-user-label'))
-            .map((node) => (node as HTMLElement).dataset?.userid)
-            .filter((id): id is string => Boolean(id))
-          : [];
         const params = {
           messageId,
-          message: messageText,
-          mentionTemplate: isMentionedMessage ? sanitizeString(mentionTemplate) : messageText,
-          mentionedUserIds: currentMentionedUserIds,
+          message: sanitizeString(messageText),
+          mentionTemplate: sanitizeString(isMentionedMessage ? mentionTemplate : messageText),
+          mentionedUserIds: isMentionEnabled ? mentionedUserIds : [],
         };
         onUpdateMessage(params);
         resetInput(internalRef);

@@ -40,11 +40,15 @@ export function extractTextAndMentions(childNodes: NodeListOf<ChildNode>) {
   let messageText = '';
   let mentionTemplate = '';
   let isMentionedMessage = false;
+  const mentionedUserIds: string[] = [];
   childNodes.forEach((node) => {
     if (isHTMLElement(node) && node.nodeName === NodeNames.Span) {
       const { innerText, dataset = {} } = node;
       const { userid = '' } = dataset;
-      if (userid) isMentionedMessage = true;
+      if (userid) {
+        isMentionedMessage = true;
+        mentionedUserIds.push(userid);
+      }
       messageText += stripZeroWidthSpace(innerText);
       mentionTemplate += `${USER_MENTION_TEMP_CHAR}{${userid}}`;
     } else if (isHTMLElement(node) && node.nodeName === NodeNames.Br) {
@@ -60,5 +64,5 @@ export function extractTextAndMentions(childNodes: NodeListOf<ChildNode>) {
       mentionTemplate += textContent;
     }
   });
-  return { messageText, mentionTemplate, isMentionedMessage };
+  return { messageText, mentionTemplate, isMentionedMessage, mentionedUserIds };
 }
