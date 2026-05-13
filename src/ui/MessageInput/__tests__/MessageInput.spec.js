@@ -380,7 +380,7 @@ describe('MessageInput error handling', () => {
   });
 });
 
-describe('MessageInput sendMessage sanitization (CLNP-6501)', () => {
+describe('MessageInput sendMessage (CLNP-6501)', () => {
   beforeEach(() => {
     const stateContextValue = {
       state: {
@@ -402,7 +402,10 @@ describe('MessageInput sendMessage sanitization (CLNP-6501)', () => {
     renderHook(() => useLocalization());
   });
 
-  it('should sanitize HTML angle brackets in message field on send', () => {
+  // Cross-platform consumers (iOS/Android/SDK) receive the raw `message` field, so we
+  // intentionally do NOT sanitize at send time. Display-side rendering escapes angle
+  // brackets via React JSX. These tests pin the raw passthrough behavior.
+  it('should keep message field raw on send (display layer escapes)', () => {
     const onSendMessage = jest.fn();
 
     render(<MessageInput onSendMessage={onSendMessage} />);
@@ -415,12 +418,12 @@ describe('MessageInput sendMessage sanitization (CLNP-6501)', () => {
 
     expect(onSendMessage).toHaveBeenCalledTimes(1);
     const params = onSendMessage.mock.calls[0][0];
-    expect(params.message).toBe('Hi &#60;b&#62;bold&#60;/b&#62;');
+    expect(params.message).toBe('Hi <b>bold</b>');
     // No mention -> mentionTemplate stays empty.
     expect(params.mentionTemplate).toBe('');
   });
 
-  it('should sanitize XSS payload on send', () => {
+  it('should keep XSS-like payload raw in message field on send (display layer escapes)', () => {
     const onSendMessage = jest.fn();
 
     render(<MessageInput onSendMessage={onSendMessage} />);
@@ -433,9 +436,7 @@ describe('MessageInput sendMessage sanitization (CLNP-6501)', () => {
 
     expect(onSendMessage).toHaveBeenCalledTimes(1);
     const params = onSendMessage.mock.calls[0][0];
-    expect(params.message).not.toContain('<');
-    expect(params.message).not.toContain('>');
-    expect(params.message).toBe('&#60;img src=x onerror=alert(1)&#62;');
+    expect(params.message).toBe('<img src=x onerror=alert(1)>');
   });
 });
 
@@ -466,7 +467,7 @@ describe('MessageInput editMessage sanitization (CLNP-6501)', () => {
     fireEvent.click(editButton);
   };
 
-  it('should sanitize HTML angle brackets in message field when editing without mentions', () => {
+  it('should keep message raw and sanitize mentionTemplate when editing without mentions', () => {
     const onUpdateMessage = jest.fn();
     const messageId = 123;
 
@@ -487,7 +488,9 @@ describe('MessageInput editMessage sanitization (CLNP-6501)', () => {
     expect(onUpdateMessage).toHaveBeenCalledTimes(1);
     const params = onUpdateMessage.mock.calls[0][0];
     expect(params.messageId).toBe(messageId);
-    expect(params.message).toBe('Hi &#60;b&#62;bold&#60;/b&#62;');
+    // message stays raw — display layer handles escaping.
+    expect(params.message).toBe('Hi <b>bold</b>');
+    // mentionTemplate is sanitized so mention-aware consumers cannot inject HTML.
     expect(params.mentionTemplate).toBe('Hi &#60;b&#62;bold&#60;/b&#62;');
     expect(params.mentionedUserIds).toEqual([]);
   });
@@ -515,8 +518,9 @@ describe('MessageInput editMessage sanitization (CLNP-6501)', () => {
 
     expect(onUpdateMessage).toHaveBeenCalledTimes(1);
     const params = onUpdateMessage.mock.calls[0][0];
-    expect(params.message).not.toContain('<');
-    expect(params.message).not.toContain('>');
+    // message stays raw — display layer handles escaping.
+    expect(params.message).toBe('Hi <img src=x onerror=alert(1)>');
+    // mentionTemplate is sanitized so mention-aware consumers cannot inject HTML.
     expect(params.mentionTemplate).not.toContain('<');
     expect(params.mentionTemplate).not.toContain('>');
     expect(params.mentionTemplate).toBe('Hi &#60;img src=x onerror=alert(1)&#62;');

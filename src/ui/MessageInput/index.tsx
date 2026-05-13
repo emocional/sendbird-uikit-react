@@ -366,7 +366,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         const { messageText, mentionTemplate, isMentionedMessage } = extractTextAndMentions(textField.childNodes);
         if (messageText.trim().length === 0) return;
         const params = {
-          message: sanitizeString(messageText),
+          message: messageText,
           mentionTemplate: isMentionedMessage ? sanitizeString(mentionTemplate) : '',
         };
         onSendMessage(params);
@@ -399,7 +399,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         if (messageText.trim().length === 0) return;
         const params = {
           messageId,
-          message: sanitizeString(messageText),
+          message: messageText,
           mentionTemplate: sanitizeString(isMentionedMessage ? mentionTemplate : messageText),
           mentionedUserIds: isMentionEnabled ? mentionedUserIds : [],
         };
