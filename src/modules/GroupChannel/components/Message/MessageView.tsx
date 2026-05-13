@@ -415,10 +415,10 @@ const MessageView = (props: MessageViewProps) => {
             message={message}
             onStartTyping={startTyping}
             onStopTyping={stopTyping}
-            onUpdateMessage={({ messageId, message, mentionTemplate }) => {
+            onUpdateMessage={({ messageId, message: editedMessage, mentionTemplate, mentionedUserIds: currentMentionedUserIds }) => {
               updateUserMessage(messageId, {
-                message,
-                mentionedUsers,
+                message: editedMessage,
+                mentionedUserIds: currentMentionedUserIds ?? [],
                 mentionedMessageTemplate: mentionTemplate,
               });
               setShowEdit(false);

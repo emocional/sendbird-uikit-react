@@ -193,11 +193,11 @@ export default function ParentMessageInfo({
           message={parentMessage}
           onStartTyping={startTyping}
           onStopTyping={stopTyping}
-          onUpdateMessage={({ messageId, message, mentionTemplate }) => {
+          onUpdateMessage={({ messageId, message: editedMessage, mentionTemplate, mentionedUserIds: currentMentionedUserIds }) => {
             updateMessage({
               messageId,
-              message,
-              mentionedUsers,
+              message: editedMessage,
+              mentionedUserIds: currentMentionedUserIds,
               mentionTemplate,
             });
             setShowEditInput(false);

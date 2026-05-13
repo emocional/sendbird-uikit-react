@@ -84,7 +84,7 @@ type MessageInputProps = {
   maxLength?: number;
   onFileUpload?: (file: File[]) => void;
   onSendMessage?: (params: { message: string; mentionTemplate: string }) => void;
-  onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string }) => void;
+  onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string; mentionedUserIds?: string[] }) => void;
   onCancelEdit?: () => void;
   onStartTyping?: () => void;
   onStopTyping?: () => void;
@@ -369,8 +369,10 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       if (!isEdit && textField) {
         const { messageText, mentionTemplate, isMentionedMessage } = extractTextAndMentions(textField.childNodes);
         if (messageText.trim().length === 0) return;
-        const params = { message: messageText, mentionTemplate };
-        if (!isMentionedMessage) params.mentionTemplate = '';
+        const params = {
+          message: messageText,
+          mentionTemplate: isMentionedMessage ? sanitizeString(mentionTemplate) : '',
+        };
         onSendMessage(params);
         resetInput(internalRef);
         wasTypingRef.current = false;
@@ -398,9 +400,14 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       const textField = internalRef?.current;
       const messageId = message?.messageId;
       if (isEdit && messageId && textField) {
-        const { messageText, mentionTemplate } = extractTextAndMentions(textField.childNodes);
+        const { messageText, mentionTemplate, isMentionedMessage, mentionedUserIds } = extractTextAndMentions(textField.childNodes);
         if (messageText.trim().length === 0) return;
-        const params = { messageId, message: messageText, mentionTemplate };
+        const params = {
+          messageId,
+          message: messageText,
+          mentionTemplate: sanitizeString(isMentionedMessage ? mentionTemplate : messageText),
+          mentionedUserIds: isMentionEnabled ? mentionedUserIds : [],
+        };
         onUpdateMessage(params);
         resetInput(internalRef);
         wasTypingRef.current = false;
