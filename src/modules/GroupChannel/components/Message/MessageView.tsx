@@ -248,23 +248,55 @@ const MessageView = (props: MessageViewProps) => {
   // Animation: once triggered, protect with local state until CSS animation completes
   const [showBounce, setShowBounce] = useState(false);
   const isAnimationTarget = animatedMessageId === message.messageId;
+  // Fallback timer ref so handleAnimationEnd can cancel it once the real
+  // animation completes (avoids double cleanup).
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hold cleanup logic in a ref so we don't have to put unstable props
+  // (animatedMessageId, onMessageAnimated) in effect deps — otherwise a
+  // non-memoized onMessageAnimated would cancel the fallback timer on every
+  // render before it can fire.
+  const finalizeAnimationRef = useRef<() => void>(() => {});
+  finalizeAnimationRef.current = () => {
+    setShowBounce(false);
+    // Only clear if this message is still the animation target
+    if (animatedMessageId === message.messageId) {
+      setAnimatedMessageId(null);
+      onMessageAnimated?.();
+    }
+  };
 
   useEffect(() => {
-    if (isAnimationTarget && !showBounce) {
+    if (isAnimationTarget) {
       setShowBounce(true);
+      // The bounce keyframe is applied to a descendant `.sendbird-message-content`,
+      // which is not rendered when consumers supply a custom `renderMessage`.
+      // In that case `onAnimationEnd` never fires and the animation state would
+      // be stuck, so schedule a fallback to force cleanup after the CSS
+      // animation duration (1s) plus a small buffer (matches the prior
+      // setTimeout-based timing).
+      if (fallbackTimerRef.current !== null) clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = setTimeout(() => {
+        fallbackTimerRef.current = null;
+        finalizeAnimationRef.current();
+      }, 1600);
     }
+    return () => {
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+    };
   }, [isAnimationTarget]);
 
   const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
     if (e.animationName === 'bounce') {
-      setShowBounce(false);
-      // Only clear if this message is still the animation target
-      if (animatedMessageId === message.messageId) {
-        setAnimatedMessageId(null);
-        onMessageAnimated?.();
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
       }
+      finalizeAnimationRef.current();
     }
-  }, [animatedMessageId, message.messageId, setAnimatedMessageId, onMessageAnimated]);
+  }, []);
 
   useLayoutEffect(() => {
     if (newMessageIds?.length > 0 && newMessageIds.includes(message.messageId)) {
