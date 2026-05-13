@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import { MutedState } from '@sendbird/chat/groupChannel';
 
 import './index.scss';
@@ -101,6 +102,8 @@ const ThreadMessageInput = (
     setShowVoiceMessageInput(false);
   }, [currentChannel?.url]);
 
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
+
   const mentionNodes = useDirtyGetMentions({ ref: ref || messageInputRef }, { logger });
   const ableMention = mentionNodes?.length < userMention?.maxMentionCount;
 
@@ -191,9 +194,8 @@ const ThreadMessageInput = (
                   : stringSet.THREAD__INPUT__REPLY_IN_THREAD
                 )
               }
-              onStartTyping={() => {
-                currentChannel?.startTyping?.();
-              }}
+              onStartTyping={startTyping}
+              onStopTyping={stopTyping}
               onSendMessage={({ message, mentionTemplate }) => {
                 sendMessage({
                   message: message,
@@ -203,7 +205,7 @@ const ThreadMessageInput = (
                 });
                 setMentionNickname('');
                 setMentionedUsers([]);
-                currentChannel?.endTyping?.();
+                stopTyping();
               }}
               onFileUpload={handleUploadFiles}
               onUserMentioned={(user) => {

@@ -546,7 +546,7 @@ describe('useThread', () => {
     });
   });
 
-  it('handles onUserBanned action correctly', async () => {
+  it('handles onUserBanned action correctly when current user is banned', async () => {
     const wrapper = ({ children }) => (
       <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
     );
@@ -562,13 +562,53 @@ describe('useThread', () => {
     const { onUserBanned } = result.current.actions;
 
     await act(() => {
-      onUserBanned();
+      onUserBanned(mockChannel, { userId: 'test-user-id' });
     });
 
     await waitFor(() => {
       expect(result.current.state.channelState).toBe(ChannelStateTypes.NIL);
       expect(result.current.state.threadListState).toBe(ThreadListStateTypes.NIL);
       expect(result.current.state.parentMessageState).toBe(ParentMessageStateTypes.NIL);
+    });
+  });
+
+  it('handles onUserBanned action correctly when another user is banned', async () => {
+    const wrapper = ({ children }) => (
+      <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
+    );
+
+    let result;
+    await act(async () => {
+      result = renderHook(() => useThread(), { wrapper }).result;
+
+      waitFor(() => {
+        expect(result.current.state.currentChannel).not.toBe(undefined);
+      });
+    });
+    const { onUserBanned } = result.current.actions;
+
+    // Channel object reflecting the ban: 'other-user-id' is no longer a member.
+    const channelAfterBan = {
+      url: 'test-channel',
+      members: [{ userId: 'test-user-id', nickname: 'me' }],
+    };
+
+    await act(() => {
+      onUserBanned(channelAfterBan, { userId: 'other-user-id' });
+    });
+
+    await waitFor(() => {
+      // Thread state must not be reset when another user is banned.
+      expect(result.current.state.channelState).not.toBe(ChannelStateTypes.NIL);
+      expect(result.current.state.currentChannel).not.toBeNull();
+      // currentChannel must be updated so the membership change is reflected.
+      expect(result.current.state.currentChannel).toBe(channelAfterBan);
+      expect(
+        result.current.state.currentChannel.members.find((m: { userId: string }) => m.userId === 'other-user-id'),
+      ).toBeUndefined();
+      // nicknamesMap must be regenerated so downstream consumers (e.g. mention list) see the change.
+      expect(result.current.state.nicknamesMap.get('other-user-id')).toBeUndefined();
+      expect(result.current.state.nicknamesMap.get('test-user-id')).toBe('me');
     });
   });
 
@@ -592,7 +632,7 @@ describe('useThread', () => {
     });
   });
 
-  it('handles onUserLeft action correctly', async () => {
+  it('handles onUserLeft action correctly when current user has left', async () => {
     const wrapper = ({ children }) => (
       <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
     );
@@ -608,13 +648,53 @@ describe('useThread', () => {
     const { onUserLeft } = result.current.actions;
 
     await act(() => {
-      onUserLeft();
+      onUserLeft(mockChannel, { userId: 'test-user-id' });
     });
 
     await waitFor(() => {
       expect(result.current.state.channelState).toBe(ChannelStateTypes.NIL);
       expect(result.current.state.threadListState).toBe(ThreadListStateTypes.NIL);
       expect(result.current.state.parentMessageState).toBe(ParentMessageStateTypes.NIL);
+    });
+  });
+
+  it('handles onUserLeft action correctly when another user has left', async () => {
+    const wrapper = ({ children }) => (
+      <ThreadProvider channelUrl="test-channel" message={mockParentMessage}>{children}</ThreadProvider>
+    );
+
+    let result;
+    await act(async () => {
+      result = renderHook(() => useThread(), { wrapper }).result;
+
+      waitFor(() => {
+        expect(result.current.state.currentChannel).not.toBe(undefined);
+      });
+    });
+    const { onUserLeft } = result.current.actions;
+
+    // Channel object reflecting the leave: 'other-user-id' is no longer a member.
+    const channelAfterLeave = {
+      url: 'test-channel',
+      members: [{ userId: 'test-user-id', nickname: 'me' }],
+    };
+
+    await act(() => {
+      onUserLeft(channelAfterLeave, { userId: 'other-user-id' });
+    });
+
+    await waitFor(() => {
+      // Thread state must not be reset when another user leaves.
+      expect(result.current.state.channelState).not.toBe(ChannelStateTypes.NIL);
+      expect(result.current.state.currentChannel).not.toBeNull();
+      // currentChannel must be updated so the membership change is reflected.
+      expect(result.current.state.currentChannel).toBe(channelAfterLeave);
+      expect(
+        result.current.state.currentChannel.members.find((m: { userId: string }) => m.userId === 'other-user-id'),
+      ).toBeUndefined();
+      // nicknamesMap must be regenerated so downstream consumers (e.g. mention list) see the change.
+      expect(result.current.state.nicknamesMap.get('other-user-id')).toBeUndefined();
+      expect(result.current.state.nicknamesMap.get('test-user-id')).toBe('me');
     });
   });
 

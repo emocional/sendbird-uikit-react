@@ -1,4 +1,5 @@
 import React, { ReactNode, useEffect, useRef, useState } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import format from 'date-fns/format';
 import { FileMessage } from '@sendbird/chat/message';
 
@@ -132,6 +133,8 @@ export default function ParentMessageInfo({
     }));
   }, [mentionedUserIds]);
 
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel, showEditInput);
+
   const handleOnDownloadClick = async (e: React.MouseEvent) => {
     if (!onBeforeDownloadFileMessage) return;
 
@@ -188,18 +191,17 @@ export default function ParentMessageInfo({
           mentionSelectedUser={selectedUser}
           isMentionEnabled={isMentionEnabled}
           message={parentMessage}
-          onStartTyping={() => {
-            currentChannel?.startTyping?.();
-          }}
-          onUpdateMessage={({ messageId, message, mentionTemplate }) => {
+          onStartTyping={startTyping}
+          onStopTyping={stopTyping}
+          onUpdateMessage={({ messageId, message: editedMessage, mentionTemplate, mentionedUserIds: currentMentionedUserIds }) => {
             updateMessage({
               messageId,
-              message,
-              mentionedUsers,
+              message: editedMessage,
+              mentionedUserIds: currentMentionedUserIds,
               mentionTemplate,
             });
             setShowEditInput(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onCancelEdit={() => {
             setMentionNickname('');
@@ -207,7 +209,7 @@ export default function ParentMessageInfo({
             setMentionedUserIds([]);
             setMentionSuggestedUsers([]);
             setShowEditInput(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onUserMentioned={(user) => {
             if (selectedUser?.userId === user?.userId) {

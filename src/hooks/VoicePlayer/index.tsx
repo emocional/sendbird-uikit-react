@@ -36,6 +36,7 @@ export interface VoicePlayerContext {
   play: (props: VoicePlayerPlayProps) => void;
   pause: (groupKey?: string) => void;
   stop: (text?: string) => void;
+  reset: (groupKey: string) => void;
   voicePlayerStore: VoicePlayerInitialState;
 }
 
@@ -52,6 +53,7 @@ const Context = createContext<VoicePlayerContext>({
   play: noop,
   pause: noop,
   stop: noop,
+  reset: noop,
   voicePlayerStore: VoicePlayerStoreDefaultValue,
 });
 
@@ -73,6 +75,16 @@ export const VoicePlayerProvider = ({
       logger.info('VoicePlayer: Pause playing(by text).');
       pause(currentGroupKey);
     }
+  };
+
+  const reset = (groupKey: string) => {
+    if (groupKey === currentGroupKey && currentPlayer) {
+      currentPlayer.pause();
+    }
+    voicePlayerDispatcher({
+      type: RESET_AUDIO_UNIT,
+      payload: { groupKey },
+    });
   };
 
   const pause = (groupKey?: string) => {
@@ -210,6 +222,7 @@ export const VoicePlayerProvider = ({
       play,
       pause,
       stop,
+      reset,
       voicePlayerStore,
     }}>
       {/**

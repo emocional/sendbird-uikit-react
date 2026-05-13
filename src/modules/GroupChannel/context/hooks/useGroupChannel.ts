@@ -125,8 +125,6 @@ export const useGroupChannel = () => {
 
     clickHandler.deactivate();
 
-    setAnimatedMessageId(null);
-
     const message = state.messages.find((it) => it.messageId === messageId || it.createdAt === createdAt);
 
     if (message) {

@@ -259,6 +259,93 @@ describe('ui/MessageInput', () => {
       container.getElementsByClassName('sendbird-message-input--edit-action').length
     ).toBe(1);
   });
+
+  describe('typing indicator callbacks', () => {
+    it('should call onStartTyping when input has text', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hello';
+      fireEvent.input(input);
+
+      expect(onStartTyping).toHaveBeenCalled();
+      expect(onStopTyping).not.toHaveBeenCalled();
+    });
+
+    it('should call onStopTyping when input becomes empty after typing', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hello';
+      fireEvent.input(input);
+      input.textContent = '';
+      fireEvent.input(input);
+
+      expect(onStartTyping).toHaveBeenCalled();
+      expect(onStopTyping).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call onStopTyping when input is empty without prior typing', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = '';
+      fireEvent.input(input);
+      fireEvent.input(input);
+
+      expect(onStartTyping).not.toHaveBeenCalled();
+      expect(onStopTyping).not.toHaveBeenCalled();
+    });
+
+    it('should call onStopTyping only once when backspacing repeatedly on empty input', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hi';
+      fireEvent.input(input);
+      input.textContent = '';
+      fireEvent.input(input);
+      fireEvent.input(input);
+      fireEvent.input(input);
+
+      expect(onStopTyping).toHaveBeenCalledTimes(1);
+    });
+
+    it('should call onStopTyping when input becomes whitespace-only after typing', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = 'hello';
+      fireEvent.input(input);
+      input.textContent = '   ';
+      fireEvent.input(input);
+
+      expect(onStopTyping).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not call onStartTyping when input contains only whitespace', () => {
+      const onStartTyping = jest.fn();
+      const onStopTyping = jest.fn();
+      render(<MessageInput onSendMessage={noop} onStartTyping={onStartTyping} onStopTyping={onStopTyping} />);
+
+      const input = screen.getByRole('textbox');
+      input.textContent = '   ';
+      fireEvent.input(input);
+
+      expect(onStartTyping).not.toHaveBeenCalled();
+      expect(onStopTyping).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('MessageInput error handling', () => {
@@ -372,11 +459,182 @@ describe('MessageInput error handling', () => {
     render(<MessageInput onFileUpload={onFileUpload} />);
 
     const fileInput = document.getElementsByClassName('sendbird-message-input--attach-input')[0];
-  
+
     fireEvent.change(fileInput, { currentTarget: { files: [file] } });
 
     expect(onFileUpload).toThrow(mockErrorMessage);
     expect(eventHandlers.message.onFileUploadFailed).toHaveBeenCalled();
+  });
+});
+
+describe('MessageInput sendMessage (CLNP-6501)', () => {
+  beforeEach(() => {
+    const stateContextValue = {
+      state: {
+        config: {
+          groupChannel: {
+            enableDocument: true,
+          },
+        },
+      },
+    };
+    const localeContextValue = {
+      stringSet: {},
+    };
+
+    useSendbird.mockReturnValue(stateContextValue);
+    useLocalization.mockReturnValue(localeContextValue);
+
+    renderHook(() => useSendbird());
+    renderHook(() => useLocalization());
+  });
+
+  // Cross-platform consumers (iOS/Android/SDK) receive the raw `message` field, so we
+  // intentionally do NOT sanitize at send time. Display-side rendering escapes angle
+  // brackets via React JSX. These tests pin the raw passthrough behavior.
+  it('should keep message field raw on send (display layer escapes)', () => {
+    const onSendMessage = jest.fn();
+
+    render(<MessageInput onSendMessage={onSendMessage} />);
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'Hi <b>bold</b>';
+    fireEvent.input(input);
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onSendMessage).toHaveBeenCalledTimes(1);
+    const params = onSendMessage.mock.calls[0][0];
+    expect(params.message).toBe('Hi <b>bold</b>');
+    // No mention -> mentionTemplate stays empty.
+    expect(params.mentionTemplate).toBe('');
+  });
+
+  it('should keep XSS-like payload raw in message field on send (display layer escapes)', () => {
+    const onSendMessage = jest.fn();
+
+    render(<MessageInput onSendMessage={onSendMessage} />);
+
+    const input = screen.getByRole('textbox');
+    input.textContent = '<img src=x onerror=alert(1)>';
+    fireEvent.input(input);
+
+    fireEvent.keyDown(input, { key: 'Enter' });
+
+    expect(onSendMessage).toHaveBeenCalledTimes(1);
+    const params = onSendMessage.mock.calls[0][0];
+    expect(params.message).toBe('<img src=x onerror=alert(1)>');
+  });
+});
+
+describe('MessageInput editMessage sanitization (CLNP-6501)', () => {
+  beforeEach(() => {
+    const stateContextValue = {
+      state: {
+        config: {
+          groupChannel: {
+            enableDocument: true,
+          },
+        },
+      },
+    };
+    const localeContextValue = {
+      stringSet: {},
+    };
+
+    useSendbird.mockReturnValue(stateContextValue);
+    useLocalization.mockReturnValue(localeContextValue);
+
+    renderHook(() => useSendbird());
+    renderHook(() => useLocalization());
+  });
+
+  const clickSave = () => {
+    const editButton = document.getElementsByClassName('sendbird-message-input--edit-action__save')[0];
+    fireEvent.click(editButton);
+  };
+
+  it('should keep message raw and sanitize mentionTemplate when editing without mentions', () => {
+    const onUpdateMessage = jest.fn();
+    const messageId = 123;
+
+    render(
+      <MessageInput
+        isEdit
+        message={{ messageId }}
+        onUpdateMessage={onUpdateMessage}
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'Hi <b>bold</b>';
+    fireEvent.input(input);
+
+    clickSave();
+
+    expect(onUpdateMessage).toHaveBeenCalledTimes(1);
+    const params = onUpdateMessage.mock.calls[0][0];
+    expect(params.messageId).toBe(messageId);
+    // message stays raw — display layer handles escaping.
+    expect(params.message).toBe('Hi <b>bold</b>');
+    // mentionTemplate is sanitized so mention-aware consumers cannot inject HTML.
+    expect(params.mentionTemplate).toBe('Hi &#60;b&#62;bold&#60;/b&#62;');
+    expect(params.mentionedUserIds).toEqual([]);
+  });
+
+  it('should sanitize XSS payload in mentionTemplate even when isMentionedMessage is false', () => {
+    // Reviewer-reported scenario: original message had a mention, user removes
+    // the mention leaving only a raw HTML payload.
+    const onUpdateMessage = jest.fn();
+    const messageId = 456;
+
+    render(
+      <MessageInput
+        isEdit
+        message={{ messageId }}
+        onUpdateMessage={onUpdateMessage}
+        isMentionEnabled
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'Hi <img src=x onerror=alert(1)>';
+    fireEvent.input(input);
+
+    clickSave();
+
+    expect(onUpdateMessage).toHaveBeenCalledTimes(1);
+    const params = onUpdateMessage.mock.calls[0][0];
+    // message stays raw — display layer handles escaping.
+    expect(params.message).toBe('Hi <img src=x onerror=alert(1)>');
+    // mentionTemplate is sanitized so mention-aware consumers cannot inject HTML.
+    expect(params.mentionTemplate).not.toContain('<');
+    expect(params.mentionTemplate).not.toContain('>');
+    expect(params.mentionTemplate).toBe('Hi &#60;img src=x onerror=alert(1)&#62;');
+    expect(params.mentionedUserIds).toEqual([]);
+  });
+
+  it('should return an empty mentionedUserIds array when isMentionEnabled is false', () => {
+    const onUpdateMessage = jest.fn();
+    const messageId = 789;
+
+    render(
+      <MessageInput
+        isEdit
+        message={{ messageId }}
+        onUpdateMessage={onUpdateMessage}
+        // isMentionEnabled is intentionally omitted (defaults to false)
+      />,
+    );
+
+    const input = screen.getByRole('textbox');
+    input.textContent = 'plain text';
+    fireEvent.input(input);
+
+    clickSave();
+
+    expect(onUpdateMessage).toHaveBeenCalledTimes(1);
+    expect(onUpdateMessage.mock.calls[0][0].mentionedUserIds).toEqual([]);
   });
 });
 

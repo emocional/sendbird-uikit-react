@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import format from 'date-fns/format';
 import type { FileMessage, MultipleFilesMessage } from '@sendbird/chat/message';
 
@@ -118,6 +119,8 @@ export default function ThreadListItem(props: ThreadListItemProps): React.ReactE
     }));
   }, [mentionedUserIds]);
 
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel, showEdit);
+
   // edit input
   const disabled = !(threadListState === ThreadListStateTypes.INITIALIZED)
     || !isOnline
@@ -169,18 +172,17 @@ export default function ThreadListItem(props: ThreadListItemProps): React.ReactE
           mentionSelectedUser={selectedUser}
           isMentionEnabled={isMentionEnabled}
           message={message}
-          onStartTyping={() => {
-            currentChannel?.startTyping?.();
-          }}
-          onUpdateMessage={({ messageId, message, mentionTemplate }) => {
+          onStartTyping={startTyping}
+          onStopTyping={stopTyping}
+          onUpdateMessage={({ messageId, message: editedMessage, mentionTemplate, mentionedUserIds: currentMentionedUserIds }) => {
             updateMessage({
               messageId,
-              message,
-              mentionedUsers,
+              message: editedMessage,
+              mentionedUserIds: currentMentionedUserIds,
               mentionTemplate,
             });
             setShowEdit(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onCancelEdit={() => {
             setMentionNickname('');
@@ -188,7 +190,7 @@ export default function ThreadListItem(props: ThreadListItemProps): React.ReactE
             setMentionedUserIds([]);
             setMentionSuggestedUsers([]);
             setShowEdit(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onUserMentioned={(user) => {
             if (selectedUser?.userId === user?.userId) {

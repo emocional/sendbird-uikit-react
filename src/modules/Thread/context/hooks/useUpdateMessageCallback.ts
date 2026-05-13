@@ -23,6 +23,7 @@ type CallbackParams = {
   messageId: number;
   message: string;
   mentionedUsers?: User[];
+  mentionedUserIds?: string[];
   mentionTemplate?: string;
 };
 
@@ -40,13 +41,16 @@ export default function useUpdateMessageCallback({
       messageId,
       message,
       mentionedUsers,
+      mentionedUserIds,
       mentionTemplate,
     } = props;
 
     const createParamsDefault = () => {
       const params = {} as UserMessageUpdateParams;
       params.message = message;
-      if (isMentionEnabled && mentionedUsers && mentionedUsers?.length > 0) {
+      if (isMentionEnabled && mentionedUserIds) {
+        params.mentionedUserIds = mentionedUserIds;
+      } else if (isMentionEnabled && mentionedUsers) {
         params.mentionedUsers = mentionedUsers;
       }
       if (isMentionEnabled && mentionTemplate) {

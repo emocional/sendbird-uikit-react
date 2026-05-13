@@ -300,19 +300,30 @@ const GroupChannelManager :React.FC<React.PropsWithChildren<GroupChannelProvider
     };
   }, [messageDataSource.initialized, state.currentChannel?.url]);
 
-  // Starting point handling
+  // Starting point handling — skip when animated message handles scroll
   useEffect(() => {
-    if (typeof startingPoint === 'number' && state.initialized) {
+    if (typeof startingPoint === 'number' && state.initialized && !_animatedMessageId) {
       actions.scrollToMessage(startingPoint, 0, false, false);
     }
   }, [state.initialized, startingPoint]);
 
-  // Animated message handling
+  // Animated message handling — scroll + animation
+  // NOTE: Depend on state.initialized so that deep-link / direct Provider usage
+  // (animatedMessageId + startingPoint set on initial mount) retries after the
+  // channel is initialized. Without it, scrollToMessage runs while messages are
+  // empty and the starting-point effect is suppressed by !_animatedMessageId,
+  // leaving the message un-scrolled and un-animated.
   useEffect(() => {
-    if (_animatedMessageId) {
-      actions.setAnimatedMessageId(_animatedMessageId);
+    if (_animatedMessageId && state.initialized) {
+      if (typeof startingPoint === 'number') {
+        // Search result click: scroll to message and animate
+        actions.scrollToMessage(startingPoint, _animatedMessageId, true, false);
+      } else {
+        // Thread parent jump: scroll already handled by startingPoint effect, just animate
+        actions.setAnimatedMessageId(_animatedMessageId);
+      }
     }
-  }, [_animatedMessageId]);
+  }, [_animatedMessageId, state.initialized]);
 
   // State update effect
   const eventHandlers = useMemo(() => ({
