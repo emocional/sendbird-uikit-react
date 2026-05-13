@@ -587,13 +587,28 @@ describe('useThread', () => {
     });
     const { onUserBanned } = result.current.actions;
 
+    // Channel object reflecting the ban: 'other-user-id' is no longer a member.
+    const channelAfterBan = {
+      url: 'test-channel',
+      members: [{ userId: 'test-user-id', nickname: 'me' }],
+    };
+
     await act(() => {
-      onUserBanned(mockChannel, { userId: 'other-user-id' });
+      onUserBanned(channelAfterBan, { userId: 'other-user-id' });
     });
 
     await waitFor(() => {
+      // Thread state must not be reset when another user is banned.
       expect(result.current.state.channelState).not.toBe(ChannelStateTypes.NIL);
       expect(result.current.state.currentChannel).not.toBeNull();
+      // currentChannel must be updated so the membership change is reflected.
+      expect(result.current.state.currentChannel).toBe(channelAfterBan);
+      expect(
+        result.current.state.currentChannel.members.find((m: { userId: string }) => m.userId === 'other-user-id'),
+      ).toBeUndefined();
+      // nicknamesMap must be regenerated so downstream consumers (e.g. mention list) see the change.
+      expect(result.current.state.nicknamesMap.get('other-user-id')).toBeUndefined();
+      expect(result.current.state.nicknamesMap.get('test-user-id')).toBe('me');
     });
   });
 
@@ -658,13 +673,28 @@ describe('useThread', () => {
     });
     const { onUserLeft } = result.current.actions;
 
+    // Channel object reflecting the leave: 'other-user-id' is no longer a member.
+    const channelAfterLeave = {
+      url: 'test-channel',
+      members: [{ userId: 'test-user-id', nickname: 'me' }],
+    };
+
     await act(() => {
-      onUserLeft(mockChannel, { userId: 'other-user-id' });
+      onUserLeft(channelAfterLeave, { userId: 'other-user-id' });
     });
 
     await waitFor(() => {
+      // Thread state must not be reset when another user leaves.
       expect(result.current.state.channelState).not.toBe(ChannelStateTypes.NIL);
       expect(result.current.state.currentChannel).not.toBeNull();
+      // currentChannel must be updated so the membership change is reflected.
+      expect(result.current.state.currentChannel).toBe(channelAfterLeave);
+      expect(
+        result.current.state.currentChannel.members.find((m: { userId: string }) => m.userId === 'other-user-id'),
+      ).toBeUndefined();
+      // nicknamesMap must be regenerated so downstream consumers (e.g. mention list) see the change.
+      expect(result.current.state.nicknamesMap.get('other-user-id')).toBeUndefined();
+      expect(result.current.state.nicknamesMap.get('test-user-id')).toBe('me');
     });
   });
 
