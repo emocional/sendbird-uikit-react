@@ -1,5 +1,6 @@
 import './index.scss';
 import React, { useState, useEffect } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import type { User } from '@sendbird/chat';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import type {
@@ -128,6 +129,8 @@ export const MessageInputWrapperView = React.forwardRef((
     setMessageInputEvent(null);
     setShowVoiceMessageInput(false);
   }, [currentChannel?.url]);
+
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
   useEffect(() => {
     setMentionedUsers(
       mentionedUsers.filter(({ userId }) => {
@@ -234,9 +237,8 @@ export const MessageInputWrapperView = React.forwardRef((
           renderFileUploadIcon={renderFileUploadIcon}
           renderSendMessageIcon={renderSendMessageIcon}
           renderVoiceMessageIcon={renderVoiceMessageIcon}
-          onStartTyping={() => {
-            currentChannel?.startTyping();
-          }}
+          onStartTyping={startTyping}
+          onStopTyping={stopTyping}
           onSendMessage={({ message, mentionTemplate }) => {
             sendUserMessage({
               message,
@@ -247,7 +249,7 @@ export const MessageInputWrapperView = React.forwardRef((
             setMentionNickname('');
             setMentionedUsers([]);
             setQuoteMessage(null);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onFileUpload={(fileList) => {
             handleUploadFiles(fileList);

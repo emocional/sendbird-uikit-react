@@ -1,5 +1,6 @@
 import type { EveryMessage, RenderCustomSeparatorProps, RenderMessageParamsType, ReplyType } from '../../../../types';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import { type EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { FileMessage, UserMessage, UserMessageCreateParams, UserMessageUpdateParams } from '@sendbird/chat/message';
@@ -220,6 +221,8 @@ const MessageView = (props: MessageViewProps) => {
     );
   }, [mentionedUserIds]);
 
+  const { startTyping, stopTyping } = useTypingLifecycle(channel, showEdit);
+
   // Side effect: scroll position update when showEdit is toggled or reactions updated
   useDidMountEffect(() => {
     handleScroll?.();
@@ -410,9 +413,8 @@ const MessageView = (props: MessageViewProps) => {
             mentionSelectedUser={selectedUser}
             isMentionEnabled={groupChannel.enableMention}
             message={message}
-            onStartTyping={() => {
-              channel?.startTyping?.();
-            }}
+            onStartTyping={startTyping}
+            onStopTyping={stopTyping}
             onUpdateMessage={({ messageId, message, mentionTemplate }) => {
               updateUserMessage(messageId, {
                 message,
@@ -420,7 +422,7 @@ const MessageView = (props: MessageViewProps) => {
                 mentionedMessageTemplate: mentionTemplate,
               });
               setShowEdit(false);
-              channel?.endTyping?.();
+              stopTyping();
             }}
             onCancelEdit={() => {
               setMentionNickname('');
@@ -428,7 +430,7 @@ const MessageView = (props: MessageViewProps) => {
               setMentionedUserIds([]);
               setMentionSuggestedUsers([]);
               setShowEdit(false);
-              channel?.endTyping?.();
+              stopTyping();
             }}
             onUserMentioned={(user) => {
               if (selectedUser?.userId === user?.userId) {
