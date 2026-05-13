@@ -1,5 +1,5 @@
 import type { EveryMessage, RenderCustomSeparatorProps, RenderMessageParamsType, ReplyType } from '../../../../types';
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import { type EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
@@ -190,7 +190,7 @@ const MessageView = (props: MessageViewProps) => {
   const [showEdit, setShowEdit] = useState(false);
   const [showRemove, setShowRemove] = useState(false);
   const [showFileViewer, setShowFileViewer] = useState(false);
-  const [isAnimated, setIsAnimated] = useState(false);
+  // isAnimated state removed — animation now driven by animatedMessageId + onAnimationEnd
   const [mentionNickname, setMentionNickname] = useState('');
   const [mentionedUsers, setMentionedUsers] = useState<User[]>([]);
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
@@ -248,29 +248,58 @@ const MessageView = (props: MessageViewProps) => {
     if (usedInLegacy) handleScroll?.(true);
   }, []);
 
-  useLayoutEffect(() => {
-    const timeouts: ReturnType<typeof setTimeout>[] = [];
+  // Animation: once triggered, protect with local state until CSS animation completes
+  const [showBounce, setShowBounce] = useState(false);
+  const isAnimationTarget = animatedMessageId === message.messageId;
+  // Fallback timer ref so handleAnimationEnd can cancel it once the real
+  // animation completes (avoids double cleanup).
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hold cleanup logic in a ref so we don't have to put unstable props
+  // (animatedMessageId, onMessageAnimated) in effect deps — otherwise a
+  // non-memoized onMessageAnimated would cancel the fallback timer on every
+  // render before it can fire.
+  const finalizeAnimationRef = useRef<() => void>(() => {});
+  finalizeAnimationRef.current = () => {
+    setShowBounce(false);
+    // Only clear if this message is still the animation target
+    if (animatedMessageId === message.messageId) {
+      setAnimatedMessageId(null);
+      onMessageAnimated?.();
+    }
+  };
 
-    if (animatedMessageId === message.messageId && messageScrollRef?.current) {
-      timeouts.push(
-        setTimeout(() => {
-          setIsAnimated(true);
-        }, 500),
-      );
-
-      timeouts.push(
-        setTimeout(() => {
-          setAnimatedMessageId(null);
-          onMessageAnimated?.();
-        }, 1600),
-      );
-    } else {
-      setIsAnimated(false);
+  useEffect(() => {
+    if (isAnimationTarget) {
+      setShowBounce(true);
+      // The bounce keyframe is applied to a descendant `.sendbird-message-content`,
+      // which is not rendered when consumers supply a custom `renderMessage`.
+      // In that case `onAnimationEnd` never fires and the animation state would
+      // be stuck, so schedule a fallback to force cleanup after the CSS
+      // animation duration (1s) plus a small buffer (matches the prior
+      // setTimeout-based timing).
+      if (fallbackTimerRef.current !== null) clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = setTimeout(() => {
+        fallbackTimerRef.current = null;
+        finalizeAnimationRef.current();
+      }, 1600);
     }
     return () => {
-      timeouts.forEach((it) => clearTimeout(it));
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
     };
-  }, [animatedMessageId, messageScrollRef.current, message.messageId]);
+  }, [isAnimationTarget]);
+
+  const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
+    if (e.animationName === 'bounce') {
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+      finalizeAnimationRef.current();
+    }
+  }, []);
 
   useLayoutEffect(() => {
     if (newMessageIds?.length > 0 && newMessageIds.includes(message.messageId)) {
@@ -438,8 +467,9 @@ const MessageView = (props: MessageViewProps) => {
     <div
       className={classnames(
         'sendbird-msg-hoc sendbird-msg--scroll-ref',
-        isAnimated && 'sendbird-msg-hoc__animated',
+        showBounce && 'sendbird-msg-hoc__animated',
       )}
+      onAnimationEnd={showBounce ? handleAnimationEnd : undefined}
       data-testid="sendbird-message-view"
       style={children || renderMessage ? undefined : { marginBottom: '2px' }}
       data-sb-message-id={message.messageId}
