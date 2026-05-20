@@ -141,11 +141,18 @@ export const MessageInputWrapperView = React.forwardRef((
   });
 
   // Window-level drop target — files dropped anywhere in the viewport route
-  // into this channel's composer. Disabled on mobile and when the input
-  // itself is not accepting new files (voice recording, channel disabled).
+  // into this channel's composer EXCEPT when the drop lands inside an open
+  // thread panel, which has its own composer. Disabled on mobile and when
+  // the input itself is not accepting new files (voice recording, channel
+  // disabled).
   useDragAndDrop({
     onAddFiles: addFiles,
     disabled: isMobile || isMessageInputDisabled || showVoiceMessageInput,
+    shouldAccept: (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return true;
+      return !target.closest('.sendbird-thread-ui');
+    },
   });
 
   // Operate states

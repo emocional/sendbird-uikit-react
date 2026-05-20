@@ -4,6 +4,13 @@ export interface UseDragAndDropParams {
   onAddFiles: (files: File[]) => void;
   /** When true, listeners are not attached (e.g. mobile, channel disabled). */
   disabled?: boolean;
+  /**
+   * Per-event filter. Return `false` to skip this drop entirely (no preventDefault,
+   * no onAddFiles). Default: accept every file drop. Used to coordinate multiple
+   * instances on the same page so each one only consumes drops in its own pane —
+   * e.g. main channel vs. thread.
+   */
+  shouldAccept?: (event: DragEvent) => boolean;
 }
 
 const dragHasFiles = (event: DragEvent): boolean => {
@@ -19,13 +26,18 @@ const dragHasFiles = (event: DragEvent): boolean => {
  *
  * When disabled, no listeners are attached, so the browser's default drop
  * behavior (open the file) is preserved.
+ *
+ * When multiple instances are mounted concurrently (e.g. main channel composer
+ * + thread composer on desktop), each one passes a `shouldAccept` predicate so
+ * exactly one consumes any given drop based on its position in the DOM.
  */
-export const useDragAndDrop = ({ onAddFiles, disabled = false }: UseDragAndDropParams): void => {
+export const useDragAndDrop = ({ onAddFiles, disabled = false, shouldAccept }: UseDragAndDropParams): void => {
   useEffect(() => {
     if (disabled) return undefined;
 
     const onDragOver = (event: DragEvent) => {
       if (!dragHasFiles(event)) return;
+      if (shouldAccept && !shouldAccept(event)) return;
       // Required to mark the document as a valid drop target and suppress
       // the browser's default "open file" behavior on drop.
       event.preventDefault();
@@ -34,6 +46,7 @@ export const useDragAndDrop = ({ onAddFiles, disabled = false }: UseDragAndDropP
 
     const onDrop = (event: DragEvent) => {
       if (!dragHasFiles(event)) return;
+      if (shouldAccept && !shouldAccept(event)) return;
       event.preventDefault();
       const files = Array.from(event.dataTransfer?.files ?? []);
       if (files.length > 0) onAddFiles(files);
@@ -45,5 +58,5 @@ export const useDragAndDrop = ({ onAddFiles, disabled = false }: UseDragAndDropP
       window.removeEventListener('dragover', onDragOver);
       window.removeEventListener('drop', onDrop);
     };
-  }, [disabled, onAddFiles]);
+  }, [disabled, onAddFiles, shouldAccept]);
 };

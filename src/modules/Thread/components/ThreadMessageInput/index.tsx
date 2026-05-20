@@ -11,6 +11,7 @@ import { useGlobalModalContext } from '../../../../hooks/useModal';
 import MessageInput from '../../../../ui/MessageInput';
 import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
+import { useDragAndDrop } from '../../../../ui/MessageInput/hooks/useDragAndDrop';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
 import { SuggestedMentionList } from '../SuggestedMentionList';
 import { VoiceMessageInputWrapper } from '../../../GroupChannel/components/MessageInputWrapper';
@@ -99,6 +100,19 @@ const ThreadMessageInput = (
     openModal,
     stringSet,
     logger,
+  });
+
+  // Window-level drop target — only consume drops that land inside the
+  // thread panel (.sendbird-thread-ui). Drops elsewhere are picked up by the
+  // main channel composer's hook instance.
+  useDragAndDrop({
+    onAddFiles: addFiles,
+    disabled: isMobile || threadInputDisabled || showVoiceMessageInput,
+    shouldAccept: (event) => {
+      const target = event.target;
+      if (!(target instanceof Element)) return false;
+      return Boolean(target.closest('.sendbird-thread-ui'));
+    },
   });
 
   const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
