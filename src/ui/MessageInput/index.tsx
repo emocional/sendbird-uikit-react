@@ -530,6 +530,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         isEdit && 'sendbird-message-input__edit',
         disabled && 'sendbird-message-input-form__disabled',
         isComposerMode && 'sendbird-message-input--composer',
+        isComposerMode && hasPendingFiles && 'sendbird-message-input--composer-active',
       )}
     >
       {!isEdit && isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (

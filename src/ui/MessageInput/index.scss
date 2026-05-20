@@ -124,6 +124,15 @@
   position: relative;
 }
 
+.sendbird-message-input--composer-active {
+  border-radius: 8px;
+  box-sizing: border-box;
+  padding: 8px;
+  @include themed() {
+    border: 1px solid t(primary-3);
+  }
+}
+
 .sendbird-message-input__pending-preview {
   display: flex;
   flex-direction: row;
