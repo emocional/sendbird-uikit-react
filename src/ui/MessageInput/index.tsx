@@ -475,7 +475,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     setMentionedUsers,
     channel,
     setIsInput,
-    onAddFiles: fileProducerEnabled ? guardedAddFiles : undefined,
+    onAddFiles: fileProducerEnabled && !isMobile ? guardedAddFiles : undefined,
   });
 
   const { isDragging, handlers: dndHandlers } = useDragAndDrop({
