@@ -159,7 +159,7 @@
     position: relative;
     width: 72px;
     height: 72px;
-    border-radius: 6px;
+    border-radius: 8px;
     overflow: hidden;
     @include themed() {
       background-color: t(bg-3);
