@@ -2,28 +2,31 @@ import React, { ReactElement, useContext } from 'react';
 
 import type { PendingFile } from '../hooks/usePendingFiles';
 import Icon, { IconColors, IconTypes } from '../../Icon';
-import Label, { LabelColors, LabelTypography } from '../../Label';
 import { LocalizationContext } from '../../../lib/LocalizationContext';
+import PendingFileCard from './PendingFileCard';
 
 interface Props {
   pendingFile: PendingFile;
   onRemove: (id: string) => void;
 }
 
-const formatBytes = (bytes: number): string => {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-};
-
+/**
+ * Renders one staged file in the composer. Images get a square thumbnail with
+ * a corner remove button; non-images delegate to PendingFileCard, which
+ * shows a horizontal card with icon + filename + uppercased extension.
+ */
 export const PendingFileItem = ({ pendingFile, onRemove }: Props): ReactElement => {
   const { stringSet } = useContext(LocalizationContext);
   const { id, file, previewUrl, isImage } = pendingFile;
 
+  if (!isImage) {
+    return <PendingFileCard pendingFile={pendingFile} onRemove={onRemove} />;
+  }
+
   return (
     <div className="sendbird-message-input__pending-file" data-testid="sendbird-pending-file">
       <div className="sendbird-message-input__pending-file__thumbnail">
-        {isImage && previewUrl ? (
+        {previewUrl ? (
           <img
             className="sendbird-message-input__pending-file__image"
             src={previewUrl}
@@ -53,24 +56,6 @@ export const PendingFileItem = ({ pendingFile, onRemove }: Props): ReactElement 
           />
         </button>
       </div>
-      {!isImage && (
-        <div className="sendbird-message-input__pending-file__meta">
-          <Label
-            className="sendbird-message-input__pending-file__name"
-            type={LabelTypography.CAPTION_2}
-            color={LabelColors.ONBACKGROUND_1}
-          >
-            {file.name}
-          </Label>
-          <Label
-            className="sendbird-message-input__pending-file__size"
-            type={LabelTypography.CAPTION_3}
-            color={LabelColors.ONBACKGROUND_2}
-          >
-            {formatBytes(file.size)}
-          </Label>
-        </div>
-      )}
     </div>
   );
 };

@@ -204,19 +204,70 @@
       }
     }
   }
+}
 
-  .sendbird-message-input__pending-file__meta {
-    margin-top: 4px;
+.sendbird-message-input__pending-card {
+  align-items: center;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 8px 12px 8px 8px;
+  position: relative;
+  @include themed() {
+    background-color: t(bg-2);
+  }
+
+  .sendbird-message-input__pending-card__icon {
+    align-items: center;
+    border-radius: 6px;
+    display: flex;
+    flex-shrink: 0;
+    height: 40px;
+    justify-content: center;
+    width: 40px;
+    @include themed() {
+      background-color: t(bg-3);
+    }
+  }
+
+  .sendbird-message-input__pending-card__meta {
     display: flex;
     flex-direction: column;
     gap: 2px;
+    min-width: 0;
     overflow: hidden;
   }
 
-  .sendbird-message-input__pending-file__name {
-    white-space: nowrap;
+  .sendbird-message-input__pending-card__name {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sendbird-message-input__pending-card__remove {
+    align-items: center;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    height: 20px;
+    justify-content: center;
+    padding: 0;
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    width: 20px;
+    @include themed() {
+      background-color: t(overlay-2);
+    }
+
+    &:hover {
+      @include themed() {
+        background-color: t(on-bg-2);
+      }
+    }
   }
 }
 
