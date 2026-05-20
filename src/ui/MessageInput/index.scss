@@ -138,14 +138,9 @@
   flex-direction: row;
   flex-wrap: nowrap;
   gap: 8px;
-  padding: 8px 12px;
   margin-bottom: 4px;
   overflow-x: auto;
   overflow-y: hidden;
-  border-radius: 4px;
-  @include themed() {
-    background-color: t(bg-2);
-  }
 }
 
 .sendbird-message-input__pending-file {
