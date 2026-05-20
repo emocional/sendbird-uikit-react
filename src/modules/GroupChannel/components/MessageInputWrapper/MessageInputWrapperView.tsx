@@ -29,6 +29,7 @@ import VoiceMessageInputWrapper from './VoiceMessageInputWrapper';
 import MessageInput from '../../../../ui/MessageInput';
 import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
+import { useDragAndDrop } from '../../../../ui/MessageInput/hooks/useDragAndDrop';
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
@@ -137,6 +138,14 @@ export const MessageInputWrapperView = React.forwardRef((
     openModal,
     stringSet,
     logger,
+  });
+
+  // Window-level drop target — files dropped anywhere in the viewport route
+  // into this channel's composer. Disabled on mobile and when the input
+  // itself is not accepting new files (voice recording, channel disabled).
+  useDragAndDrop({
+    onAddFiles: addFiles,
+    disabled: isMobile || isMessageInputDisabled || showVoiceMessageInput,
   });
 
   // Operate states

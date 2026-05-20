@@ -20,10 +20,8 @@ import {
 } from './utils';
 import { arrayEqual, getMimeTypesUIKitAccepts } from '../../utils';
 import { usePaste } from './hooks/usePaste';
-import { useDragAndDrop } from './hooks/useDragAndDrop';
 import type { PendingFile } from './hooks/usePendingFiles';
 import PendingFilesPreview from './composer/PendingFilesPreview';
-import DropZoneOverlay from './composer/DropZoneOverlay';
 import { tokenizeMessage } from '../../modules/Message/utils/tokens/tokenize';
 import { USER_MENTION_PREFIX } from '../../modules/Message/consts';
 import { TOKEN_TYPES } from '../../modules/Message/utils/tokens/types';
@@ -478,11 +476,6 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     onAddFiles: fileProducerEnabled && !isMobile ? guardedAddFiles : undefined,
   });
 
-  const { isDragging, handlers: dndHandlers } = useDragAndDrop({
-    onAddFiles: guardedAddFiles,
-    disabled: !fileProducerEnabled || isMobile,
-  });
-
   const uploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = event.currentTarget;
     try {
@@ -538,10 +531,6 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         disabled && 'sendbird-message-input-form__disabled',
         isComposerMode && 'sendbird-message-input--composer',
       )}
-      onDragEnter={dndHandlers.onDragEnter}
-      onDragOver={dndHandlers.onDragOver}
-      onDragLeave={dndHandlers.onDragLeave}
-      onDrop={dndHandlers.onDrop}
     >
       {!isEdit && isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (
         <PendingFilesPreview pendingFiles={pendingFiles} onRemove={onRemoveFile} />
@@ -703,7 +692,6 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
           </IconButton>
         )}
       </div>
-      <DropZoneOverlay visible={isDragging} />
       {/* Edit */}
       {isEdit && (
         <div className="sendbird-message-input--edit-action" data-testid="sendbird-message-input--edit-action">
