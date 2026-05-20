@@ -175,12 +175,11 @@ export const MessageInputWrapperView = React.forwardRef((
     );
   }, [mentionedUserIds]);
 
-  // Submit handler: drains pendingFiles + text body in one transaction.
-  // Body-text placement rule (per spec): attached to the FIRST send only.
-  // - text only -> sendUserMessage
-  // - 2+ images present -> body rides MFM (fired first), other files follow
-  // - 1 image only -> body rides that single sendFileMessage
-  // - non-images only -> body rides the first sendFileMessage
+  // Submit handler: drains pendingFiles XOR text body. Files and body do not
+  // coexist in a single send anymore — when files are present, text from the
+  // composer is suppressed at the UI level (textarea locked) and again here
+  // for defense in depth. The caption read path remains in MessageBody to
+  // render historical file messages that still carry a body.
   const handleSubmit = useCallback(async ({
     message,
     mentionTemplate,
@@ -207,27 +206,12 @@ export const MessageInputWrapperView = React.forwardRef((
         logger,
       });
 
-      let bodyConsumed = false;
-      // Body text + mention metadata both ride the FIRST send only. The SDK's
-      // FileMessage/MFM types omit mentionedMessageTemplate but the server
-      // accepts it; we cast through to attach it.
-      const takeFirstSendExtras = (): { message?: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } => {
-        if (bodyConsumed) return {};
-        bodyConsumed = true;
-        if (trimmed.length === 0) return {};
-        const extras: { message: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } = { message };
-        if (mentionedUsers.length > 0) extras.mentionedUsers = mentionedUsers;
-        if (mentionTemplate) extras.mentionedMessageTemplate = mentionTemplate;
-        return extras;
-      };
-
       // Sequential dispatcher built upfront so per-step error isolation does
-      // not affect ordering. The body extras are captured at queue time so the
-      // first task — whatever shape — gets them.
+      // not affect ordering. No body / mention metadata is attached to any
+      // file send — text is intentionally dropped when files are present.
       const tasks: Array<() => Promise<unknown>> = [];
       const useMFMBatch = isMultipleFilesMessageEnabled && compressedImageFiles.length > 1;
       if (useMFMBatch) {
-        const extras = takeFirstSendExtras();
         tasks.push(() => sendMultipleFilesMessage({
           fileInfoList: compressedImageFiles.map((file) => ({
             file,
@@ -236,32 +220,25 @@ export const MessageInputWrapperView = React.forwardRef((
             mimeType: file.type,
           })),
           parentMessageId,
-          ...extras,
         } as MultipleFilesMessageCreateParams));
       } else if (compressedImageFiles.length === 1) {
-        const extras = takeFirstSendExtras();
         const file = compressedImageFiles[0];
         tasks.push(() => sendFileMessage({
           file,
           parentMessageId,
-          ...extras,
         } as FileMessageCreateParams));
       } else if (compressedImageFiles.length > 1) {
         compressedImageFiles.forEach((file) => {
-          const extras = takeFirstSendExtras();
           tasks.push(() => sendFileMessage({
             file,
             parentMessageId,
-            ...extras,
           } as FileMessageCreateParams));
         });
       }
       otherFiles.forEach((file) => {
-        const extras = takeFirstSendExtras();
         tasks.push(() => sendFileMessage({
           file,
           parentMessageId,
-          ...extras,
         } as FileMessageCreateParams));
       });
 

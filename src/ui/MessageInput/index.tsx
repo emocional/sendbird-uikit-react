@@ -546,10 +546,15 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         )}
         <div
           id={`${textFieldId}${isEdit ? message?.messageId : ''}`}
-          className={`sendbird-message-input--textarea ${textFieldId}`}
-          contentEditable={!disabled}
+          className={classnames(
+            'sendbird-message-input--textarea',
+            textFieldId,
+            hasPendingFiles && 'sendbird-message-input--textarea-locked',
+          )}
+          contentEditable={!disabled && !hasPendingFiles}
           role="textbox"
           aria-label="Text Input"
+          aria-disabled={disabled || hasPendingFiles}
           ref={internalRef}
           // @ts-ignore
           disabled={disabled}
@@ -622,7 +627,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
           >
             {placeholder
               || (hasPendingFiles
-                ? stringSet.MESSAGE_INPUT__PLACE_HOLDER__WITH_FILES
+                ? stringSet.MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED
                 : stringSet.MESSAGE_INPUT__PLACE_HOLDER)}
           </Label>
         )}

@@ -221,3 +221,10 @@
     }
   }
 }
+
+.sendbird-message-input--textarea-locked {
+  cursor: not-allowed;
+  @include themed() {
+    color: t(on-bg-3);
+  }
+}

@@ -103,9 +103,11 @@ const ThreadMessageInput = (
 
   const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
 
-  // Submit handler. Body-text rule mirrors GroupChannel: text rides the
-  // FIRST send only. parentMessage is always the thread parent, so each send
-  // automatically threads correctly.
+  // Submit handler. Files and body text do not coexist: when files are
+  // present, the composer's text is suppressed at the UI level and again
+  // here. parentMessage is always the thread parent so each send threads
+  // correctly. The caption read path is preserved elsewhere for historical
+  // file messages that still carry a body.
   const handleSubmit = useCallback(async ({
     message,
     mentionTemplate,
@@ -130,39 +132,22 @@ const ThreadMessageInput = (
         logger,
       });
 
-      let bodyConsumed = false;
-      // Body text + mentions ride the FIRST send only.
-      const takeFirstSendExtras = (): { message?: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } => {
-        if (bodyConsumed) return {};
-        bodyConsumed = true;
-        if (trimmed.length === 0) return {};
-        const extras: { message?: string; mentionedUsers?: typeof mentionedUsers; mentionedMessageTemplate?: string } = { message };
-        if (mentionedUsers.length > 0) extras.mentionedUsers = mentionedUsers;
-        if (mentionTemplate) extras.mentionedMessageTemplate = mentionTemplate;
-        return extras;
-      };
-
       const tasks: Array<() => Promise<unknown>> = [];
       const useMFMBatch = isMultipleFilesMessageEnabled && compressedImageFiles.length > 1;
       if (useMFMBatch) {
-        const extras = takeFirstSendExtras();
         tasks.push(() => sendMultipleFilesMessage(
           compressedImageFiles,
           parentMessage ?? undefined,
-          extras,
         ));
       } else if (compressedImageFiles.length === 1) {
-        const extras = takeFirstSendExtras();
-        tasks.push(() => sendFileMessage(compressedImageFiles[0], parentMessage ?? undefined, extras));
+        tasks.push(() => sendFileMessage(compressedImageFiles[0], parentMessage ?? undefined));
       } else if (compressedImageFiles.length > 1) {
         compressedImageFiles.forEach((file) => {
-          const extras = takeFirstSendExtras();
-          tasks.push(() => sendFileMessage(file, parentMessage ?? undefined, extras));
+          tasks.push(() => sendFileMessage(file, parentMessage ?? undefined));
         });
       }
       otherFiles.forEach((file) => {
-        const extras = takeFirstSendExtras();
-        tasks.push(() => sendFileMessage(file, parentMessage ?? undefined, extras));
+        tasks.push(() => sendFileMessage(file, parentMessage ?? undefined));
       });
 
       // Sequential dispatch with per-task error isolation.

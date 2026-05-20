@@ -149,7 +149,9 @@ const stringSet = {
     MESSAGE_INPUT__PLACE_HOLDER__MUTED: 'Chat is unavailable because you\'re muted',
     MESSAGE_INPUT__PLACE_HOLDER__MUTED_SHORT: 'You\'re muted',
     MESSAGE_INPUT__QUOTE_REPLY__PLACE_HOLDER: 'Reply to message',
+    /** @deprecated Composer no longer allows text + files together; use `MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED`. Kept defined for backward compatibility with locale packs that reference this key. */
     MESSAGE_INPUT__PLACE_HOLDER__WITH_FILES: 'Add a message, or send',
+    MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED: 'Text disabled while file attached',
     MESSAGE_INPUT__DROP_ZONE__LABEL: 'Drop files here to attach',
     MESSAGE_INPUT__PENDING_FILE__REMOVE: 'Remove file',
     // Common UI

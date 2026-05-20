@@ -39,9 +39,11 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
     clearPendingFiles();
   }, [currentOpenChannel?.url]);
 
-  // OpenChannel does not support MultipleFilesMessage. Files send sequentially via FileMessage,
-  // with the body text attached to the first send. handleSendMessage reads the textarea ref
-  // directly, so the composer's text body lands on the UserMessage when files are absent.
+  // OpenChannel does not support MultipleFilesMessage. Files send sequentially
+  // via FileMessage and the composer's text body is suppressed when files are
+  // present (matches GroupChannel/Thread behavior). handleSendMessage reads the
+  // textarea ref directly, so text-only sends still land on UserMessage as
+  // before.
   const handleSubmit = useCallback(({
     message,
     files,
@@ -52,10 +54,7 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
       if (trimmed.length === 0) return;
       handleSendMessage();
     } else {
-      handleFileUpload(
-        files.map((entry) => entry.file),
-        trimmed.length > 0 ? { message } : undefined,
-      );
+      handleFileUpload(files.map((entry) => entry.file));
     }
 
     clearPendingFiles();
