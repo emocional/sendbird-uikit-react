@@ -4,7 +4,6 @@ import format from 'date-fns/format';
 import './index.scss';
 
 import Avatar from '../Avatar';
-import FileMessageCaption from '../FileMessageCaption';
 import ContextMenu, { MenuItems, MenuItem } from '../ContextMenu';
 import Label, { LabelTypography, LabelColors } from '../Label';
 import Loader from '../Loader';
@@ -164,7 +163,6 @@ export default function OpenChannelFileMessage({
               </div>
             )
           }
-          <FileMessageCaption message={message} />
           <div
             className="sendbird-openchannel-file-message__right__body"
             {...(isMobile ? { ...longPress } : {})}
