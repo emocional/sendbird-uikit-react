@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React, { ReactElement, useEffect, useRef } from 'react';
 
 import type { PendingFile } from '../hooks/usePendingFiles';
 import PendingFileItem from './PendingFileItem';
@@ -10,12 +10,28 @@ interface Props {
 }
 
 export const PendingFilesPreview = ({ pendingFiles, onRemove, className }: Props): ReactElement | null => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return undefined;
+    const onWheel = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth) return;
+      if (e.deltaY === 0 || Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
   if (pendingFiles.length === 0) return null;
 
   const classNames = ['sendbird-message-input__pending-preview', className].filter(Boolean).join(' ');
 
   return (
     <div
+      ref={containerRef}
       className={classNames}
       data-testid="sendbird-pending-files-preview"
       role="list"

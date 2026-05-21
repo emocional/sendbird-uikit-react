@@ -1,4 +1,4 @@
-import React, { ReactElement, useContext } from 'react';
+import React, { ReactElement, useContext, useMemo } from 'react';
 
 import type { PendingFile } from '../hooks/usePendingFiles';
 import Icon, { IconColors, IconTypes } from '../../Icon';
@@ -11,11 +11,31 @@ interface Props {
   onRemove: (id: string) => void;
 }
 
-/** Maximum filename characters to render before middle-truncation kicks in.
- * Sized for the card width across desktop / mobile-web / mobile-thread —
- * narrower viewports will visually crop further via CSS overflow, but the
- * truncated string still preserves the extension. */
-const FILENAME_MAX_CHARS = 22;
+const META_WIDTH_PX = 108;
+const FILENAME_FONT = '700 14px Roboto, sans-serif';
+
+function fitFilenameToWidth(filename: string): string {
+  if (typeof document === 'undefined') return filename;
+  const ctx = document.createElement('canvas').getContext('2d');
+  if (!ctx) return filename;
+  ctx.font = FILENAME_FONT;
+  if (ctx.measureText(filename).width <= META_WIDTH_PX) return filename;
+
+  let lo = 3;
+  let hi = filename.length;
+  let best = '...';
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const candidate = truncateMiddleKeepExtension(filename, mid);
+    if (ctx.measureText(candidate).width <= META_WIDTH_PX) {
+      best = candidate;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return best;
+}
 
 /** Extract the uppercased extension from the filename, falling back to a
  * localized "FILE" label when no extension is present. */
@@ -34,34 +54,36 @@ function getExtensionLabel(filename: string, fallback: string): string {
 export const PendingFileCard = ({ pendingFile, onRemove }: Props): ReactElement => {
   const { stringSet } = useContext(LocalizationContext);
   const { id, file } = pendingFile;
-  const displayName = truncateMiddleKeepExtension(file.name, FILENAME_MAX_CHARS);
+  const displayName = useMemo(() => fitFilenameToWidth(file.name), [file.name]);
   const extLabel = getExtensionLabel(file.name, stringSet.MESSAGE_INPUT__PENDING_FILE__TYPE_UNKNOWN);
 
   return (
     <div className="sendbird-message-input__pending-card" data-testid="sendbird-pending-file">
-      <div className="sendbird-message-input__pending-card__icon">
-        <Icon
-          type={IconTypes.FILE_DOCUMENT}
-          fillColor={IconColors.PRIMARY}
-          width="24px"
-          height="24px"
-        />
-      </div>
-      <div className="sendbird-message-input__pending-card__meta">
-        <Label
-          className="sendbird-message-input__pending-card__name"
-          type={LabelTypography.CAPTION_1}
-          color={LabelColors.ONBACKGROUND_1}
-        >
-          {displayName}
-        </Label>
-        <Label
-          className="sendbird-message-input__pending-card__type"
-          type={LabelTypography.CAPTION_3}
-          color={LabelColors.ONBACKGROUND_2}
-        >
-          {extLabel}
-        </Label>
+      <div className="sendbird-message-input__pending-card__body">
+        <div className="sendbird-message-input__pending-card__icon">
+          <Icon
+            type={IconTypes.FILE_DOCUMENT}
+            fillColor={IconColors.PRIMARY}
+            width="24px"
+            height="24px"
+          />
+        </div>
+        <div className="sendbird-message-input__pending-card__meta">
+          <Label
+            className="sendbird-message-input__pending-card__name"
+            type={LabelTypography.CAPTION_1}
+            color={LabelColors.ONBACKGROUND_1}
+          >
+            {displayName}
+          </Label>
+          <Label
+            className="sendbird-message-input__pending-card__type"
+            type={LabelTypography.CAPTION_2}
+            color={LabelColors.ONBACKGROUND_2}
+          >
+            {extLabel}
+          </Label>
+        </div>
       </div>
       <button
         type="button"
@@ -70,10 +92,9 @@ export const PendingFileCard = ({ pendingFile, onRemove }: Props): ReactElement 
         onClick={() => onRemove(id)}
       >
         <Icon
-          type={IconTypes.CLOSE}
-          fillColor={IconColors.CONTENT_INVERSE}
-          width="16px"
-          height="16px"
+          type={IconTypes.REMOVE}
+          width="22px"
+          height="22px"
         />
       </button>
     </div>

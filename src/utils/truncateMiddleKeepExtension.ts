@@ -6,11 +6,14 @@ const ELLIPSIS = '...';
  * returns it unchanged. If the extension alone exceeds the budget, the
  * extension is dropped and the head is truncated.
  *
- * The utility operates on character count, not pixel width — the caller is
- * responsible for picking a `maxChars` that fits the rendered container.
+ * The utility operates on Unicode code points (after NFC normalization), so
+ * Hangul syllables stay intact even when the input is decomposed jamo (as
+ * macOS produces), and surrogate pairs (emoji, supplementary CJK) are never
+ * split. The caller is responsible for picking a `maxChars` that fits the
+ * rendered container.
  *
  * Examples:
- *   truncateMiddleKeepExtension('File-name-is-too-long.pdf', 14) -> 'File-n...g.pdf'
+ *   truncateMiddleKeepExtension('File-name-is-too-long.pdf', 14) -> 'File...ong.pdf'
  *   truncateMiddleKeepExtension('short.pdf', 14)                 -> 'short.pdf'
  *   truncateMiddleKeepExtension('noextension', 14)               -> 'noextension'
  *   truncateMiddleKeepExtension('verylong.tar.gz', 10)           -> 've...tar.gz'
@@ -18,30 +21,32 @@ const ELLIPSIS = '...';
  */
 export function truncateMiddleKeepExtension(filename: string, maxChars: number): string {
   if (maxChars <= 0) return '';
-  if (filename.length <= maxChars) return filename;
+
+  const normalized = filename.normalize('NFC');
+  const chars = Array.from(normalized);
+
+  if (chars.length <= maxChars) return normalized;
   if (maxChars <= ELLIPSIS.length) return ELLIPSIS.slice(0, maxChars);
 
-  const dotIdx = filename.lastIndexOf('.');
-  // Treat a leading dot (".env") as no extension — there is no base name to split.
-  const hasExtension = dotIdx > 0 && dotIdx < filename.length - 1;
+  const dotIdx = chars.lastIndexOf('.');
+  const hasExtension = dotIdx > 0 && dotIdx < chars.length - 1;
+
   if (!hasExtension) {
-    return filename.slice(0, maxChars - ELLIPSIS.length) + ELLIPSIS;
+    return chars.slice(0, maxChars - ELLIPSIS.length).join('') + ELLIPSIS;
   }
 
-  const ext = filename.slice(dotIdx); // includes the leading dot
-  const base = filename.slice(0, dotIdx);
+  const extChars = chars.slice(dotIdx);
+  const baseChars = chars.slice(0, dotIdx);
 
-  // Layout: head + '...' + tail + ext = maxChars
-  // So head + tail = maxChars - ELLIPSIS - ext.length
-  const baseBudget = maxChars - ELLIPSIS.length - ext.length;
+  const baseBudget = maxChars - ELLIPSIS.length - extChars.length;
   if (baseBudget <= 0) {
-    // Extension does not fit alongside any base + ellipsis. Drop the
-    // extension and tail-truncate the full filename instead so the caller
-    // still sees a recognizable head.
-    return filename.slice(0, maxChars - ELLIPSIS.length) + ELLIPSIS;
+    return chars.slice(0, maxChars - ELLIPSIS.length).join('') + ELLIPSIS;
   }
 
   const headLen = Math.ceil(baseBudget / 2);
   const tailLen = baseBudget - headLen;
-  return base.slice(0, headLen) + ELLIPSIS + (tailLen > 0 ? base.slice(base.length - tailLen) : '') + ext;
+  return baseChars.slice(0, headLen).join('')
+    + ELLIPSIS
+    + (tailLen > 0 ? baseChars.slice(baseChars.length - tailLen).join('') : '')
+    + extChars.join('');
 }

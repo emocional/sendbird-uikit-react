@@ -53,10 +53,14 @@
     pointer-events: none;
     bottom: 12px;
     left: 16px;
+    right: 56px;
     height: 32px;
     font-family: var(--sendbird-font-family-default);
     font-size: 14px;
     line-height: 32px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .sendbird-message-input--attach {
@@ -133,6 +137,11 @@
   margin-bottom: 4px;
   overflow-x: auto;
   overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .sendbird-message-input__pending-file {
@@ -146,16 +155,15 @@
     position: relative;
     width: 72px;
     height: 72px;
-    border-radius: 8px;
-    overflow: hidden;
-    @include themed() {
-      background-color: t(bg-3);
-    }
   }
 
   .sendbird-message-input__pending-file__image {
-    width: 100%;
-    height: 100%;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
     object-fit: cover;
     display: block;
   }
@@ -170,89 +178,114 @@
 
   .sendbird-message-input__pending-file__remove {
     position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 20px;
-    height: 20px;
+    top: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
     padding: 0;
     border: none;
-    border-radius: 50%;
+    background-color: transparent;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    @include themed() {
-      background-color: t(overlay-2);
-    }
 
-    &:hover {
-      @include themed() {
-        background-color: t(on-bg-2);
+    .sendbird-icon [class*='fill'] {
+      .sendbird-theme--light & {
+        fill: var(--sendbird-light-onlight-02);
+      }
+
+      .sendbird-theme--dark & {
+        fill: var(--sendbird-dark-ondark-01);
       }
     }
   }
 }
 
 .sendbird-message-input__pending-card {
-  align-items: center;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: row;
   flex-shrink: 0;
-  gap: 8px;
-  padding: 8px 12px 8px 8px;
+  height: 72px;
   position: relative;
-  @include themed() {
-    background-color: t(bg-2);
+  width: 188px;
+
+  .sendbird-message-input__pending-card__body {
+    align-items: center;
+    border-radius: 12px;
+    bottom: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    height: 64px;
+    left: 0;
+    padding: 8px 12px;
+    position: absolute;
+    width: 180px;
+    @include themed() {
+      border: 1px solid t(on-bg-4);
+    }
+
+    .sendbird-theme--light & {
+      background-color: var(--sendbird-light-background-100);
+    }
+
+    .sendbird-theme--dark & {
+      background-color: var(--sendbird-dark-background-400);
+    }
   }
 
   .sendbird-message-input__pending-card__icon {
     align-items: center;
-    border-radius: 6px;
+    border-radius: 8px;
     display: flex;
     flex-shrink: 0;
     height: 40px;
     justify-content: center;
     width: 40px;
     @include themed() {
-      background-color: t(bg-3);
+      background-color: t(bg-0);
     }
   }
 
   .sendbird-message-input__pending-card__meta {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    flex-shrink: 0;
+    gap: 4px;
     min-width: 0;
     overflow: hidden;
+    width: 108px;
   }
 
   .sendbird-message-input__pending-card__name {
+    font-weight: 700;
+    line-height: 20px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
   .sendbird-message-input__pending-card__remove {
-    align-items: center;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
+    padding: 0;
     border: none;
-    border-radius: 50%;
+    background-color: transparent;
     cursor: pointer;
     display: flex;
-    height: 20px;
+    align-items: center;
     justify-content: center;
-    padding: 0;
-    position: absolute;
-    right: 4px;
-    top: 4px;
-    width: 20px;
-    @include themed() {
-      background-color: t(overlay-2);
-    }
 
-    &:hover {
-      @include themed() {
-        background-color: t(on-bg-2);
+    .sendbird-icon [class*='fill'] {
+      .sendbird-theme--light & {
+        fill: var(--sendbird-light-onlight-02);
+      }
+
+      .sendbird-theme--dark & {
+        fill: var(--sendbird-dark-ondark-01);
       }
     }
   }
@@ -304,7 +337,7 @@
     left: 16px;
     margin-bottom: 0;
     position: absolute;
-    right: 16px;
+    right: 56px;
     top: 12px;
   }
 

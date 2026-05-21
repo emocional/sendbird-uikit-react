@@ -49,10 +49,9 @@ export const PendingFileItem = ({ pendingFile, onRemove }: Props): ReactElement 
           onClick={() => onRemove(id)}
         >
           <Icon
-            type={IconTypes.CLOSE}
-            fillColor={IconColors.CONTENT_INVERSE}
-            width="16px"
-            height="16px"
+            type={IconTypes.REMOVE}
+            width="22px"
+            height="22px"
           />
         </button>
       </div>
