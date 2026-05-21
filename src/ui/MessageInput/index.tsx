@@ -632,10 +632,9 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
             type={LabelTypography.BODY_1}
             color={disabled ? LabelColors.ONBACKGROUND_4 : LabelColors.ONBACKGROUND_3}
           >
-            {placeholder
-              || (hasPendingFiles
-                ? stringSet.MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED
-                : stringSet.MESSAGE_INPUT__PLACE_HOLDER)}
+            {hasPendingFiles
+              ? stringSet.MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED
+              : (placeholder || stringSet.MESSAGE_INPUT__PLACE_HOLDER)}
           </Label>
         )}
         {/* send icon */}
