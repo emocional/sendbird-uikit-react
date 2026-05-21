@@ -11,6 +11,7 @@ interface Props {
 
 export const PendingFilesPreview = ({ pendingFiles, onRemove, className }: Props): ReactElement | null => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const prevCountRef = useRef(pendingFiles.length);
 
   useEffect(() => {
     const el = containerRef.current;
@@ -24,6 +25,15 @@ export const PendingFilesPreview = ({ pendingFiles, onRemove, className }: Props
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
   }, []);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (pendingFiles.length > prevCountRef.current) {
+      el.scrollTo({ left: el.scrollWidth, behavior: 'smooth' });
+    }
+    prevCountRef.current = pendingFiles.length;
+  }, [pendingFiles.length]);
 
   if (pendingFiles.length === 0) return null;
 
