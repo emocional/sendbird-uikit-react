@@ -51,11 +51,12 @@
   .sendbird-message-input--placeholder {
     position: absolute;
     pointer-events: none;
-    top: 18px;
+    bottom: 12px;
     left: 16px;
+    height: 32px;
     font-family: var(--sendbird-font-family-default);
     font-size: 14px;
-    line-height: 1.43;
+    line-height: 32px;
   }
 
   .sendbird-message-input--attach {
@@ -122,15 +123,6 @@
 
 .sendbird-message-input--composer {
   position: relative;
-}
-
-.sendbird-message-input--composer-active {
-  border-radius: 8px;
-  box-sizing: border-box;
-  padding: 8px;
-  @include themed() {
-    border: 1px solid t(primary-3);
-  }
 }
 
 .sendbird-message-input__pending-preview {
@@ -281,5 +273,49 @@
   cursor: not-allowed;
   @include themed() {
     color: t(on-bg-3);
+  }
+}
+
+.sendbird-message-input--has-pending {
+  .sendbird-message-input--textarea {
+    height: 126px;
+    max-height: 126px;
+    min-height: 126px;
+    overflow-y: hidden;
+    @include themed() {
+      border-color: t(primary-3);
+    }
+
+    &:focus {
+      @include themed() {
+        border-color: t(primary-3);
+        box-shadow: none;
+      }
+    }
+
+    &:active {
+      @include themed() {
+        border-color: t(primary-3);
+      }
+    }
+  }
+
+  .sendbird-message-input__pending-preview {
+    left: 16px;
+    margin-bottom: 0;
+    position: absolute;
+    right: 16px;
+    top: 12px;
+  }
+
+  .sendbird-message-input--placeholder {
+    bottom: 12px;
+    height: auto;
+    line-height: 1.43;
+    top: 94px;
+  }
+
+  .sendbird-message-input--send {
+    bottom: 12px;
   }
 }

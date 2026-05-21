@@ -530,13 +530,16 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         isEdit && 'sendbird-message-input__edit',
         disabled && 'sendbird-message-input-form__disabled',
         isComposerMode && 'sendbird-message-input--composer',
-        isComposerMode && hasPendingFiles && 'sendbird-message-input--composer-active',
       )}
     >
-      {!isEdit && isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (
-        <PendingFilesPreview pendingFiles={pendingFiles} onRemove={onRemoveFile} />
-      )}
-      <div className={classnames('sendbird-message-input', disabled && 'sendbird-message-input__disabled')} data-testid="sendbird-message-input">
+      <div
+        className={classnames(
+          'sendbird-message-input',
+          disabled && 'sendbird-message-input__disabled',
+          hasPendingFiles && 'sendbird-message-input--has-pending',
+        )}
+        data-testid="sendbird-message-input"
+      >
         {isMobileIOS(navigator.userAgent) && (
           <input
             id={'ghost-input-reset-ime-cjk'}
@@ -619,6 +622,9 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
             setTimeout(adjustScrollToCaret);
           }}
         />
+        {!isEdit && isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (
+          <PendingFilesPreview pendingFiles={pendingFiles} onRemove={onRemoveFile} />
+        )}
         {/* placeholder */}
         {getTextContentWithoutZeroWidthSpace(internalRef?.current).length === 0 && (
           <Label
