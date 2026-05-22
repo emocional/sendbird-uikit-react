@@ -129,6 +129,10 @@ export const MessageInputWrapperView = React.forwardRef((
 
   // Composer staging — file picker, drag-drop, and clipboard paste all feed
   // into pendingFiles. The submit handler drains them along with any text body.
+  const allowMultipleFiles = Boolean(isMultipleFilesMessageEnabled)
+    && Boolean(currentChannel)
+    && isChannelTypeSupportsMultipleFilesMessage(currentChannel as GroupChannel);
+  const effectiveMultiLimit = allowMultipleFiles ? uikitMultipleFilesMessageLimit : 1;
   const {
     pendingFiles,
     addFiles,
@@ -136,7 +140,7 @@ export const MessageInputWrapperView = React.forwardRef((
     clear: clearPendingFiles,
   } = usePendingFiles({
     uikitUploadSizeLimit,
-    uikitMultipleFilesMessageLimit,
+    uikitMultipleFilesMessageLimit: effectiveMultiLimit,
     openModal,
     stringSet,
     logger,
@@ -148,9 +152,6 @@ export const MessageInputWrapperView = React.forwardRef((
   // the input itself is not accepting new files (voice recording, channel
   // disabled).
   const isFileUploadEnabled = checkIfFileUploadEnabled({ channel: currentChannel ?? undefined, config });
-  const allowMultipleFiles = Boolean(isMultipleFilesMessageEnabled)
-    && Boolean(currentChannel)
-    && isChannelTypeSupportsMultipleFilesMessage(currentChannel as GroupChannel);
   const handleDroppedFiles = useCallback((dropped: File[]) => {
     const accepted = filterFilesForUpload(dropped, { acceptableMimeTypes, allowMultipleFiles });
     if (accepted.length === 0) return;

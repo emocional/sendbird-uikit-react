@@ -91,6 +91,10 @@ const ThreadMessageInput = (
   // Composer staging
   const { openModal } = useGlobalModalContext();
   const { uikitUploadSizeLimit, uikitMultipleFilesMessageLimit } = config;
+  const allowMultipleFiles = Boolean(isMultipleFilesMessageEnabled)
+    && Boolean(currentChannel)
+    && isChannelTypeSupportsMultipleFilesMessage(currentChannel);
+  const effectiveMultiLimit = allowMultipleFiles ? uikitMultipleFilesMessageLimit : 1;
   const {
     pendingFiles,
     addFiles,
@@ -98,7 +102,7 @@ const ThreadMessageInput = (
     clear: clearPendingFiles,
   } = usePendingFiles({
     uikitUploadSizeLimit,
-    uikitMultipleFilesMessageLimit,
+    uikitMultipleFilesMessageLimit: effectiveMultiLimit,
     openModal,
     stringSet,
     logger,
@@ -108,9 +112,6 @@ const ThreadMessageInput = (
   // thread panel (.sendbird-thread-ui). Drops elsewhere are picked up by the
   // main channel composer's hook instance.
   const isFileUploadEnabled = checkIfFileUploadEnabled({ channel: currentChannel ?? undefined, config });
-  const allowMultipleFiles = Boolean(isMultipleFilesMessageEnabled)
-    && Boolean(currentChannel)
-    && isChannelTypeSupportsMultipleFilesMessage(currentChannel);
   const handleDroppedFiles = useCallback((dropped: File[]) => {
     const accepted = filterFilesForUpload(dropped, { acceptableMimeTypes, allowMultipleFiles });
     if (accepted.length === 0) return;
