@@ -158,6 +158,7 @@ export const MessageInputWrapperView = React.forwardRef((
   });
 
   const stashedMentionedUsersRef = useRef<User[] | null>(null);
+  const stashedQuoteMessageRef = useRef<SendableMessageType | null>(null);
   const prevHasPendingFilesRef = useRef<boolean>(false);
   const hasPendingFilesInWrapper = pendingFiles.length > 0;
   useEffect(() => {
@@ -165,10 +166,17 @@ export const MessageInputWrapperView = React.forwardRef((
       if (mentionedUsers.length > 0) {
         stashedMentionedUsersRef.current = mentionedUsers;
       }
+      if (quoteMessage) {
+        stashedQuoteMessageRef.current = quoteMessage;
+      }
     } else if (!hasPendingFilesInWrapper && prevHasPendingFilesRef.current) {
       if (stashedMentionedUsersRef.current) {
         setMentionedUsers(stashedMentionedUsersRef.current);
         stashedMentionedUsersRef.current = null;
+      }
+      if (stashedQuoteMessageRef.current) {
+        setQuoteMessage(stashedQuoteMessageRef.current);
+        stashedQuoteMessageRef.current = null;
       }
     }
     prevHasPendingFilesRef.current = hasPendingFilesInWrapper;
@@ -185,6 +193,7 @@ export const MessageInputWrapperView = React.forwardRef((
     setShowVoiceMessageInput(false);
     clearPendingFiles();
     stashedMentionedUsersRef.current = null;
+    stashedQuoteMessageRef.current = null;
   }, [currentChannel?.url]);
 
   const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
