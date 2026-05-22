@@ -202,10 +202,28 @@ const ThreadMessageInput = (
     && !isDisabledBecauseMuted(currentChannel)
     && !currentChannel?.isBroadcast;
 
+  const stashedMentionedUsersRef = useRef<User[] | null>(null);
+  const prevHasPendingFilesRef = useRef<boolean>(false);
+  const hasPendingFilesInWrapper = pendingFiles.length > 0;
+  useEffect(() => {
+    if (hasPendingFilesInWrapper && !prevHasPendingFilesRef.current) {
+      if (mentionedUsers.length > 0) {
+        stashedMentionedUsersRef.current = mentionedUsers;
+      }
+    } else if (!hasPendingFilesInWrapper && prevHasPendingFilesRef.current) {
+      if (stashedMentionedUsersRef.current) {
+        setMentionedUsers(stashedMentionedUsersRef.current);
+        stashedMentionedUsersRef.current = null;
+      }
+    }
+    prevHasPendingFilesRef.current = hasPendingFilesInWrapper;
+  }, [hasPendingFilesInWrapper]);
+
   // Reset when changing channel
   useEffect(() => {
     setShowVoiceMessageInput(false);
     clearPendingFiles();
+    stashedMentionedUsersRef.current = null;
   }, [currentChannel?.url]);
 
   const mentionNodes = useDirtyGetMentions({ ref: ref || messageInputRef }, { logger });

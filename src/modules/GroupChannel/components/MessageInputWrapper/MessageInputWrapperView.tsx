@@ -1,5 +1,5 @@
 import './index.scss';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import type { User } from '@sendbird/chat';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
@@ -157,6 +157,23 @@ export const MessageInputWrapperView = React.forwardRef((
     },
   });
 
+  const stashedMentionedUsersRef = useRef<User[] | null>(null);
+  const prevHasPendingFilesRef = useRef<boolean>(false);
+  const hasPendingFilesInWrapper = pendingFiles.length > 0;
+  useEffect(() => {
+    if (hasPendingFilesInWrapper && !prevHasPendingFilesRef.current) {
+      if (mentionedUsers.length > 0) {
+        stashedMentionedUsersRef.current = mentionedUsers;
+      }
+    } else if (!hasPendingFilesInWrapper && prevHasPendingFilesRef.current) {
+      if (stashedMentionedUsersRef.current) {
+        setMentionedUsers(stashedMentionedUsersRef.current);
+        stashedMentionedUsersRef.current = null;
+      }
+    }
+    prevHasPendingFilesRef.current = hasPendingFilesInWrapper;
+  }, [hasPendingFilesInWrapper]);
+
   // Operate states
   useEffect(() => {
     setMentionNickname('');
@@ -167,6 +184,7 @@ export const MessageInputWrapperView = React.forwardRef((
     setMessageInputEvent(null);
     setShowVoiceMessageInput(false);
     clearPendingFiles();
+    stashedMentionedUsersRef.current = null;
   }, [currentChannel?.url]);
 
   const { startTyping, stopTyping } = useTypingLifecycle(currentChannel);
