@@ -4,6 +4,7 @@ import MessageInput from '../../../../ui/MessageInput';
 import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { useDragAndDrop } from '../../../../ui/MessageInput/hooks/useDragAndDrop';
+import { checkIfFileUploadEnabled } from '../../../../ui/MessageInput/messageInputUtils';
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { useOpenChannelContext } from '../../context/OpenChannelProvider';
 import { useGlobalModalContext } from '../../../../hooks/useModal';
@@ -38,9 +39,10 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
     logger,
   });
 
+  const isFileUploadEnabled = checkIfFileUploadEnabled({ channel: currentOpenChannel ?? undefined, config });
   useDragAndDrop({
     onAddFiles: addFiles,
-    disabled: isMobile || disabled,
+    disabled: isMobile || disabled || !isFileUploadEnabled,
   });
 
   useEffect(() => {
