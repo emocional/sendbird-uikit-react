@@ -211,14 +211,40 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     setIsInput(hasTextContentWithoutZeroWidthSpace(textField));
   }, [initialValue]);
 
+  const stashedHtmlRef = useRef<string>('');
+  const prevHasPendingFilesRef = useRef<boolean>(false);
+
   // #Mention | Clear input value when channel changes
   useEffect(() => {
     if (!isEdit) {
       setIsInput(false);
       resetInput(internalRef);
       wasTypingRef.current = false;
+      stashedHtmlRef.current = '';
     }
   }, [channelUrl]);
+
+  useEffect(() => {
+    const textField = internalRef?.current;
+    if (!textField) {
+      prevHasPendingFilesRef.current = hasPendingFiles;
+      return;
+    }
+    if (hasPendingFiles && !prevHasPendingFilesRef.current) {
+      if (hasTextContentWithoutZeroWidthSpace(textField)) {
+        stashedHtmlRef.current = textField.innerHTML;
+        resetInput(internalRef);
+        setIsInput(false);
+      }
+    } else if (!hasPendingFiles && prevHasPendingFilesRef.current) {
+      if (stashedHtmlRef.current) {
+        textField.innerHTML = stashedHtmlRef.current;
+        stashedHtmlRef.current = '';
+        setIsInput(true);
+      }
+    }
+    prevHasPendingFilesRef.current = hasPendingFiles;
+  }, [hasPendingFiles]);
 
   // #Mention & #Edit | Fill message input values
   useEffect(() => {
