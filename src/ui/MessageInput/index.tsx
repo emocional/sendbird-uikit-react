@@ -656,7 +656,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
           <Label
             className="sendbird-message-input--placeholder"
             type={LabelTypography.BODY_1}
-            color={disabled ? LabelColors.ONBACKGROUND_4 : LabelColors.ONBACKGROUND_3}
+            color={LabelColors.ONBACKGROUND_4}
           >
             {hasPendingFiles
               ? stringSet.MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED

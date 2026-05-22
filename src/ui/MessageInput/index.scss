@@ -349,5 +349,11 @@
 
   .sendbird-message-input--send {
     bottom: 12px;
+
+    @include mobile() {
+      bottom: auto;
+      top: 50%;
+      transform: translateY(-50%);
+    }
   }
 }
