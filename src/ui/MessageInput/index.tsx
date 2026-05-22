@@ -18,7 +18,7 @@ import {
   sanitizeString,
   stripZeroWidthSpace,
 } from './utils';
-import { arrayEqual, getMimeTypesUIKitAccepts } from '../../utils';
+import { arrayEqual, getMimeTypesUIKitAccepts, isFileAllowedByAccept } from '../../utils';
 import { usePaste } from './hooks/usePaste';
 import type { PendingFile } from './hooks/usePendingFiles';
 import PendingFilesPreview from './composer/PendingFilesPreview';
@@ -190,11 +190,17 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
   // if one did, staged files would have nowhere to go (Send is replaced by
   // Cancel/Save). Belt-and-suspenders.
   const fileProducerEnabled = isComposerMode && isFileUploadEnabled && !disabled && !isEdit;
+  const allowMultipleFiles = isSelectingMultipleFilesEnabled && isChannelTypeSupportsMultipleFilesMessage(channel);
   const guardedAddFiles = useCallback((incoming: File[]) => {
     if (!fileProducerEnabled || !onAddFiles) return;
     if (incoming.length === 0) return;
-    onAddFiles(incoming);
-  }, [fileProducerEnabled, onAddFiles]);
+    const mimeFiltered = (acceptableMimeTypes && acceptableMimeTypes.length > 0)
+      ? incoming.filter((file) => isFileAllowedByAccept(file, acceptableMimeTypes))
+      : incoming;
+    const capped = allowMultipleFiles ? mimeFiltered : mimeFiltered.slice(0, 1);
+    if (capped.length === 0) return;
+    onAddFiles(capped);
+  }, [fileProducerEnabled, onAddFiles, acceptableMimeTypes, allowMultipleFiles]);
 
   const fileInputRef = useRef<HTMLInputElement>();
   const [isInput, setIsInput] = useState(false);

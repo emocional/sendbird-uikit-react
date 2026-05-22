@@ -96,6 +96,7 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
     <div className="sendbird-openchannel-footer">
       <MessageInput
         channel={currentOpenChannel}
+        channelUrl={currentOpenChannel?.url}
         ref={ref}
         value={value}
         disabled={disabled}

@@ -364,6 +364,7 @@ export const MessageInputWrapperView = React.forwardRef((
         <div className="sendbird-message-input-wrapper__quote-message-input">
           <QuoteMessageInput replyingMessage={quoteMessage} onClose={() => {
             setQuoteMessage(null);
+            stashedQuoteMessageRef.current = null;
           }} />
         </div>
       )}
