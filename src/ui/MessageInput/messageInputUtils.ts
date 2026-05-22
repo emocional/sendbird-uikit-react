@@ -8,6 +8,7 @@ import type { OpenChannel } from '@sendbird/chat/openChannel';
 import { match } from 'ts-pattern';
 
 import type { SendbirdStateConfig } from '../../lib/Sendbird/types';
+import { isFileAllowedByAccept } from '../../utils';
 
 /**
  * FIXME:
@@ -39,4 +40,17 @@ export const checkIfFileUploadEnabled = ({ channel, config }: {
     .otherwise(() => true);
 
   return isEnabled;
+};
+
+export interface FilterFilesForUploadParams {
+  acceptableMimeTypes?: string[];
+  allowMultipleFiles: boolean;
+}
+
+export const filterFilesForUpload = (
+  files: File[],
+  { acceptableMimeTypes, allowMultipleFiles }: FilterFilesForUploadParams,
+): File[] => {
+  const mimeFiltered = files.filter((file) => isFileAllowedByAccept(file, acceptableMimeTypes));
+  return allowMultipleFiles ? mimeFiltered : mimeFiltered.slice(0, 1);
 };

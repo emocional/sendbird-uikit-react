@@ -12,7 +12,8 @@ import MessageInput from '../../../../ui/MessageInput';
 import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { useDragAndDrop } from '../../../../ui/MessageInput/hooks/useDragAndDrop';
-import { checkIfFileUploadEnabled } from '../../../../ui/MessageInput/messageInputUtils';
+import { checkIfFileUploadEnabled, filterFilesForUpload } from '../../../../ui/MessageInput/messageInputUtils';
+import { isChannelTypeSupportsMultipleFilesMessage } from '../../../../ui/MessageInput/utils';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
 import { SuggestedMentionList } from '../SuggestedMentionList';
 import { VoiceMessageInputWrapper } from '../../../GroupChannel/components/MessageInputWrapper';
@@ -107,8 +108,16 @@ const ThreadMessageInput = (
   // thread panel (.sendbird-thread-ui). Drops elsewhere are picked up by the
   // main channel composer's hook instance.
   const isFileUploadEnabled = checkIfFileUploadEnabled({ channel: currentChannel ?? undefined, config });
+  const allowMultipleFiles = Boolean(isMultipleFilesMessageEnabled)
+    && Boolean(currentChannel)
+    && isChannelTypeSupportsMultipleFilesMessage(currentChannel);
+  const handleDroppedFiles = useCallback((dropped: File[]) => {
+    const accepted = filterFilesForUpload(dropped, { acceptableMimeTypes, allowMultipleFiles });
+    if (accepted.length === 0) return;
+    addFiles(accepted);
+  }, [addFiles, acceptableMimeTypes, allowMultipleFiles]);
   useDragAndDrop({
-    onAddFiles: addFiles,
+    onAddFiles: handleDroppedFiles,
     disabled: isMobile || threadInputDisabled || showVoiceMessageInput || !isFileUploadEnabled,
     shouldAccept: (event) => {
       const target = event.target;

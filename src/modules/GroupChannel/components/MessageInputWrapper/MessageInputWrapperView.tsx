@@ -30,7 +30,8 @@ import MessageInput from '../../../../ui/MessageInput';
 import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { useDragAndDrop } from '../../../../ui/MessageInput/hooks/useDragAndDrop';
-import { checkIfFileUploadEnabled } from '../../../../ui/MessageInput/messageInputUtils';
+import { checkIfFileUploadEnabled, filterFilesForUpload } from '../../../../ui/MessageInput/messageInputUtils';
+import { isChannelTypeSupportsMultipleFilesMessage } from '../../../../ui/MessageInput/utils';
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
@@ -147,8 +148,16 @@ export const MessageInputWrapperView = React.forwardRef((
   // the input itself is not accepting new files (voice recording, channel
   // disabled).
   const isFileUploadEnabled = checkIfFileUploadEnabled({ channel: currentChannel ?? undefined, config });
+  const allowMultipleFiles = Boolean(isMultipleFilesMessageEnabled)
+    && Boolean(currentChannel)
+    && isChannelTypeSupportsMultipleFilesMessage(currentChannel as GroupChannel);
+  const handleDroppedFiles = useCallback((dropped: File[]) => {
+    const accepted = filterFilesForUpload(dropped, { acceptableMimeTypes, allowMultipleFiles });
+    if (accepted.length === 0) return;
+    addFiles(accepted);
+  }, [addFiles, acceptableMimeTypes, allowMultipleFiles]);
   useDragAndDrop({
-    onAddFiles: addFiles,
+    onAddFiles: handleDroppedFiles,
     disabled: isMobile || isMessageInputDisabled || showVoiceMessageInput || !isFileUploadEnabled,
     shouldAccept: (event) => {
       const target = event.target;
@@ -250,6 +259,7 @@ export const MessageInputWrapperView = React.forwardRef((
     setMentionNickname('');
     setMentionedUsers([]);
     setQuoteMessage(null);
+    stashedQuoteMessageRef.current = null;
     stopTyping();
     clearPendingFiles();
 

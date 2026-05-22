@@ -3,9 +3,10 @@ import { isFileAllowedByAccept } from '..';
 const makeFile = (name: string, type = ''): File => new File([new Uint8Array(1)], name, { type });
 
 describe('isFileAllowedByAccept', () => {
-  it('accepts everything when acceptableMimeTypes is undefined or empty', () => {
+  it('falls back to UIKit default supported MIME/extension list when acceptableMimeTypes is undefined or empty', () => {
     expect(isFileAllowedByAccept(makeFile('a.zip', 'application/zip'), undefined)).toBe(true);
-    expect(isFileAllowedByAccept(makeFile('a.zip', 'application/zip'), [])).toBe(true);
+    expect(isFileAllowedByAccept(makeFile('photo.png', 'image/png'), [])).toBe(true);
+    expect(isFileAllowedByAccept(makeFile('installer.dmg', 'application/x-apple-diskimage'), undefined)).toBe(false);
   });
 
   it('matches by MIME exact when consumer passes a raw MIME', () => {

@@ -163,7 +163,6 @@ export const getMimeTypesUIKitAccepts = (acceptableTypes?: string[]): string => 
 };
 
 export const isFileAllowedByAccept = (file: File, acceptableMimeTypes?: string[]): boolean => {
-  if (!acceptableMimeTypes || acceptableMimeTypes.length === 0) return true;
   const tokens = getMimeTypesUIKitAccepts(acceptableMimeTypes)
     .split(',')
     .map((token) => token.trim().toLowerCase())

@@ -18,14 +18,14 @@ import {
   sanitizeString,
   stripZeroWidthSpace,
 } from './utils';
-import { arrayEqual, getMimeTypesUIKitAccepts, isFileAllowedByAccept } from '../../utils';
+import { arrayEqual, getMimeTypesUIKitAccepts } from '../../utils';
 import { usePaste } from './hooks/usePaste';
 import type { PendingFile } from './hooks/usePendingFiles';
 import PendingFilesPreview from './composer/PendingFilesPreview';
 import { tokenizeMessage } from '../../modules/Message/utils/tokens/tokenize';
 import { USER_MENTION_PREFIX } from '../../modules/Message/consts';
 import { TOKEN_TYPES } from '../../modules/Message/utils/tokens/types';
-import { checkIfFileUploadEnabled } from './messageInputUtils';
+import { checkIfFileUploadEnabled, filterFilesForUpload } from './messageInputUtils';
 import { classnames } from '../../utils/utils';
 import { isMobileIOS } from '../../utils/browser';
 
@@ -194,12 +194,9 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
   const guardedAddFiles = useCallback((incoming: File[]) => {
     if (!fileProducerEnabled || !onAddFiles) return;
     if (incoming.length === 0) return;
-    const mimeFiltered = (acceptableMimeTypes && acceptableMimeTypes.length > 0)
-      ? incoming.filter((file) => isFileAllowedByAccept(file, acceptableMimeTypes))
-      : incoming;
-    const capped = allowMultipleFiles ? mimeFiltered : mimeFiltered.slice(0, 1);
-    if (capped.length === 0) return;
-    onAddFiles(capped);
+    const accepted = filterFilesForUpload(incoming, { acceptableMimeTypes, allowMultipleFiles });
+    if (accepted.length === 0) return;
+    onAddFiles(accepted);
   }, [fileProducerEnabled, onAddFiles, acceptableMimeTypes, allowMultipleFiles]);
 
   const fileInputRef = useRef<HTMLInputElement>();
