@@ -3,6 +3,8 @@ import { LocalizationContext } from '../../../../lib/LocalizationContext';
 import MessageInput from '../../../../ui/MessageInput';
 import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
 import { usePendingFiles } from '../../../../ui/MessageInput/hooks/usePendingFiles';
+import { useDragAndDrop } from '../../../../ui/MessageInput/hooks/useDragAndDrop';
+import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { useOpenChannelContext } from '../../context/OpenChannelProvider';
 import { useGlobalModalContext } from '../../../../hooks/useModal';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
@@ -19,7 +21,8 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
   const { stringSet } = useContext(LocalizationContext);
   const { openModal } = useGlobalModalContext();
   const { state: { config } } = useSendbird();
-  const { uikitUploadSizeLimit, uikitMultipleFilesMessageLimit, logger } = config;
+  const { uikitUploadSizeLimit, logger } = config;
+  const { isMobile } = useMediaQueryContext();
   const { value } = props;
 
   const {
@@ -29,10 +32,15 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
     clear: clearPendingFiles,
   } = usePendingFiles({
     uikitUploadSizeLimit,
-    uikitMultipleFilesMessageLimit,
+    uikitMultipleFilesMessageLimit: 1,
     openModal,
     stringSet,
     logger,
+  });
+
+  useDragAndDrop({
+    onAddFiles: addFiles,
+    disabled: isMobile || disabled,
   });
 
   useEffect(() => {
