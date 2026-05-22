@@ -70,4 +70,46 @@ describe('truncateMiddleKeepExtension', () => {
       }
     }
   });
+
+  it('normalizes decomposed Hangul (NFD) to composed syllables (NFC)', () => {
+    // macOS surfaces Korean filenames in NFD: '한' is stored as ᄒ + ᅡ + ᆫ
+    // (3 code points). The output must use the composed form so slicing never
+    // lands inside a syllable.
+    const nfdHangul = '한글.pdf'; // 한글.pdf in NFD
+    const out = truncateMiddleKeepExtension(nfdHangul, 20);
+    expect(out).toBe('한글.pdf');
+    expect(out.normalize('NFC')).toBe(out);
+  });
+
+  it('truncates Korean filenames at syllable boundaries (never orphan jamo)', () => {
+    const input = '한글파일이름이매우길어요.pdf';
+    const out = truncateMiddleKeepExtension(input, 10);
+    expect(out).toContain('...');
+    expect(out.endsWith('.pdf')).toBe(true);
+    // Output must not contain bare jamo (U+1100-U+11FF Hangul Jamo or
+    // U+3130-U+318F Compatibility Jamo). All Hangul should be composed
+    // syllables (U+AC00-U+D7AF).
+    expect(/[ᄀ-ᇿ㄰-㆏]/.test(out)).toBe(false);
+  });
+
+  it('keeps surrogate pairs (emoji) intact when truncating', () => {
+    // '👨‍👩‍👧' style emojis are surrogate pairs in UTF-16. Code-unit slicing
+    // could split them; code-point iteration must not.
+    const input = 'photo📸from📷camera🎥holiday.jpg';
+    const out = truncateMiddleKeepExtension(input, 15);
+    expect(out.length).toBeLessThanOrEqual(15);
+    // No lone high/low surrogates in the output.
+    for (let i = 0; i < out.length; i += 1) {
+      const code = out.charCodeAt(i);
+      const isHigh = code >= 0xD800 && code <= 0xDBFF;
+      const isLow = code >= 0xDC00 && code <= 0xDFFF;
+      if (isHigh) {
+        const next = out.charCodeAt(i + 1);
+        expect(next >= 0xDC00 && next <= 0xDFFF).toBe(true);
+        i += 1;
+      } else {
+        expect(isLow).toBe(false);
+      }
+    }
+  });
 });
