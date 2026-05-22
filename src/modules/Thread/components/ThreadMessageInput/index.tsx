@@ -124,6 +124,7 @@ const ThreadMessageInput = (
   // here. parentMessage is always the thread parent so each send threads
   // correctly. The caption read path is preserved elsewhere for historical
   // file messages that still carry a body.
+  const isSubmittingFilesRef = useRef(false);
   const handleSubmit = useCallback(async ({
     message,
     mentionTemplate,
@@ -139,7 +140,21 @@ const ThreadMessageInput = (
         mentionTemplate,
         quoteMessage: parentMessage,
       });
-    } else {
+      setMentionNickname('');
+      setMentionedUsers([]);
+      stopTyping();
+      return;
+    }
+
+    if (isSubmittingFilesRef.current) return;
+    isSubmittingFilesRef.current = true;
+
+    setMentionNickname('');
+    setMentionedUsers([]);
+    stopTyping();
+    clearPendingFiles();
+
+    try {
       const rawImageFiles = files.filter((entry) => entry.isImage).map((entry) => entry.file);
       const otherFiles = files.filter((entry) => !entry.isImage).map((entry) => entry.file);
       const { compressedFiles: compressedImageFiles } = await compressImages({
@@ -176,12 +191,9 @@ const ThreadMessageInput = (
           }
         }
       })();
+    } finally {
+      isSubmittingFilesRef.current = false;
     }
-
-    setMentionNickname('');
-    setMentionedUsers([]);
-    stopTyping();
-    clearPendingFiles();
   }, [
     sendMessage,
     sendFileMessage,

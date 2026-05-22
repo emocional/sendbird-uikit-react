@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect } from 'react';
+import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
 import MessageInput from '../../../../ui/MessageInput';
 import type { PendingFile } from '../../../../ui/MessageInput/hooks/usePendingFiles';
@@ -54,6 +54,7 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
   // present (matches GroupChannel/Thread behavior). handleSendMessage reads the
   // textarea ref directly, so text-only sends still land on UserMessage as
   // before.
+  const isSubmittingFilesRef = useRef(false);
   const handleSubmit = useCallback(({
     message,
     files,
@@ -63,11 +64,19 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
     if (files.length === 0) {
       if (trimmed.length === 0) return;
       handleSendMessage();
-    } else {
-      handleFileUpload(files.map((entry) => entry.file));
+      return;
     }
 
+    if (isSubmittingFilesRef.current) return;
+    isSubmittingFilesRef.current = true;
+
     clearPendingFiles();
+
+    try {
+      handleFileUpload(files.map((entry) => entry.file));
+    } finally {
+      isSubmittingFilesRef.current = false;
+    }
   }, [handleSendMessage, handleFileUpload, clearPendingFiles]);
 
   function getPlaceHolderString() {

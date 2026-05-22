@@ -202,6 +202,8 @@ export const MessageInputWrapperView = React.forwardRef((
     );
   }, [mentionedUserIds]);
 
+  const isSubmittingFilesRef = useRef(false);
+
   // Submit handler: drains pendingFiles XOR text body. Files and body do not
   // coexist in a single send anymore — when files are present, text from the
   // composer is suppressed at the UI level (textarea locked) and again here
@@ -223,7 +225,26 @@ export const MessageInputWrapperView = React.forwardRef((
         mentionedMessageTemplate: mentionTemplate,
         parentMessageId,
       });
-    } else {
+      setMentionNickname('');
+      setMentionedUsers([]);
+      setQuoteMessage(null);
+      stopTyping();
+      return;
+    }
+
+    if (isSubmittingFilesRef.current) return;
+    isSubmittingFilesRef.current = true;
+
+    // Clear pending state and other composer state immediately so a rapid
+    // second send (within the compression window) finds an empty queue and
+    // bails out at MessageInput's sendMessage gate.
+    setMentionNickname('');
+    setMentionedUsers([]);
+    setQuoteMessage(null);
+    stopTyping();
+    clearPendingFiles();
+
+    try {
       // Compress images before send (matches legacy useHandleUploadFiles behavior).
       const rawImageFiles = files.filter((entry) => entry.isImage).map((entry) => entry.file);
       const otherFiles = files.filter((entry) => !entry.isImage).map((entry) => entry.file);
@@ -280,13 +301,9 @@ export const MessageInputWrapperView = React.forwardRef((
           }
         }
       })();
+    } finally {
+      isSubmittingFilesRef.current = false;
     }
-
-    setMentionNickname('');
-    setMentionedUsers([]);
-    setQuoteMessage(null);
-    stopTyping();
-    clearPendingFiles();
   }, [
     sendUserMessage,
     sendFileMessage,
