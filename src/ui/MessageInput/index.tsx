@@ -667,12 +667,12 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
           </Label>
         )}
         {/* send icon */}
-        {!isEdit && (isInput || hasPendingFiles) && (
+        {!isEdit && (isInput || hasPendingFiles) && !disabled && (
           <IconButton className="sendbird-message-input--send" height="32px" width="32px" onClick={() => sendMessage()} testID="sendbird-message-input-send-button">
             {renderSendMessageIcon?.() || (
               <Icon
                 type={IconTypes.SEND}
-                fillColor={disabled ? IconColors.ON_BACKGROUND_4 : IconColors.PRIMARY}
+                fillColor={IconColors.PRIMARY}
                 width="20px"
                 height="20px"
               />
