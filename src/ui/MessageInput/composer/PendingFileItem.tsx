@@ -27,6 +27,14 @@ export const PendingFileItem = ({ pendingFile, onRemove }: Props): ReactElement 
   return (
     <div className="sendbird-message-input__pending-file" data-testid="sendbird-pending-file">
       <div className="sendbird-message-input__pending-file__thumbnail">
+        {previewUrl && (
+          <img
+            className="sendbird-message-input__pending-file__image"
+            src={previewUrl}
+            alt={file.name}
+            onLoad={() => setImageLoaded(true)}
+          />
+        )}
         {!imageLoaded && (
           <div className="sendbird-message-input__pending-file__image-placeholder">
             <Icon
@@ -36,14 +44,6 @@ export const PendingFileItem = ({ pendingFile, onRemove }: Props): ReactElement 
               height="32px"
             />
           </div>
-        )}
-        {previewUrl && (
-          <img
-            className="sendbird-message-input__pending-file__image"
-            src={previewUrl}
-            alt={file.name}
-            onLoad={() => setImageLoaded(true)}
-          />
         )}
         <button
           type="button"
