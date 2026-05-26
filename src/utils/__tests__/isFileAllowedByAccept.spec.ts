@@ -37,4 +37,19 @@ describe('isFileAllowedByAccept', () => {
     expect(isFileAllowedByAccept(makeFile('PHOTO.JPG', 'image/jpeg'), ['.JPG'])).toBe(true);
     expect(isFileAllowedByAccept(makeFile('photo.jpg', 'image/jpeg'), ['.JPG'])).toBe(true);
   });
+
+  it('allows extensionless files with unknown MIME when acceptableMimeTypes is not restricted', () => {
+    expect(isFileAllowedByAccept(makeFile('README', ''), undefined)).toBe(true);
+    expect(isFileAllowedByAccept(makeFile('Makefile', ''), [])).toBe(true);
+    expect(isFileAllowedByAccept(makeFile('.bashrc', ''), undefined)).toBe(true);
+  });
+
+  it('still rejects extensionless files when acceptableMimeTypes is explicitly restricted', () => {
+    expect(isFileAllowedByAccept(makeFile('README', ''), ['image'])).toBe(false);
+    expect(isFileAllowedByAccept(makeFile('Makefile', ''), ['video'])).toBe(false);
+  });
+
+  it('still rejects files with explicit unsupported extension even when MIME is unknown', () => {
+    expect(isFileAllowedByAccept(makeFile('installer.dmg', ''), undefined)).toBe(false);
+  });
 });
