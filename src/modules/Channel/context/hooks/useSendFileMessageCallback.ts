@@ -31,11 +31,6 @@ export default function useSendFileMessageCallback(
     (
       compressedFile: File,
       quoteMessage?: SendableMessageType,
-      extraParams?: {
-        message?: string;
-        mentionedUsers?: import('@sendbird/chat').User[];
-        mentionedMessageTemplate?: string;
-      },
     ) => new Promise<FileMessage>((resolve, reject) => {
       // Create FileMessageParams
       let params = onBeforeSendFileMessage?.(compressedFile, quoteMessage);
@@ -45,11 +40,6 @@ export default function useSendFileMessageCallback(
           params.isReplyToChannel = true;
           params.parentMessageId = quoteMessage.messageId;
         }
-      }
-      if (extraParams?.message && !params.message) params.message = extraParams.message;
-      if (extraParams?.mentionedUsers && !params.mentionedUsers) params.mentionedUsers = extraParams.mentionedUsers;
-      if (extraParams?.mentionedMessageTemplate) {
-        (params as FileMessageCreateParams & { mentionedMessageTemplate?: string }).mentionedMessageTemplate = extraParams.mentionedMessageTemplate;
       }
 
       // Send FileMessage

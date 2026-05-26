@@ -18,21 +18,6 @@ export interface MessageInputWrapperProps {
  * For more information, please refer to the migration guide:
  * https://docs.sendbird.com/docs/chat/uikit/v3/react/introduction/group-channel-migration-guide
  */
-interface MessageBearingParams {
-  message?: string;
-  mentionedUsers?: import('@sendbird/chat').User[];
-}
-
-const buildExtras = (params: MessageBearingParams): { message?: string; mentionedUsers?: import('@sendbird/chat').User[]; mentionedMessageTemplate?: string } | undefined => {
-  const template = (params as MessageBearingParams & { mentionedMessageTemplate?: string }).mentionedMessageTemplate;
-  if (!params.message && !params.mentionedUsers && !template) return undefined;
-  const extras: { message?: string; mentionedUsers?: import('@sendbird/chat').User[]; mentionedMessageTemplate?: string } = {};
-  if (params.message) extras.message = params.message;
-  if (params.mentionedUsers) extras.mentionedUsers = params.mentionedUsers;
-  if (template) extras.mentionedMessageTemplate = template;
-  return extras;
-};
-
 export const MessageInputWrapper = (props: MessageInputWrapperProps) => {
   const context = useChannelContext();
   const { quoteMessage, currentGroupChannel, sendMessage, sendFileMessage, sendVoiceMessage, sendMultipleFilesMessage } = context;
@@ -52,22 +37,15 @@ export const MessageInputWrapper = (props: MessageInputWrapperProps) => {
         });
       }}
       sendFileMessage={(params) => {
-        const extras = buildExtras(params);
-        return sendFileMessage(
-          params.file as File,
-          quoteMessage ?? undefined,
-          extras,
-        );
+        return sendFileMessage(params.file as File, quoteMessage ?? undefined);
       }}
       sendVoiceMessage={({ file }, duration) => {
         return sendVoiceMessage(file as File, duration, quoteMessage ?? undefined);
       }}
       sendMultipleFilesMessage={(params) => {
-        const extras = buildExtras(params);
         return sendMultipleFilesMessage(
           params.fileInfoList.map((fileInfo) => fileInfo.file) as File[],
           quoteMessage ?? undefined,
-          extras,
         );
       }}
     />

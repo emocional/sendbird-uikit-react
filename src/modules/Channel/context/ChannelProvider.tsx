@@ -157,9 +157,9 @@ export interface ChannelProviderInterface extends ChannelContextProps, MessageSt
   resendMessage(failedMessage: SendableMessageType): void,
   // TODO: Good to change interface to using params / This part need refactoring
   sendMessage: SendMessageType,
-  sendFileMessage: (file: File, quoteMessage?: SendableMessageType, extraParams?: { message?: string; mentionedUsers?: User[]; mentionedMessageTemplate?: string }) => Promise<FileMessage>,
+  sendFileMessage: (file: File, quoteMessage?: SendableMessageType) => Promise<FileMessage>,
   sendVoiceMessage: (file: File, duration: number, quoteMessage?: SendableMessageType) => Promise<FileMessage>,
-  sendMultipleFilesMessage: (files: Array<File>, quoteMessage?: SendableMessageType, extraParams?: { message?: string; mentionedUsers?: User[]; mentionedMessageTemplate?: string }) => Promise<MultipleFilesMessage>,
+  sendMultipleFilesMessage: (files: Array<File>, quoteMessage?: SendableMessageType) => Promise<MultipleFilesMessage>,
   toggleReaction(message: SendableMessageType, emojiKey: string, isReacted: boolean): void,
   renderUserMentionItem?: (props: { user: User }) => JSX.Element;
 }

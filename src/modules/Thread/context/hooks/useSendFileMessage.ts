@@ -25,19 +25,9 @@ interface LocalFileMessage extends FileMessage {
   file: File;
 }
 
-export interface SendFileMessageExtraParams {
-  /** Optional text body. Attached to params.message when onBeforeSendFileMessage did not already set one. */
-  message?: string;
-  /** Optional mentioned users. Carried for push notification + UI attribution. */
-  mentionedUsers?: import('@sendbird/chat').User[];
-  /** Optional mention template; SDK type omits this on FileMessage but server accepts it. */
-  mentionedMessageTemplate?: string;
-}
-
 export type SendFileMessageFunctionType = (
   file: File,
   quoteMessage?: SendableMessageType,
-  extraParams?: SendFileMessageExtraParams,
 ) => Promise<FileMessage>;
 
 export default function useSendFileMessageCallback({
@@ -49,7 +39,7 @@ export default function useSendFileMessageCallback({
   logger,
   pubSub,
 }: StaticProps): SendFileMessageFunctionType {
-  return useCallback((file, quoteMessage, extraParams): Promise<FileMessage> => {
+  return useCallback((file, quoteMessage): Promise<FileMessage> => {
     return new Promise((resolve, reject) => {
       const createParamsDefault = () => {
         const params = {} as FileMessageCreateParams;
@@ -61,11 +51,6 @@ export default function useSendFileMessageCallback({
         return params;
       };
       const params = onBeforeSendFileMessage?.(file, quoteMessage) ?? createParamsDefault();
-      if (extraParams?.message && !params.message) params.message = extraParams.message;
-      if (extraParams?.mentionedUsers && !params.mentionedUsers) params.mentionedUsers = extraParams.mentionedUsers;
-      if (extraParams?.mentionedMessageTemplate) {
-        (params as FileMessageCreateParams & { mentionedMessageTemplate?: string }).mentionedMessageTemplate = extraParams.mentionedMessageTemplate;
-      }
       logger.info('Thread | useSendFileMessageCallback: Sending file message start.', params);
 
       if (currentChannel == null) {
