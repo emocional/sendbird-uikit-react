@@ -190,14 +190,13 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
   // if one did, staged files would have nowhere to go (Send is replaced by
   // Cancel/Save). Belt-and-suspenders.
   const fileProducerEnabled = isComposerMode && isFileUploadEnabled && !disabled && !isEdit;
-  const allowMultipleFiles = isSelectingMultipleFilesEnabled && isChannelTypeSupportsMultipleFilesMessage(channel);
   const guardedAddFiles = useCallback((incoming: File[]) => {
     if (!fileProducerEnabled || !onAddFiles) return;
     if (incoming.length === 0) return;
-    const accepted = filterFilesForUpload(incoming, { acceptableMimeTypes, allowMultipleFiles });
+    const accepted = filterFilesForUpload(incoming, { acceptableMimeTypes });
     if (accepted.length === 0) return;
     onAddFiles(accepted);
-  }, [fileProducerEnabled, onAddFiles, acceptableMimeTypes, allowMultipleFiles]);
+  }, [fileProducerEnabled, onAddFiles, acceptableMimeTypes]);
 
   const fileInputRef = useRef<HTMLInputElement>();
   const [isInput, setIsInput] = useState(false);

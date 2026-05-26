@@ -153,10 +153,10 @@ export const MessageInputWrapperView = React.forwardRef((
   // disabled).
   const isFileUploadEnabled = checkIfFileUploadEnabled({ channel: currentChannel ?? undefined, config });
   const handleDroppedFiles = useCallback((dropped: File[]) => {
-    const accepted = filterFilesForUpload(dropped, { acceptableMimeTypes, allowMultipleFiles });
+    const accepted = filterFilesForUpload(dropped, { acceptableMimeTypes });
     if (accepted.length === 0) return;
     addFiles(accepted);
-  }, [addFiles, acceptableMimeTypes, allowMultipleFiles]);
+  }, [addFiles, acceptableMimeTypes]);
   useDragAndDrop({
     onAddFiles: handleDroppedFiles,
     disabled: isMobile || isMessageInputDisabled || showVoiceMessageInput || !isFileUploadEnabled,

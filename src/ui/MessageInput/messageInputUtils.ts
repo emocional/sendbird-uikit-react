@@ -44,13 +44,9 @@ export const checkIfFileUploadEnabled = ({ channel, config }: {
 
 export interface FilterFilesForUploadParams {
   acceptableMimeTypes?: string[];
-  allowMultipleFiles: boolean;
 }
 
 export const filterFilesForUpload = (
   files: File[],
-  { acceptableMimeTypes, allowMultipleFiles }: FilterFilesForUploadParams,
-): File[] => {
-  const mimeFiltered = files.filter((file) => isFileAllowedByAccept(file, acceptableMimeTypes));
-  return allowMultipleFiles ? mimeFiltered : mimeFiltered.slice(0, 1);
-};
+  { acceptableMimeTypes }: FilterFilesForUploadParams,
+): File[] => files.filter((file) => isFileAllowedByAccept(file, acceptableMimeTypes));

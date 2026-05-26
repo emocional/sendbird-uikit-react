@@ -41,7 +41,7 @@ export default React.forwardRef<HTMLInputElement, MessageInputWrapperProps>((pro
 
   const isFileUploadEnabled = checkIfFileUploadEnabled({ channel: currentOpenChannel ?? undefined, config });
   const handleDroppedFiles = useCallback((dropped: File[]) => {
-    const accepted = filterFilesForUpload(dropped, { allowMultipleFiles: false });
+    const accepted = filterFilesForUpload(dropped, {});
     if (accepted.length === 0) return;
     addFiles(accepted);
   }, [addFiles]);
