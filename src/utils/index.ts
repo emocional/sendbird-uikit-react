@@ -170,8 +170,6 @@ export const isFileAllowedByAccept = (file: File, acceptableMimeTypes?: string[]
   if (tokens.length === 0) return true;
   const name = file.name.toLowerCase();
   const type = (file.type || '').toLowerCase();
-  const isUsingDefault = !acceptableMimeTypes || acceptableMimeTypes.length === 0;
-  if (isUsingDefault && !type && name.lastIndexOf('.') <= 0) return true;
   return tokens.some((token) => {
     if (token.startsWith('.')) return name.endsWith(token);
     if (token.endsWith('/*')) return type.startsWith(token.slice(0, -1));

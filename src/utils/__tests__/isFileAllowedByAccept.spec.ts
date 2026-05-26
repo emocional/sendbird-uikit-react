@@ -38,18 +38,14 @@ describe('isFileAllowedByAccept', () => {
     expect(isFileAllowedByAccept(makeFile('photo.jpg', 'image/jpeg'), ['.JPG'])).toBe(true);
   });
 
-  it('allows extensionless files with unknown MIME when acceptableMimeTypes is not restricted', () => {
-    expect(isFileAllowedByAccept(makeFile('README', ''), undefined)).toBe(true);
-    expect(isFileAllowedByAccept(makeFile('Makefile', ''), [])).toBe(true);
-    expect(isFileAllowedByAccept(makeFile('.bashrc', ''), undefined)).toBe(true);
+  it('rejects extensionless files with unknown MIME (matches the picker accept hint)', () => {
+    expect(isFileAllowedByAccept(makeFile('README', ''), undefined)).toBe(false);
+    expect(isFileAllowedByAccept(makeFile('Makefile', ''), [])).toBe(false);
+    expect(isFileAllowedByAccept(makeFile('.bashrc', ''), undefined)).toBe(false);
   });
 
-  it('still rejects extensionless files when acceptableMimeTypes is explicitly restricted', () => {
-    expect(isFileAllowedByAccept(makeFile('README', ''), ['image'])).toBe(false);
-    expect(isFileAllowedByAccept(makeFile('Makefile', ''), ['video'])).toBe(false);
-  });
-
-  it('still rejects files with explicit unsupported extension even when MIME is unknown', () => {
+  it('rejects files whose extension is not in the UIKit default supported list', () => {
+    expect(isFileAllowedByAccept(makeFile('installer.dmg', 'application/x-apple-diskimage'), undefined)).toBe(false);
     expect(isFileAllowedByAccept(makeFile('installer.dmg', ''), undefined)).toBe(false);
   });
 });
