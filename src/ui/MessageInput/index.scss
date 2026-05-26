@@ -176,6 +176,28 @@
     justify-content: center;
   }
 
+  .sendbird-message-input__pending-file__image-placeholder {
+    align-items: center;
+    border-radius: 8px;
+    bottom: 0;
+    box-sizing: border-box;
+    display: flex;
+    height: 64px;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    width: 64px;
+
+    .sendbird-theme--light & {
+      background-color: var(--sendbird-light-background-100);
+    }
+
+    .sendbird-theme--dark & {
+      background-color: var(--sendbird-dark-background-400);
+      border: 1px solid var(--sendbird-dark-ondark-04);
+    }
+  }
+
   .sendbird-message-input__pending-file__remove {
     position: absolute;
     top: 0;

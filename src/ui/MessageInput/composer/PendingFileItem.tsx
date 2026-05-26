@@ -1,4 +1,4 @@
-import React, { ReactElement, useContext } from 'react';
+import React, { ReactElement, useContext, useState } from 'react';
 
 import type { PendingFile } from '../hooks/usePendingFiles';
 import Icon, { IconColors, IconTypes } from '../../Icon';
@@ -18,6 +18,7 @@ interface Props {
 export const PendingFileItem = ({ pendingFile, onRemove }: Props): ReactElement => {
   const { stringSet } = useContext(LocalizationContext);
   const { id, file, previewUrl, isImage } = pendingFile;
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   if (!isImage) {
     return <PendingFileCard pendingFile={pendingFile} onRemove={onRemove} />;
@@ -26,21 +27,23 @@ export const PendingFileItem = ({ pendingFile, onRemove }: Props): ReactElement 
   return (
     <div className="sendbird-message-input__pending-file" data-testid="sendbird-pending-file">
       <div className="sendbird-message-input__pending-file__thumbnail">
-        {previewUrl ? (
+        {!imageLoaded && (
+          <div className="sendbird-message-input__pending-file__image-placeholder">
+            <Icon
+              type={IconTypes.PHOTO}
+              fillColor={IconColors.ON_BACKGROUND_2}
+              width="32px"
+              height="32px"
+            />
+          </div>
+        )}
+        {previewUrl && (
           <img
             className="sendbird-message-input__pending-file__image"
             src={previewUrl}
             alt={file.name}
+            onLoad={() => setImageLoaded(true)}
           />
-        ) : (
-          <div className="sendbird-message-input__pending-file__icon">
-            <Icon
-              type={IconTypes.FILE_DOCUMENT}
-              fillColor={IconColors.ON_BACKGROUND_2}
-              width="24px"
-              height="24px"
-            />
-          </div>
         )}
         <button
           type="button"
