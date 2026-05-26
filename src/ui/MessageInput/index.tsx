@@ -238,6 +238,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         resetInput(internalRef);
         setIsInput(false);
       }
+      textField.focus();
     } else if (!hasPendingFiles && prevHasPendingFilesRef.current) {
       if (stashedHtmlRef.current) {
         textField.innerHTML = stashedHtmlRef.current;
@@ -584,6 +585,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
             hasPendingFiles && 'sendbird-message-input--textarea-locked',
           )}
           contentEditable={!disabled && !hasPendingFiles}
+          tabIndex={hasPendingFiles ? 0 : undefined}
           role="textbox"
           aria-label="Text Input"
           aria-disabled={disabled || hasPendingFiles}
