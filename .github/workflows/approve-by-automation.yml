@@ -1,0 +1,22 @@
+name: Approve by automation
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  approve-release-pr:
+    if: startsWith(github.head_ref, 'release/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Approve release pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr review "${{ github.event.pull_request.number }}" \
+            --approve \
+            --body "Auto-approved: release branch PR. Release is gated by the Jira EM approval." \
+            --repo "${{ github.repository }}"
