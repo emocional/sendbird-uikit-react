@@ -228,6 +228,7 @@ const ThreadMessageInput = (
       if (mentionedUsers.length > 0) {
         stashedMentionedUsersRef.current = mentionedUsers;
       }
+      setMentionNickname('');
     } else if (!hasPendingFilesInWrapper && prevHasPendingFilesRef.current) {
       if (stashedMentionedUsersRef.current) {
         setMentionedUsers(stashedMentionedUsersRef.current);

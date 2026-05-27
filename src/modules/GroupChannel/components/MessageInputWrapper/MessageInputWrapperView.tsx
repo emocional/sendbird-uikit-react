@@ -175,6 +175,7 @@ export const MessageInputWrapperView = React.forwardRef((
       if (quoteMessage) {
         stashedQuoteMessageRef.current = quoteMessage;
       }
+      setMentionNickname('');
     } else if (!hasPendingFilesInWrapper && prevHasPendingFilesRef.current) {
       if (stashedMentionedUsersRef.current) {
         setMentionedUsers(stashedMentionedUsersRef.current);
