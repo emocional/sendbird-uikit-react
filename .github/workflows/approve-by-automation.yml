@@ -9,14 +9,21 @@ permissions:
 
 jobs:
   approve-release-pr:
-    if: startsWith(github.head_ref, 'release/v')
+    if: github.base_ref == 'main' && startsWith(github.head_ref, 'release/v')
     runs-on: ubuntu-latest
     steps:
       - name: Approve release pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
         run: |
-          gh pr review "${{ github.event.pull_request.number }}" \
+          if ! printf '%s' "$HEAD_REF" | grep -qE '^release/v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "Not an exact release/vX.Y.Z branch ('$HEAD_REF'); skipping auto-approval."
+            exit 0
+          fi
+          gh pr review "$PR_NUMBER" \
             --approve \
-            --body "Auto-approved: release branch PR. Release is gated by the Jira EM approval." \
-            --repo "${{ github.repository }}"
+            --body "Auto-approved: release branch PR (release/vX.Y.Z). Release is gated by the Jira EM approval." \
+            --repo "$REPO"
