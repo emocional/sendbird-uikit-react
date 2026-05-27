@@ -18,13 +18,14 @@ interface useHandleUploadFilesDynamicProps {
   sendFileMessage: (params: FileMessageCreateParams) => Promise<FileMessage>;
   sendMultipleFilesMessage: (params: MultipleFilesMessageCreateParams) => Promise<MultipleFilesMessage>;
   quoteMessage?: SendableMessageType;
+  acceptableMimeTypes?: string[];
 }
 interface useHandleUploadFilesStaticProps {
   logger: Logger;
 }
 
 export const useHandleUploadFiles = (
-  { sendFileMessage, sendMultipleFilesMessage, quoteMessage }: useHandleUploadFilesDynamicProps,
+  { sendFileMessage, sendMultipleFilesMessage, quoteMessage, acceptableMimeTypes }: useHandleUploadFilesDynamicProps,
   { logger }: useHandleUploadFilesStaticProps,
 ) => {
   const { stringSet } = useLocalization();
@@ -41,6 +42,7 @@ export const useHandleUploadFiles = (
         files,
         uikitUploadSizeLimit,
         uikitMultipleFilesMessageLimit,
+        acceptableMimeTypes,
         openModal,
         stringSet,
         logger,
@@ -101,6 +103,6 @@ export const useHandleUploadFiles = (
         );
       }
     },
-    [sendFileMessage, sendMultipleFilesMessage, quoteMessage],
+    [sendFileMessage, sendMultipleFilesMessage, quoteMessage, acceptableMimeTypes],
   );
 };

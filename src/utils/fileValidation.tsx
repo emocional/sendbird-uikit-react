@@ -131,7 +131,7 @@ export interface ValidateFilesForUploadParams {
   files: File[];
   uikitUploadSizeLimit: number;
   uikitMultipleFilesMessageLimit: number;
-  acceptableMimeTypes?: string[];
+  acceptableMimeTypes: string[] | undefined;
   openModal: (props: OpenGlobalModalProps) => void;
   stringSet: StringSet;
   logger?: Logger;

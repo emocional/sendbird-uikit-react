@@ -21,6 +21,7 @@ interface useHandleUploadFilesDynamicProps {
   sendFileMessage: SendFileMessageFunctionType;
   sendMultipleFilesMessage: SendMFMFunctionType;
   quoteMessage?: SendableMessageType;
+  acceptableMimeTypes?: string[];
 }
 interface useHandleUploadFilesStaticProps {
   logger: Logger;
@@ -30,6 +31,7 @@ export const useHandleUploadFiles = ({
   sendFileMessage,
   sendMultipleFilesMessage,
   quoteMessage,
+  acceptableMimeTypes,
 }: useHandleUploadFilesDynamicProps, {
   logger,
 }: useHandleUploadFilesStaticProps) => {
@@ -51,6 +53,7 @@ export const useHandleUploadFiles = ({
       files,
       uikitUploadSizeLimit,
       uikitMultipleFilesMessageLimit,
+      acceptableMimeTypes,
       openModal,
       stringSet,
       logger,
@@ -106,6 +109,7 @@ export const useHandleUploadFiles = ({
     sendFileMessage,
     sendMultipleFilesMessage,
     quoteMessage,
+    acceptableMimeTypes,
   ]);
 
   return handleUploadFiles;
