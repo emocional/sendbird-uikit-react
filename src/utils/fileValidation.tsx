@@ -6,6 +6,7 @@ import type { StringSet } from '../ui/Label/stringSet';
 import { ButtonTypes } from '../ui/Button';
 import { ModalFooter } from '../ui/Modal';
 import { ONE_MiB } from './consts';
+import { isFileAllowedByAccept } from '.';
 
 interface OpenSimpleModalParams {
   openModal: (props: OpenGlobalModalProps) => void;
@@ -56,6 +57,39 @@ export const validateFileCount = ({
   openAcknowledgeModal({
     openModal,
     titleText: stringSet.FILE_UPLOAD_NOTIFICATION__COUNT_LIMIT.replace('%d', `${uikitMultipleFilesMessageLimit}`),
+    okText: stringSet.BUTTON__OK,
+  });
+  return false;
+};
+
+interface TypeFilterParams {
+  files: File[];
+  acceptableMimeTypes?: string[];
+  openModal: (props: OpenGlobalModalProps) => void;
+  stringSet: StringSet;
+  logger?: Logger;
+  logTag?: string;
+}
+
+/**
+ * Validates that every file matches the consumer's acceptableMimeTypes (or
+ * the UIKit default supported list when unspecified). Opens the unsupported-
+ * type modal and rejects the whole batch when any file fails.
+ */
+export const validateFileTypes = ({
+  files,
+  acceptableMimeTypes,
+  openModal,
+  stringSet,
+  logger,
+  logTag = 'validateFileTypes',
+}: TypeFilterParams): boolean => {
+  if (files.every((file) => isFileAllowedByAccept(file, acceptableMimeTypes))) return true;
+
+  logger?.info(`${logTag}: batch contains unsupported file type(s)`);
+  openAcknowledgeModal({
+    openModal,
+    titleText: stringSet.FILE_UPLOAD_NOTIFICATION__UNSUPPORTED_FILE_TYPE,
     okText: stringSet.BUTTON__OK,
   });
   return false;

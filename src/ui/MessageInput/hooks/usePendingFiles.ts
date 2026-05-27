@@ -5,7 +5,7 @@ import type { OpenGlobalModalProps } from '../../../hooks/useModal';
 import type { StringSet } from '../../Label/stringSet';
 import { isImage } from '../../../utils';
 import { uuidv4 } from '../../../utils/uuid';
-import { validateFileCount, validateFileSizes } from '../../../utils/fileValidation';
+import { validateFileCount, validateFileSizes, validateFileTypes } from '../../../utils/fileValidation';
 
 export interface PendingFile {
   id: string;
@@ -18,6 +18,7 @@ export interface PendingFile {
 export interface UsePendingFilesParams {
   uikitUploadSizeLimit: number;
   uikitMultipleFilesMessageLimit: number;
+  acceptableMimeTypes?: string[];
   openModal: (props: OpenGlobalModalProps) => void;
   stringSet: StringSet;
   logger?: Logger;
@@ -53,6 +54,7 @@ const buildPendingFile = (file: File): PendingFile => {
 export const usePendingFiles = ({
   uikitUploadSizeLimit,
   uikitMultipleFilesMessageLimit,
+  acceptableMimeTypes,
   openModal,
   stringSet,
   logger,
@@ -68,6 +70,15 @@ export const usePendingFiles = ({
 
   const addFiles = useCallback((files: File[]) => {
     if (files.length === 0) return;
+
+    if (!validateFileTypes({
+      files,
+      acceptableMimeTypes,
+      openModal,
+      stringSet,
+      logger,
+      logTag: 'usePendingFiles',
+    })) return;
 
     const totalCount = pendingFilesRef.current.length + files.length;
     if (!validateFileCount({
@@ -89,7 +100,7 @@ export const usePendingFiles = ({
     })) return;
 
     setPendingFiles((current) => [...current, ...files.map(buildPendingFile)]);
-  }, [uikitUploadSizeLimit, uikitMultipleFilesMessageLimit, openModal, stringSet, logger]);
+  }, [uikitUploadSizeLimit, uikitMultipleFilesMessageLimit, acceptableMimeTypes, openModal, stringSet, logger]);
 
   const removeFile = useCallback((id: string) => {
     setPendingFiles((current) => {

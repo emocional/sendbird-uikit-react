@@ -13,6 +13,7 @@ const makeFile = (name: string, sizeBytes: number, type = 'text/plain'): File =>
 const baseStringSet = {
   FILE_UPLOAD_NOTIFICATION__COUNT_LIMIT: 'Up to %d files can be attached.',
   FILE_UPLOAD_NOTIFICATION__SIZE_LIMIT: 'The maximum size per file is %d MB.',
+  FILE_UPLOAD_NOTIFICATION__UNSUPPORTED_FILE_TYPE: 'The attachment failed because the file is in an unsupported format.',
   BUTTON__OK: 'OK',
 } as unknown as StringSet;
 
@@ -133,5 +134,22 @@ describe('usePendingFiles', () => {
     act(() => result.current.addFiles([]));
     expect(result.current.pendingFiles).toEqual([]);
     expect(openModal).not.toHaveBeenCalled();
+  });
+
+  it('rejects the whole batch and opens the unsupported-type modal when any file fails the MIME filter', () => {
+    const { result, openModal } = renderUsePendingFiles({ acceptableMimeTypes: ['image'] });
+    const png = makeFile('a.png', 'image/png');
+    const pdf = makeFile('b.pdf', 'application/pdf');
+    act(() => result.current.addFiles([png, pdf]));
+    expect(result.current.pendingFiles).toEqual([]);
+    expect(openModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('rejects extension-less files when acceptableMimeTypes is restricted', () => {
+    const { result, openModal } = renderUsePendingFiles({ acceptableMimeTypes: ['image'] });
+    const readme = makeFile('README', '');
+    act(() => result.current.addFiles([readme]));
+    expect(result.current.pendingFiles).toEqual([]);
+    expect(openModal).toHaveBeenCalledTimes(1);
   });
 });

@@ -25,7 +25,7 @@ import PendingFilesPreview from './composer/PendingFilesPreview';
 import { tokenizeMessage } from '../../modules/Message/utils/tokens/tokenize';
 import { USER_MENTION_PREFIX } from '../../modules/Message/consts';
 import { TOKEN_TYPES } from '../../modules/Message/utils/tokens/types';
-import { checkIfFileUploadEnabled, filterFilesForUpload } from './messageInputUtils';
+import { checkIfFileUploadEnabled } from './messageInputUtils';
 import { classnames } from '../../utils/utils';
 import { isMobileIOS } from '../../utils/browser';
 
@@ -193,10 +193,8 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
   const guardedAddFiles = useCallback((incoming: File[]) => {
     if (!fileProducerEnabled || !onAddFiles) return;
     if (incoming.length === 0) return;
-    const accepted = filterFilesForUpload(incoming, { acceptableMimeTypes });
-    if (accepted.length === 0) return;
-    onAddFiles(accepted);
-  }, [fileProducerEnabled, onAddFiles, acceptableMimeTypes]);
+    onAddFiles(incoming);
+  }, [fileProducerEnabled, onAddFiles]);
 
   const fileInputRef = useRef<HTMLInputElement>();
   const [isInput, setIsInput] = useState(false);
