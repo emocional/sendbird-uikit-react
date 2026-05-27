@@ -149,6 +149,9 @@ const stringSet = {
     MESSAGE_INPUT__PLACE_HOLDER__MUTED: 'Chat is unavailable because you\'re muted',
     MESSAGE_INPUT__PLACE_HOLDER__MUTED_SHORT: 'You\'re muted',
     MESSAGE_INPUT__QUOTE_REPLY__PLACE_HOLDER: 'Reply to message',
+    MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED: 'Text disabled while file attached',
+    MESSAGE_INPUT__PENDING_FILE__TYPE_UNKNOWN: 'FILE',
+    MESSAGE_INPUT__PENDING_FILE__REMOVE: 'Remove file',
     // Common UI
     BUTTON__SUBMIT: 'Submit',
     BUTTON__CANCEL: 'Cancel',
@@ -229,6 +232,7 @@ const stringSet = {
     // File upload
     FILE_UPLOAD_NOTIFICATION__COUNT_LIMIT: 'Up to %d files can be attached.',
     FILE_UPLOAD_NOTIFICATION__SIZE_LIMIT: 'The maximum size per file is %d MB.',
+    FILE_UPLOAD_NOTIFICATION__UNSUPPORTED_FILE_TYPE: 'The attachment failed because the file is in an unsupported format.',
     // Feedback button text
     FEEDBACK_LIKE: 'Like',
     FEEDBACK_DISLIKE: 'Dislike',

@@ -38,7 +38,10 @@ export interface FileUploadedPayload {
   uploadableFileInfo: UploadableFileInfo,
   error: Error,
 }
-export type SendMFMFunctionType = (files: Array<File>, quoteMessage?: SendableMessageType) => Promise<MultipleFilesMessage>;
+export type SendMFMFunctionType = (
+  files: Array<File>,
+  quoteMessage?: SendableMessageType,
+) => Promise<MultipleFilesMessage>;
 
 /**
  * pubSub is used instead of messagesDispatcher to avoid redundantly calling

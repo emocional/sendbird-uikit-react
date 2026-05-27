@@ -28,7 +28,10 @@ export default function useSendFileMessageCallback(
   { logger, pubSub, scrollRef, messagesDispatcher }: UseSendFileMessageCallbackParams,
 ) {
   const sendMessage = useCallback(
-    (compressedFile: File, quoteMessage?: SendableMessageType) => new Promise<FileMessage>((resolve, reject) => {
+    (
+      compressedFile: File,
+      quoteMessage?: SendableMessageType,
+    ) => new Promise<FileMessage>((resolve, reject) => {
       // Create FileMessageParams
       let params = onBeforeSendFileMessage?.(compressedFile, quoteMessage);
       if (!params) {

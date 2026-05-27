@@ -162,6 +162,21 @@ export const getMimeTypesUIKitAccepts = (acceptableTypes?: string[]): string => 
   ].join(',');
 };
 
+export const isFileAllowedByAccept = (file: File, acceptableMimeTypes?: string[]): boolean => {
+  const tokens = getMimeTypesUIKitAccepts(acceptableMimeTypes)
+    .split(',')
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean);
+  if (tokens.length === 0) return true;
+  const name = file.name.toLowerCase();
+  const type = (file.type || '').toLowerCase();
+  return tokens.some((token) => {
+    if (token.startsWith('.')) return name.endsWith(token);
+    if (token.endsWith('/*')) return type.startsWith(token.slice(0, -1));
+    return type === token;
+  });
+};
+
 /* eslint-disable no-redeclare */
 export interface UIKitMessageTypes {
   ADMIN: 'ADMIN',

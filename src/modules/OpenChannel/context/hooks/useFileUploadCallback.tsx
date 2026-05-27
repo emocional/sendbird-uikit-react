@@ -26,7 +26,7 @@ interface StaticParams {
   scrollRef: React.RefObject<HTMLElement>;
 }
 
-type CallbackReturn = (files: Array<File> | File) => void;
+type CallbackReturn = (files: Array<File> | File) => Promise<void>;
 
 function useFileUploadCallback({
   currentOpenChannel,
@@ -40,24 +40,21 @@ function useFileUploadCallback({
   const { state: { config: { uikitUploadSizeLimit } } } = useSendbird();
 
   return useCallback(async (files) => {
-    if (sdk) {
-      /**
-       * OpenChannel does not currently support file lists.
-       * However, this change is made to maintain interface consistency with group channels.
-       */
-      const file = Array.isArray(files) ? files[0] : files;
-      const createCustomParams = onBeforeSendFileMessage && typeof onBeforeSendFileMessage === 'function';
+    if (!sdk) return;
+    const fileList = Array.isArray(files) ? files : [files];
 
-      const createParamsDefault = (file: File): FileMessageCreateParams => {
-        const params: FileMessageCreateParams = {};
-        params.file = file;
-        return params;
-      };
+    const createCustomParams = onBeforeSendFileMessage && typeof onBeforeSendFileMessage === 'function';
 
-      /**
-       * Validate file sizes
-       * The default value of uikitUploadSizeLimit is 25MiB
-       */
+    const createParamsDefault = (file: File): FileMessageCreateParams => {
+      const params: FileMessageCreateParams = {};
+      params.file = file;
+      return params;
+    };
+
+    for (let i = 0; i < fileList.length; i += 1) {
+      const file = fileList[i];
+
+      // Validate file size
       if (file.size > uikitUploadSizeLimit) {
         logger.info(`OpenChannel | useFileUploadCallback: Cannot upload file size exceeding ${uikitUploadSizeLimit}`);
         openModal({
@@ -79,6 +76,7 @@ function useFileUploadCallback({
       }
 
       // Image compression
+      // eslint-disable-next-line no-await-in-loop
       const { compressedFiles } = await compressImages({
         files: [file],
         imageCompression,
@@ -86,7 +84,6 @@ function useFileUploadCallback({
       });
       const [compressedFile] = compressedFiles;
 
-      // Send FileMessage
       if (createCustomParams) {
         logger.info('OpenChannel | useFileUploadCallback: Creating params using onBeforeSendFileMessage', onBeforeSendFileMessage);
       }

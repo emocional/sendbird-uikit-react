@@ -42,8 +42,11 @@ export const MessageInputWrapper = (props: MessageInputWrapperProps) => {
       sendVoiceMessage={({ file }, duration) => {
         return sendVoiceMessage(file as File, duration, quoteMessage ?? undefined);
       }}
-      sendMultipleFilesMessage={({ fileInfoList }) => {
-        return sendMultipleFilesMessage(fileInfoList.map((fileInfo) => fileInfo.file) as File[], quoteMessage ?? undefined);
+      sendMultipleFilesMessage={(params) => {
+        return sendMultipleFilesMessage(
+          params.fileInfoList.map((fileInfo) => fileInfo.file) as File[],
+          quoteMessage ?? undefined,
+        );
       }}
     />
   );

@@ -51,11 +51,16 @@
   .sendbird-message-input--placeholder {
     position: absolute;
     pointer-events: none;
-    top: 18px;
+    bottom: 12px;
     left: 16px;
+    right: 56px;
+    height: 32px;
     font-family: var(--sendbird-font-family-default);
     font-size: 14px;
-    line-height: 1.43;
+    line-height: 32px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .sendbird-message-input--attach {
@@ -120,6 +125,194 @@
   cursor: not-allowed;
 }
 
+.sendbird-message-input--composer {
+  position: relative;
+}
+
+.sendbird-message-input__pending-preview {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-bottom: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.sendbird-message-input__pending-file {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  width: 72px;
+  position: relative;
+
+  .sendbird-message-input__pending-file__thumbnail {
+    position: relative;
+    width: 72px;
+    height: 72px;
+  }
+
+  .sendbird-message-input__pending-file__image {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .sendbird-message-input__pending-file__icon {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sendbird-message-input__pending-file__image-placeholder {
+    align-items: center;
+    border-radius: 8px;
+    bottom: 0;
+    box-sizing: border-box;
+    display: flex;
+    height: 64px;
+    justify-content: center;
+    left: 0;
+    position: absolute;
+    width: 64px;
+
+    .sendbird-theme--light & {
+      background-color: var(--sendbird-light-background-100);
+    }
+
+    .sendbird-theme--dark & {
+      background-color: var(--sendbird-dark-background-400);
+      border: 1px solid var(--sendbird-dark-ondark-04);
+    }
+  }
+
+  .sendbird-message-input__pending-file__remove {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .sendbird-icon [class*='fill'] {
+      .sendbird-theme--light & {
+        fill: var(--sendbird-light-onlight-02);
+      }
+
+      .sendbird-theme--dark & {
+        fill: var(--sendbird-dark-ondark-01);
+      }
+    }
+  }
+}
+
+.sendbird-message-input__pending-card {
+  flex-shrink: 0;
+  height: 72px;
+  position: relative;
+  width: 188px;
+
+  .sendbird-message-input__pending-card__body {
+    align-items: center;
+    border-radius: 12px;
+    bottom: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    height: 64px;
+    left: 0;
+    padding: 8px 12px;
+    position: absolute;
+    width: 180px;
+    @include themed() {
+      border: 1px solid t(on-bg-4);
+    }
+
+    .sendbird-theme--light & {
+      background-color: var(--sendbird-light-background-100);
+    }
+
+    .sendbird-theme--dark & {
+      background-color: var(--sendbird-dark-background-400);
+    }
+  }
+
+  .sendbird-message-input__pending-card__icon {
+    align-items: center;
+    border-radius: 8px;
+    display: flex;
+    flex-shrink: 0;
+    height: 40px;
+    justify-content: center;
+    width: 40px;
+    @include themed() {
+      background-color: t(bg-0);
+    }
+  }
+
+  .sendbird-message-input__pending-card__meta {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 4px;
+    min-width: 0;
+    overflow: hidden;
+    width: 108px;
+  }
+
+  .sendbird-message-input__pending-card__name {
+    font-weight: 700;
+    line-height: 20px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sendbird-message-input__pending-card__remove {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background-color: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .sendbird-icon [class*='fill'] {
+      .sendbird-theme--light & {
+        fill: var(--sendbird-light-onlight-02);
+      }
+
+      .sendbird-theme--dark & {
+        fill: var(--sendbird-dark-ondark-01);
+      }
+    }
+  }
+}
+
 .sendbird-message-input__disabled {
   pointer-events: none;
   cursor: not-allowed;
@@ -127,6 +320,62 @@
     @include themed() {
       color: t(on-bg-4);
       border: 1px solid t(on-bg-4);
+    }
+  }
+}
+
+.sendbird-message-input--textarea-locked {
+  @include themed() {
+    color: t(on-bg-3);
+  }
+}
+
+.sendbird-message-input--has-pending {
+  .sendbird-message-input--textarea {
+    height: 126px;
+    max-height: 126px;
+    min-height: 126px;
+    overflow-y: hidden;
+    @include themed() {
+      border-color: t(primary-3);
+    }
+
+    &:focus {
+      @include themed() {
+        border-color: t(primary-3);
+        box-shadow: none;
+      }
+    }
+
+    &:active {
+      @include themed() {
+        border-color: t(primary-3);
+      }
+    }
+  }
+
+  .sendbird-message-input__pending-preview {
+    left: 16px;
+    margin-bottom: 0;
+    position: absolute;
+    right: 56px;
+    top: 12px;
+  }
+
+  .sendbird-message-input--placeholder {
+    bottom: 12px;
+    height: auto;
+    line-height: 1.43;
+    top: 94px;
+  }
+
+  .sendbird-message-input--send {
+    bottom: 12px;
+
+    @include mobile() {
+      bottom: auto;
+      top: 50%;
+      transform: translateY(-50%);
     }
   }
 }

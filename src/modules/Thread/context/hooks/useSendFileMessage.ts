@@ -25,7 +25,10 @@ interface LocalFileMessage extends FileMessage {
   file: File;
 }
 
-export type SendFileMessageFunctionType = (file: File, quoteMessage?: SendableMessageType) => Promise<FileMessage>;
+export type SendFileMessageFunctionType = (
+  file: File,
+  quoteMessage?: SendableMessageType,
+) => Promise<FileMessage>;
 
 export default function useSendFileMessageCallback({
   currentChannel,
