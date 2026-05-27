@@ -169,6 +169,7 @@
   "resolutions": {
     "svgo@^2.7.0": "^2.8.1",
     "svgo@^3.0.2": "^3.3.3",
-    "rollup@^4.20.0": "^4.59.0"
+    "rollup@^4.20.0": "^4.59.0",
+    "@babel/plugin-transform-modules-systemjs": "^7.29.4"
   }
 }
