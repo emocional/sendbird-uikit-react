@@ -138,8 +138,8 @@ describe('usePendingFiles', () => {
 
   it('rejects the whole batch and opens the unsupported-type modal when any file fails the MIME filter', () => {
     const { result, openModal } = renderUsePendingFiles({ acceptableMimeTypes: ['image'] });
-    const png = makeFile('a.png', 'image/png');
-    const pdf = makeFile('b.pdf', 'application/pdf');
+    const png = makeFile('a.png', 100, 'image/png');
+    const pdf = makeFile('b.pdf', 100, 'application/pdf');
     act(() => result.current.addFiles([png, pdf]));
     expect(result.current.pendingFiles).toEqual([]);
     expect(openModal).toHaveBeenCalledTimes(1);
@@ -147,7 +147,7 @@ describe('usePendingFiles', () => {
 
   it('rejects extension-less files when acceptableMimeTypes is restricted', () => {
     const { result, openModal } = renderUsePendingFiles({ acceptableMimeTypes: ['image'] });
-    const readme = makeFile('README', '');
+    const readme = makeFile('README', 1, '');
     act(() => result.current.addFiles([readme]));
     expect(result.current.pendingFiles).toEqual([]);
     expect(openModal).toHaveBeenCalledTimes(1);
