@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface UseDragAndDropParams {
   onAddFiles: (files: File[]) => void;
@@ -32,12 +32,24 @@ const dragHasFiles = (event: DragEvent): boolean => {
  * exactly one consumes any given drop based on its position in the DOM.
  */
 export const useDragAndDrop = ({ onAddFiles, disabled = false, shouldAccept }: UseDragAndDropParams): void => {
+  // Latch callbacks in refs so listener registration only churns on disabled
+  // flips. Otherwise inline shouldAccept / onAddFiles passed from a caller
+  // would change identity each render and tear the listeners down + up,
+  // risking missed drag events in between.
+  const onAddFilesRef = useRef(onAddFiles);
+  const shouldAcceptRef = useRef(shouldAccept);
+  useEffect(() => {
+    onAddFilesRef.current = onAddFiles;
+    shouldAcceptRef.current = shouldAccept;
+  });
+
   useEffect(() => {
     if (disabled) return undefined;
 
     const onDragOver = (event: DragEvent) => {
       if (!dragHasFiles(event)) return;
-      if (shouldAccept && !shouldAccept(event)) return;
+      const shouldAcceptFn = shouldAcceptRef.current;
+      if (shouldAcceptFn && !shouldAcceptFn(event)) return;
       // Required to mark the document as a valid drop target and suppress
       // the browser's default "open file" behavior on drop.
       event.preventDefault();
@@ -46,10 +58,11 @@ export const useDragAndDrop = ({ onAddFiles, disabled = false, shouldAccept }: U
 
     const onDrop = (event: DragEvent) => {
       if (!dragHasFiles(event)) return;
-      if (shouldAccept && !shouldAccept(event)) return;
+      const shouldAcceptFn = shouldAcceptRef.current;
+      if (shouldAcceptFn && !shouldAcceptFn(event)) return;
       event.preventDefault();
       const files = Array.from(event.dataTransfer?.files ?? []);
-      if (files.length > 0) onAddFiles(files);
+      if (files.length > 0) onAddFilesRef.current(files);
     };
 
     window.addEventListener('dragover', onDragOver);
@@ -58,5 +71,5 @@ export const useDragAndDrop = ({ onAddFiles, disabled = false, shouldAccept }: U
       window.removeEventListener('dragover', onDragOver);
       window.removeEventListener('drop', onDrop);
     };
-  }, [disabled, onAddFiles, shouldAccept]);
+  }, [disabled]);
 };

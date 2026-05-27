@@ -17,6 +17,12 @@ const baseStringSet = {
   BUTTON__OK: 'OK',
 } as unknown as StringSet;
 
+const expectModalTitle = (openModal: jest.Mock, title: string) => {
+  expect(openModal).toHaveBeenCalledWith(expect.objectContaining({
+    modalProps: expect.objectContaining({ titleText: title }),
+  }));
+};
+
 const renderUsePendingFiles = (overrides: Partial<Parameters<typeof usePendingFiles>[0]> = {}) => {
   const openModal = jest.fn();
   const logger = {
@@ -75,15 +81,17 @@ describe('usePendingFiles', () => {
     act(() => result.current.addFiles(files));
     expect(result.current.pendingFiles).toEqual([]);
     expect(openModal).toHaveBeenCalledTimes(1);
+    expectModalTitle(openModal, 'Up to 2 files can be attached.');
   });
 
   it('addFiles rejects the whole batch when any file exceeds the size limit', () => {
-    const { result, openModal } = renderUsePendingFiles({ uikitUploadSizeLimit: 1000 });
+    const { result, openModal } = renderUsePendingFiles({ uikitUploadSizeLimit: ONE_MIB });
     const small = makeFile('a.txt', 100);
-    const tooLarge = makeFile('b.txt', 10_000);
+    const tooLarge = makeFile('b.txt', 2 * ONE_MIB);
     act(() => result.current.addFiles([small, tooLarge]));
     expect(result.current.pendingFiles).toEqual([]);
     expect(openModal).toHaveBeenCalledTimes(1);
+    expectModalTitle(openModal, 'The maximum size per file is 1 MB.');
   });
 
   it('addFiles counts the existing staged files when checking the limit', () => {
@@ -93,6 +101,7 @@ describe('usePendingFiles', () => {
     act(() => result.current.addFiles([makeFile('c.txt', 1)]));
     expect(result.current.pendingFiles).toHaveLength(2);
     expect(openModal).toHaveBeenCalledTimes(1);
+    expectModalTitle(openModal, 'Up to 2 files can be attached.');
   });
 
   it('removeFile removes the targeted entry and revokes its object URL', () => {
@@ -143,6 +152,7 @@ describe('usePendingFiles', () => {
     act(() => result.current.addFiles([png, pdf]));
     expect(result.current.pendingFiles).toEqual([]);
     expect(openModal).toHaveBeenCalledTimes(1);
+    expectModalTitle(openModal, 'The attachment failed because the file is in an unsupported format.');
   });
 
   it('rejects extension-less files when acceptableMimeTypes is restricted', () => {
@@ -151,5 +161,6 @@ describe('usePendingFiles', () => {
     act(() => result.current.addFiles([readme]));
     expect(result.current.pendingFiles).toEqual([]);
     expect(openModal).toHaveBeenCalledTimes(1);
+    expectModalTitle(openModal, 'The attachment failed because the file is in an unsupported format.');
   });
 });

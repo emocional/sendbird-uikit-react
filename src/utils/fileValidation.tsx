@@ -131,6 +131,7 @@ export interface ValidateFilesForUploadParams {
   files: File[];
   uikitUploadSizeLimit: number;
   uikitMultipleFilesMessageLimit: number;
+  acceptableMimeTypes?: string[];
   openModal: (props: OpenGlobalModalProps) => void;
   stringSet: StringSet;
   logger?: Logger;
@@ -140,13 +141,14 @@ export interface ValidateFilesForUploadParams {
 
 /**
  * Validates a File[] before upload. Used by the legacy immediate-send hooks.
- * Composer staging (usePendingFiles) calls validateFileCount and
- * validateFileSizes directly so it can check combined-with-staging count.
+ * Composer staging (usePendingFiles) calls validateFileTypes, validateFileCount,
+ * and validateFileSizes directly so it can check combined-with-staging count.
  */
 export const validateFilesForUpload = ({
   files,
   uikitUploadSizeLimit,
   uikitMultipleFilesMessageLimit,
+  acceptableMimeTypes,
   openModal,
   stringSet,
   logger,
@@ -156,6 +158,15 @@ export const validateFilesForUpload = ({
     logger?.warning(`${logTag}: given file list is empty.`, { files });
     return false;
   }
+
+  if (!validateFileTypes({
+    files,
+    acceptableMimeTypes,
+    openModal,
+    stringSet,
+    logger,
+    logTag,
+  })) return false;
 
   if (!validateFileCount({
     totalCount: files.length,
