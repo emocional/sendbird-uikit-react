@@ -25,6 +25,8 @@ Los consumidores (`emo-front`) pueden seguir usando `enableAutoChat`, `searcherF
 
 ## No reimplementado a propósito
 
+Inventario completo: [`NOT-PORTED.md`](../../NOT-PORTED.md) (raíz del repo).
+
 | Feature fork | Decisión en 3.18 |
 |--------------|------------------|
 | `userQuery` propagado por `App` | **No necesario**: `emo-front` usa `userListQuery` en `SendbirdProvider` (upstream ya lo propaga) |

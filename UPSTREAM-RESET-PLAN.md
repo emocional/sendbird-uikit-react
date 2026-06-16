@@ -2,6 +2,8 @@
 
 Estrategia para traer **Sendbird UIKit 3.18.0** (última publicada) sin perder el fork actual, evaluar la UI, y reaplicar después lo documentado en [`FORK-FEATURES.md`](./FORK-FEATURES.md).
 
+**Qué no se portó del fork:** ver [`NOT-PORTED.md`](./NOT-PORTED.md).
+
 ## Principios
 
 1. **Nunca tocar `main` del fork actual** hasta tener claro el resultado del experimento.

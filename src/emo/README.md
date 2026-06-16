@@ -34,6 +34,7 @@ src/emo/
 3. Revisar que los enganches `// @emo-integration` siguen siendo válidos.
 4. Ejecutar **`yarn test:emo`** (suite de producto Emocional) y, si hace falta, `yarn jest src/emo`.
 5. Revisar `FORK-FEATURES.md` por features nuevas de upstream que sustituyan las nuestras.
+6. Consultar [`NOT-PORTED.md`](../../NOT-PORTED.md) antes de re-portar estilos o APIs descartadas.
 
 ## Test de producto (`yarn test:emo`)
 
