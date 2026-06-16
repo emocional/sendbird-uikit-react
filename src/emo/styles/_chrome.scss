@@ -19,6 +19,7 @@
 }
 
 .sendbird-chat-header {
+  border: 2px solid blue;
   height: 70px;
   min-height: 70px;
   border-bottom: 1px solid #dee1e580;
@@ -26,6 +27,23 @@
   @include themed() {
     border-bottom: 1px solid #dee1e580;
   }
+}
+
+div.sendbird-channel-list {
+  width: 100%;
+}
+
+.sendbird-channel-list__header {
+  border: 2px solid blue;
+  height: 70px;
+  min-height: 70px;
+  width: 100%;
+}
+
+.sendbird-channel-list__header .sendbird-channel-header.sendbird-ui-header {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
 }
 
 .sendbird-channel-header {

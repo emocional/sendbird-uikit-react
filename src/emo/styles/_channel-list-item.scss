@@ -2,8 +2,9 @@
 
 /* GroupChannelListItem — fork §8 */
 
-.sendbird-channel-preview {
+.sendbird-channel-list .sendbird-channel-preview {
   width: 100%;
+  max-width: none;
   padding: 12px 16px;
   border-bottom: 1px solid #dee1e580;
 
