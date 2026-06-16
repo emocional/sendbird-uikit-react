@@ -7,10 +7,7 @@ import Header, { type HeaderCustomProps } from '../../../../ui/Header';
 import { classnames } from '../../../../utils/utils';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 // @emo-integration
-import {
-  EmocionalGroupChannelHeaderLeft,
-  EmocionalGroupChannelHeaderMiddle,
-} from '../../../../emo/integration/group-channel-header';
+import { EmocionalGroupChannelHeaderProfile } from '../../../../emo/integration/group-channel-header';
 
 export interface GroupChannelHeaderViewProps extends HeaderCustomProps {
   className?: string;
@@ -44,19 +41,14 @@ export const GroupChannelHeaderView = ({
     <Header
       className={classnames('sendbird-chat-header', 'emo-group-channel-header', className)}
       renderLeft={renderLeft ?? (() => (
-        <EmocionalGroupChannelHeaderLeft
+        <EmocionalGroupChannelHeaderProfile
           currentChannel={currentChannel}
           userId={userId}
           theme={theme}
           onBackClick={onBackClick}
         />
       ))}
-      renderMiddle={renderMiddle ?? (() => (
-        <EmocionalGroupChannelHeaderMiddle
-          currentChannel={currentChannel}
-          userId={userId}
-        />
-      ))}
+      renderMiddle={renderMiddle}
       renderRight={renderRight ?? (() => (
         <>
           {isMuted && (

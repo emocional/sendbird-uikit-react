@@ -1,16 +1,53 @@
-.emo-group-channel-header__middle {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.emo-group-channel-header__company {
-  flex-shrink: 0;
-}
-
 .sendbird-chat-header.emo-group-channel-header {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
+  padding-left: 16px;
+  padding-right: 16px;
+
+  .sendbird-ui-header__left {
+    flex: 1;
+    min-width: 0;
+    margin-right: 8px;
+  }
+
+  .sendbird-ui-header__right {
+    flex-shrink: 0;
+    margin-left: 8px;
+  }
+}
+
+.emo-group-channel-header__profile {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.emo-group-channel-header__name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.emo-group-channel-header__tag {
+  flex-shrink: 0;
+}
+
+.sendbird-chat-header__icon_back {
+  flex-shrink: 0;
+  margin-right: 0;
+}
+
+.emo-group-channel-header__profile .emo-connection-status-channel-avatar,
+.emo-group-channel-header__profile .sendbird-avatar {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
 }
