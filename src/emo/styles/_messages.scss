@@ -2,6 +2,7 @@
 
 $emo-message-padding-y: 4px;
 $emo-message-content-padding-y: 8px;
+$emo-message-content-padding-x: 12px;
 $emo-message-avatar-gap: 14px;
 
 /* MessageContent — avatar | (nombre + hora) / mensaje */
@@ -23,7 +24,7 @@ $emo-message-avatar-gap: 14px;
   position: relative;
   width: 100%;
   margin: 0;
-  padding: $emo-message-content-padding-y 0;
+  padding: $emo-message-content-padding-y $emo-message-content-padding-x;
   gap: $emo-message-avatar-gap;
   box-sizing: border-box;
 
@@ -36,14 +37,13 @@ $emo-message-avatar-gap: 14px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    max-width: 100%;
-    flex: 1;
+    align-self: stretch;
+    flex: 1 1 0;
     min-width: 0;
-    width: 100%;
-    position: relative;
+    max-width: 100%;
+    width: auto;
 
     @include mobile() {
-      width: auto;
       max-width: 100%;
     }
   }
@@ -81,40 +81,40 @@ $emo-message-avatar-gap: 14px;
     width: 100%;
     max-width: 100%;
   }
+}
 
-  .sendbird-message-content__right {
-    position: absolute;
-    z-index: 10;
-    right: 0;
-    bottom: 0;
-    left: auto;
-    top: auto;
-    display: inline-flex;
-    margin: 0;
-    padding: 0;
+/* Menú hover — anclado a la esquina inferior derecha del bloque con fondo */
+.sendbird-conversation .sendbird-message-content .emo-message-content__right.sendbird-message-content__right {
+  position: absolute;
+  z-index: 10;
+  inset: auto $emo-message-content-padding-x $emo-message-content-padding-y auto;
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  width: auto;
+  height: auto;
+
+  &.chain-top {
+    padding-top: 0;
+  }
+
+  &.use-reactions {
     width: auto;
+  }
 
-    &.chain-top {
-      padding-top: 0;
-    }
-
-    &.use-reactions {
-      width: auto;
-    }
-
-    .sendbird-message-content-menu {
-      background-color: white;
-      border: 1px solid #fafafaff;
-      border-radius: 8px;
-      height: min-content;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      flex-direction: row;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 0;
-      min-width: auto;
-      position: relative;
-    }
+  .sendbird-message-content-menu {
+    background-color: white;
+    border: 1px solid #fafafaff;
+    border-radius: 8px;
+    height: min-content;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0;
+    min-width: auto;
+    position: relative;
   }
 }
 
@@ -158,11 +158,9 @@ $emo-message-avatar-gap: 14px;
 .sendbird-conversation .sendbird-message-content.incoming,
 .sendbird-conversation .sendbird-message-content.outgoing,
 .sendbird-conversation .sendbird-message-content__left.incoming,
-.sendbird-conversation .sendbird-message-content__left.outgoing,
-.sendbird-conversation .sendbird-message-content__middle.incoming,
-.sendbird-conversation .sendbird-message-content__middle.outgoing {
+.sendbird-conversation .sendbird-message-content__left.outgoing {
   margin-left: 0;
-  margin-right: auto;
+  margin-right: 0;
 }
 
 .sendbird-conversation .sendbird-message-content__middle__body-container__created-at {

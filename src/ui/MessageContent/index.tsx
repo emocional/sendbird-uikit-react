@@ -530,52 +530,53 @@ export function MessageContent(props: MessageContentProps): ReactElement {
             </FeedbackIconButton>
           </div>
         }
-        {/* right — @emo-integration: dentro de __middle, esquina inferior derecha del mensaje */}
-        {showRightContent && (
-          <div
-            className={classnames('sendbird-message-content__right', chainTopClassName, isReactionEnabledClassName, useReplyingClassName)}
-            data-testid="sendbird-message-content__right"
-          >
-            <div className={classnames('sendbird-message-content-menu', chainTopClassName, hoveredMenuClassName, isByMeClassName)}>
-              {isReactionEnabledInChannel && (
-                renderEmojiMenu({
-                  className: 'sendbird-message-content-menu__reaction-menu',
-                  message,
-                  userId,
-                  emojiContainer,
-                  toggleReaction,
-                  filterEmojiCategoryIds,
-                })
-              )}
-              <EmocionalReplyButton
-                channel={channel}
-                message={message}
-                replyType={replyType}
-                setQuoteMessage={setQuoteMessage}
-              />
-              {renderMessageMenu({
-                className: 'sendbird-message-content-menu__normal-menu',
-                channel,
-                message,
-                isByMe,
-                replyType,
-                showRemove,
-                resendMessage,
-                setQuoteMessage,
-                markAsUnread,
-                onReplyInThread: ({ message }) => {
-                  if (threadReplySelectType === ThreadReplySelectType.THREAD) {
-                    onReplyInThread?.({ message });
-                  } else if (threadReplySelectType === ThreadReplySelectType.PARENT) {
-                    scrollToMessage?.(message.parentMessage?.createdAt ?? 0, message.parentMessageId);
-                  }
-                },
-                deleteMessage,
-              })}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* right — @emo-integration: esquina inferior derecha del bloque con hover */}
+      {showRightContent && (
+        <div
+          className={classnames('sendbird-message-content__right', 'emo-message-content__right', chainTopClassName, isReactionEnabledClassName, useReplyingClassName)}
+          data-testid="sendbird-message-content__right"
+        >
+          <div className={classnames('sendbird-message-content-menu', chainTopClassName, hoveredMenuClassName, isByMeClassName)}>
+            {isReactionEnabledInChannel && (
+              renderEmojiMenu({
+                className: 'sendbird-message-content-menu__reaction-menu',
+                message,
+                userId,
+                emojiContainer,
+                toggleReaction,
+                filterEmojiCategoryIds,
+              })
+            )}
+            <EmocionalReplyButton
+              channel={channel}
+              message={message}
+              replyType={replyType}
+              setQuoteMessage={setQuoteMessage}
+            />
+            {renderMessageMenu({
+              className: 'sendbird-message-content-menu__normal-menu',
+              channel,
+              message,
+              isByMe,
+              replyType,
+              showRemove,
+              resendMessage,
+              setQuoteMessage,
+              markAsUnread,
+              onReplyInThread: ({ message }) => {
+                if (threadReplySelectType === ThreadReplySelectType.THREAD) {
+                  onReplyInThread?.({ message });
+                } else if (threadReplySelectType === ThreadReplySelectType.PARENT) {
+                  scrollToMessage?.(message.parentMessage?.createdAt ?? 0, message.parentMessageId);
+                }
+              },
+              deleteMessage,
+            })}
+          </div>
+        </div>
+      )}
 
       {
         showMenu && isSendableMessage(message) && channel && renderMobileMenuOnLongPress({
