@@ -20,7 +20,7 @@ El resto del código Emocional está en `src/emo/`.
 | `src/modules/GroupChannel/components/GroupChannelUI/index.scss` | Sin borde exterior en conversación embebida | `@emo-integration` |
 | `src/modules/GroupChannel/components/TypingIndicator.tsx` | Texto typing Emocional | `@emo-integration` |
 | `src/modules/Message/context/MessageProvider.tsx` | `isByMe` → layout entrante | `@emo-integration` |
-| `src/ui/MessageContent/index.tsx` | `isByMe` → layout entrante; cabecera nombre+hora; menú Emocional + reply inline | `@emo-integration` |
+| `src/ui/MessageContent/index.tsx` | `isByMe` → layout entrante; cabecera nombre+hora; menú hover en esquina inferior derecha del mensaje; menú Emocional + reply inline | `@emo-integration` |
 | `src/ui/MessageContent/MessageProfile/index.tsx` | Avatar 40px en primer mensaje del grupo; oculto en `chainTop` | `@emo-integration` |
 | `src/ui/MessageMenu/menuItems/MessageMenuItems.tsx` | Trigger compacto 24px | `@emo-integration` |
 | `src/ui/MessageItemReactionMenu/index.tsx` | Trigger y picker compactos | `@emo-integration` |
