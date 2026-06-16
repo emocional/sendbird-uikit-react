@@ -1,6 +1,7 @@
 @import '../../styles/variables';
 
-$emo-message-padding-y: 8px;
+$emo-message-padding-y: 4px;
+$emo-message-content-padding-y: 8px;
 $emo-message-avatar-gap: 14px;
 
 /* MessageContent — avatar | (nombre + hora) / mensaje */
@@ -21,7 +22,7 @@ $emo-message-avatar-gap: 14px;
   align-items: flex-start;
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: $emo-message-content-padding-y 0;
   gap: $emo-message-avatar-gap;
   box-sizing: border-box;
 
@@ -63,7 +64,7 @@ $emo-message-avatar-gap: 14px;
     width: 40px;
     min-width: 40px;
     align-self: flex-start;
-    padding-top: 2px;
+    padding-top: 0;
 
     .sendbird-message-content__left__avatar {
       position: static;
@@ -127,7 +128,7 @@ $emo-message-avatar-gap: 14px;
   gap: 8px;
   max-width: 100%;
   margin-bottom: 2px;
-  padding-top: 4px;
+  padding-top: 0;
 
   &__name {
     font-weight: 700;
