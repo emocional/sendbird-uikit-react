@@ -34,14 +34,15 @@
   position: relative;
   cursor: pointer;
   box-sizing: border-box;
-  width: 100%;
+  width: 320px;
+  height: 80px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: center;
   padding: 12px 16px 12px 16px;
   @include themed() {
-    border-bottom: solid 1px #dee1e580;
+    border-bottom: solid 1px t(on-bg-4);
   }
   @include mobile() {
     width: 100%;
@@ -52,8 +53,8 @@
   }
 
   .sendbird-channel-preview__avatar {
-    width: 32px;
-    height: 32px;
+    width: 56px;
+    height: 56px;
   }
   .sendbird-channel-preview__content {
     width: 100%;
@@ -67,7 +68,8 @@
     .sendbird-channel-preview__content__upper {
       display: flex;
       justify-content: space-between;
-      width: 100%;
+      width: 216px;
+      height: 16px;
 
       @include mobile() {
         width: auto;
@@ -87,7 +89,6 @@
           max-width: 128px;
           word-break: break-all;
           white-space: nowrap;
-          font-weight: 700;
         }
         .sendbird-channel-preview__content__upper__header__total-members {
           margin-top: 2px;
@@ -111,7 +112,8 @@
 
     .sendbird-channel-preview__content__lower {
       margin-top: 8px;
-      width: 100%;
+      width: 216px;
+      height: 32px;
       display: flex;
       justify-content: space-between;
       @include mobile() {
@@ -151,7 +153,7 @@
 
   &:hover {
     @include themed() {
-      background-color: #fafafbff;
+      background-color: t(bg-1);
     }
 
     .sendbird-channel-preview__action .sendbird-iconbutton {
@@ -171,7 +173,9 @@
 .sendbird-channel-preview--active {
   padding: 12px 16px 12px 12px;
   @include themed() {
-    background-color: #fafafbff;
+    border-left: solid 4px t(primary-3);
+    border-bottom: solid 1px t(on-bg-4);
+    background-color: t(primary--1-7);
   }
 
   .sendbird-channel-preview__content__upper__header__channel-name {

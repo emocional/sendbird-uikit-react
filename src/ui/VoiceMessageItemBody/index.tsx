@@ -70,21 +70,32 @@ export const VoiceMessageItemBody = ({
       />
       <div className="sendbird-voice-message-item-body__status-button">
         {(playingStatus === VOICE_PLAYER_STATUS.IDLE || playingStatus === VOICE_PLAYER_STATUS.PAUSED) && (
-          <div className="sendbird-voice-message-item-body__status-button__button" onClick={play}>
-            <Icon width="18px" height="18px" type={IconTypes.PLAY} fillColor={IconColors.PRIMARY} />
+          <div
+            className="sendbird-voice-message-item-body__status-button__button"
+            onClick={play}
+          >
+            <Icon
+              width="18px"
+              height="18px"
+              type={IconTypes.PLAY}
+              fillColor={IconColors.PRIMARY}
+            />
           </div>
         )}
         {playingStatus === VOICE_PLAYER_STATUS.PREPARING && (
           <Loader width="22.2px" height="22.2px">
-            <Icon width="22.2px" height="22.2px" type={IconTypes.SPINNER} fillColor={IconColors.PRIMARY_2} />
+            <Icon
+              width="22.2px"
+              height="22.2px"
+              type={IconTypes.SPINNER}
+              fillColor={IconColors.PRIMARY_2}
+            />
           </Loader>
         )}
         {playingStatus === VOICE_PLAYER_STATUS.PLAYING && (
           <div
             className="sendbird-voice-message-item-body__status-button__button"
-            onClick={() => {
-              pause();
-            }}
+            onClick={() => { pause(); }}
           >
             <div className="sendbird-voice-message-item-body__status-button__button__pause">
               <div className="sendbird-voice-message-item-body__status-button__button__pause__inner" />

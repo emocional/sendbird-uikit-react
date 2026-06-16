@@ -26,7 +26,6 @@ export interface AppLayoutProps {
   currentChannel?: GroupChannel;
   setCurrentChannel: React.Dispatch<GroupChannel | undefined>;
   enableLegacyChannelModules: boolean;
-  userQuery?(): UserListQuery;
 }
 
 interface SubLayoutCommonProps {
@@ -38,7 +37,7 @@ interface SubLayoutCommonProps {
   setThreadTargetMessage: React.Dispatch<SendableMessageType>;
 }
 
-export interface MobileLayoutProps extends AppLayoutProps, SubLayoutCommonProps {}
+export interface MobileLayoutProps extends AppLayoutProps, SubLayoutCommonProps { }
 
 export interface DesktopLayoutProps extends AppLayoutProps, SubLayoutCommonProps {
   // modertion pannel
@@ -55,8 +54,8 @@ export default interface AppProps {
   appId: string;
   userId: string;
   accessToken?: string;
-  customApiHost?: string;
-  customWebSocketHost?: string;
+  customApiHost?: string,
+  customWebSocketHost?: string,
   theme?: 'light' | 'dark';
   userListQuery?(): UserListQuery;
   nickname?: string;
@@ -73,9 +72,9 @@ export default interface AppProps {
   stringSet?: Record<string, string>;
   colorSet?: Record<string, string>;
   imageCompression?: {
-    compressionRate?: number;
-    resizingWidth?: number | string;
-    resizingHeight?: number | string;
+    compressionRate?: number,
+    resizingWidth?: number | string,
+    resizingHeight?: number | string,
   };
   replyType?: ReplyType;
   disableAutoSelect?: boolean;

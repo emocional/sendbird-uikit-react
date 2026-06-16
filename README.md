@@ -1,16 +1,22 @@
 # @sendbird/uikit-react
 
+[![Platform React](https://img.shields.io/badge/Platform-React-orange.svg)](https://reactjs.org)
+[![Language TypeScript](https://img.shields.io/badge/Language-TypeScript-orange.svg)](https://www.typescriptlang.org/)
+
+> React based UI kit based on sendbird javascript SDK
+
+We are introducing a new version of the Sendbird Chat UIKit. Version 3 features a new modular architecture with more granular components that give you enhanced flexibility to customize your web and mobile apps. Check out our [migration guides](MIGRATION_v2-to-v3.md).
+
 ## Installation
-`pnpm i @emocional/sendbird-uikit-react`
+
+`yarn add @sendbird/uikit-react`
+or if you're using npm
+`npm i @sendbird/uikit-react`
 
 ## Getting Started
 
-Once you modified the components run
-`bash build.sh`
-or change once
-`chmod +x build.sh`
-and run
-`./build.sh`
+With Sendbird UI Kit React, we export these components:
+(See `src/index.jsx`)
 
 * SendBirdProvider - The context provider for SDK component
 * useSendbirdStateContext - Hook to access SendBirdProvider context

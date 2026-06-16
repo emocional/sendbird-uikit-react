@@ -21,12 +21,10 @@ export interface GroupChannelListUIProps {
   renderPlaceHolderError?: (props: void) => React.ReactElement;
   renderPlaceHolderLoading?: (props: void) => React.ReactElement;
   renderPlaceHolderEmptyList?: (props: void) => React.ReactElement;
-  userQuery?(): UserListQuery;
 }
 
 export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
-  const { renderHeader, renderChannelPreview, renderPlaceHolderError, renderPlaceHolderLoading, renderPlaceHolderEmptyList, userQuery } =
-    props;
+  const { renderHeader, renderChannelPreview, renderPlaceHolderError, renderPlaceHolderLoading, renderPlaceHolderEmptyList } = props;
 
   const {
     state: {

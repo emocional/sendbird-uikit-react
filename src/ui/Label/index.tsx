@@ -42,7 +42,7 @@ export const Label = forwardRef(({
 
 const LabelTypography = Typography;
 const LabelColors = Colors;
-const LabelStringSet = getStringSet('es');
+const LabelStringSet = getStringSet('en');
 export { LabelTypography, LabelColors, LabelStringSet };
 
 export default Label;

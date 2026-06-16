@@ -10,23 +10,22 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
-  height: 70px;
-  min-height: 70px;
+  height: 64px;
+  min-height: 64px;
   padding-left: 20px;
   padding-right: 16px;
   overflow: hidden;
   text-overflow: ellipsis;
   box-sizing: border-box;
   @include themed() {
-    border-bottom: 1px solid #dee1e580;
+    border-bottom: 1px solid t(on-bg-4);
     background-color: t(bg-0);
   }
 
   &__left {
     margin-right: 24px;
   }
-  &__left,
-  &__right {
+  &__left, &__right {
     overflow: hidden;
     display: flex;
     flex-direction: row;

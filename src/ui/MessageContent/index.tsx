@@ -5,6 +5,7 @@ import './index.scss';
 import MessageStatus from '../MessageStatus';
 import { MessageMenu, type MessageMenuProps } from '../MessageMenu';
 import { MessageEmojiMenu, MessageEmojiMenuProps } from '../MessageItemReactionMenu';
+import Label, { LabelColors, LabelTypography } from '../Label';
 import EmojiReactions, { EmojiReactionsProps } from '../EmojiReactions';
 
 import AdminMessage from '../AdminMessage';
@@ -17,8 +18,7 @@ import {
   isAdminMessage,
   isFormMessage,
   isMultipleFilesMessage,
-  isOGMessage,
-  isSendableMessage,
+  isOGMessage, isSendableMessage,
   isTemplateMessage,
   isThumbnailMessage,
   isValidTemplateMessageType,
@@ -239,23 +239,20 @@ export function MessageContent(props: MessageContentProps): ReactElement {
   // onMouseUp: (e: React.MouseEvent<T>) => void;
   // onMouseLeave: (e: React.MouseEvent<T>) => void;
   // onTouchEnd: (e: React.TouchEvent<T>) => void;
-  const longPress = useLongPress(
-    {
-      onLongPress: () => {
-        if (showLongPressMenu) {
-          setShowMenu(true);
-        }
-      },
-      onClick: noop,
+  const longPress = useLongPress({
+    onLongPress: () => {
+      if (showLongPressMenu) {
+        setShowMenu(true);
+      }
     },
-    {
-      delay: 300,
-      shouldPreventDefault: false,
-    }
-  );
+    onClick: noop,
+  }, {
+    delay: 300,
+    shouldPreventDefault: false,
+  });
 
   if (isAdminMessage(message)) {
-    return <AdminMessage message={message} />;
+    return (<AdminMessage message={message} />);
   }
 
   if (isTemplateMessage(message)) {
@@ -352,7 +349,7 @@ export function MessageContent(props: MessageContentProps): ReactElement {
           (!isByMe && !chainTop && !useReplying) && renderMessageHeader(props)
         }
         {/* quote message */}
-        {useReplying ? (
+        {(useReplying) ? (
           <div
             className={classnames('sendbird-message-content__middle__quote-message', isByMe ? 'outgoing' : 'incoming', useReplyingClassName)}
             data-testid="sendbird-message-content__middle__quote-message"
@@ -368,9 +365,8 @@ export function MessageContent(props: MessageContentProps): ReactElement {
                   onQuoteMessageClick?.({ message });
                 }
                 if (
-                  (replyType === 'QUOTE_REPLY' || (replyType === 'THREAD' && threadReplySelectType === ThreadReplySelectType.PARENT)) &&
-                  message?.parentMessage?.createdAt &&
-                  message?.parentMessageId
+                  (replyType === 'QUOTE_REPLY' || (replyType === 'THREAD' && threadReplySelectType === ThreadReplySelectType.PARENT))
+                  && message?.parentMessage?.createdAt && message?.parentMessageId
                 ) {
                   scrollToMessage?.(message.parentMessage.createdAt, message.parentMessageId);
                 }
@@ -387,7 +383,7 @@ export function MessageContent(props: MessageContentProps): ReactElement {
           )}
         >
           {/* message status component when sent by me */}
-          {isByMe && !chainBottom && (
+          {(isByMe && !chainBottom) && (
             <div
               className={classnames(
                 'sendbird-message-content__middle__body-container__created-at',
@@ -396,7 +392,10 @@ export function MessageContent(props: MessageContentProps): ReactElement {
               )}
             >
               <div className="sendbird-message-content__middle__body-container__created-at__component-container">
-                <MessageStatus message={message} channel={channel} />
+                <MessageStatus
+                  message={message}
+                  channel={channel}
+                />
               </div>
             </div>
           )}
@@ -451,7 +450,7 @@ export function MessageContent(props: MessageContentProps): ReactElement {
               {format(message?.createdAt || 0, stringSet.DATE_FORMAT__MESSAGE_CREATED_AT, {
                 locale: dateLocale,
               })}
-            </div>
+            </Label>
           )}
         </div>
         {/* thread replies */}
@@ -464,8 +463,11 @@ export function MessageContent(props: MessageContentProps): ReactElement {
           />
         )}
         {/* Feedback buttons */}
-        {isFeedbackEnabled && (
-          <div className="sendbird-message-content__middle__body-container__feedback-buttons-container" ref={feedbackButtonsRef}>
+        {
+          isFeedbackEnabled && <div
+            className="sendbird-message-content__middle__body-container__feedback-buttons-container"
+            ref={feedbackButtonsRef}
+          >
             <FeedbackIconButton
               isSelected={message?.myFeedback?.rating === FeedbackRating.GOOD}
               onClick={async () => {
@@ -485,7 +487,11 @@ export function MessageContent(props: MessageContentProps): ReactElement {
               }}
               disabled={!!message?.myFeedback && message.myFeedback.rating !== FeedbackRating.GOOD}
             >
-              <Icon type={IconTypes.FEEDBACK_LIKE} width="24px" height="24px" />
+              <Icon
+                type={IconTypes.FEEDBACK_LIKE}
+                width='24px'
+                height='24px'
+              />
             </FeedbackIconButton>
             <FeedbackIconButton
               isSelected={message?.myFeedback?.rating === FeedbackRating.BAD}
@@ -506,10 +512,14 @@ export function MessageContent(props: MessageContentProps): ReactElement {
               }}
               disabled={!!message?.myFeedback && message.myFeedback.rating !== FeedbackRating.BAD}
             >
-              <Icon type={IconTypes.FEEDBACK_DISLIKE} width="24px" height="24px" />
+              <Icon
+                type={IconTypes.FEEDBACK_DISLIKE}
+                width='24px'
+                height='24px'
+              />
             </FeedbackIconButton>
           </div>
-        )}
+        }
       </div>
 
       {/* right */}
@@ -536,7 +546,6 @@ export function MessageContent(props: MessageContentProps): ReactElement {
               isByMe,
               replyType,
               showRemove,
-              showEdit,
               resendMessage,
               setQuoteMessage,
               markAsUnread,
@@ -557,9 +566,7 @@ export function MessageContent(props: MessageContentProps): ReactElement {
         showMenu && isSendableMessage(message) && channel && renderMobileMenuOnLongPress({
           parentRef: contentRef,
           channel,
-          hideMenu: () => {
-            setShowMenu(false);
-          },
+          hideMenu: () => { setShowMenu(false); },
           message,
           isReactionEnabled: isReactionEnabledInChannel,
           isByMe,
@@ -659,14 +666,16 @@ export function MessageContent(props: MessageContentProps): ReactElement {
         )
       }
       {/* Feedback failed modal */}
-      {feedbackFailedText && (
-        <MessageFeedbackFailedModal
-          text={feedbackFailedText}
-          onCancel={() => {
-            setFeedbackFailedText('');
-          }}
-        />
-      )}
+      {
+        feedbackFailedText && (
+          <MessageFeedbackFailedModal
+            text={feedbackFailedText}
+            onCancel={() => {
+              setFeedbackFailedText('');
+            }}
+          />
+        )
+      }
     </div>
   );
 }

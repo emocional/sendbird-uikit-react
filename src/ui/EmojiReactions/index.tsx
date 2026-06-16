@@ -75,8 +75,11 @@ const EmojiReactions = ({
   const showAddReactionBadge = (message.reactions?.length ?? 0) < emojisMap.size;
 
   return (
-    <div className={getClassName([className, 'sendbird-emoji-reactions', isByMe ? 'outgoing' : 'incoming'])}>
-      {(message.reactions?.length ?? 0) > 0 &&
+    <div className={getClassName([
+      className, 'sendbird-emoji-reactions',
+      isByMe ? 'outgoing' : 'incoming',
+    ])}>
+      {((message.reactions?.length ?? 0) > 0) && (
         message.reactions?.map((reaction: Reaction): ReactElement => {
           return (
             <ReactionItem
@@ -94,8 +97,9 @@ const EmojiReactions = ({
               }
             />
           );
-        })}
-      {!isMobile && showAddReactionBadge && (
+        })
+      )}
+      {(!isMobile && showAddReactionBadge) && (
         <ContextMenu
           menuTrigger={(toggleDropdown: () => void): ReactElement => (
             <ReactionBadge
@@ -108,7 +112,12 @@ const EmojiReactions = ({
                 e?.stopPropagation?.();
               }}
             >
-              <Icon type={IconTypes.EMOJI_MORE} fillColor={IconColors.ON_BACKGROUND_3} width="20px" height="20px" />
+              <Icon
+                type={IconTypes.EMOJI_MORE}
+                fillColor={IconColors.ON_BACKGROUND_3}
+                width="20px"
+                height="20px"
+              />
             </ReactionBadge>
           )}
           menuItems={(closeDropdown: () => void): ReactElement => {
@@ -159,14 +168,14 @@ const EmojiReactions = ({
           }}
         />
       )}
-      {isMobile && showAddReactionBadge && (
+      {(isMobile && showAddReactionBadge) && (
         <AddReactionBadgeItem
           onClick={() => {
             setShowEmojiList(true);
           }}
         />
       )}
-      {isMobile && showEmojiList && (
+      {(isMobile && showEmojiList) && (
         <MobileEmojisBottomSheet
           userId={userId}
           message={message}
@@ -177,18 +186,20 @@ const EmojiReactions = ({
           toggleReaction={toggleReaction}
         />
       )}
-      {isMobile && selectedEmojiKey && channel !== null && showTheReactedMembers && (
-        <ReactedMembersBottomSheet
-          message={message}
-          channel={channel}
-          emojiKey={selectedEmojiKey}
-          hideMenu={() => {
-            setSelectedEmojiKey('');
-          }}
-          emojiContainer={emojiContainer}
-          onPressUserProfileHandler={onPressUserProfile}
-        />
-      )}
+      {
+        (isMobile && selectedEmojiKey && channel !== null && showTheReactedMembers) && (
+          <ReactedMembersBottomSheet
+            message={message}
+            channel={channel}
+            emojiKey={selectedEmojiKey}
+            hideMenu={() => {
+              setSelectedEmojiKey('');
+            }}
+            emojiContainer={emojiContainer}
+            onPressUserProfileHandler={onPressUserProfile}
+          />
+        )
+      }
     </div>
   );
 };

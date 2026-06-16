@@ -13,7 +13,6 @@ import {
   isVoiceMessageMimeType,
 } from '../../../../utils';
 import { LabelStringSet } from '../../../../ui/Label';
-import { getGlobalUserTag } from '../../../../ui/UserListItem/utils';
 
 export const getChannelTitle = (channel?: GroupChannel, currentUserId?: string, stringSet = LabelStringSet) => {
   if (!channel?.name && !channel?.members) {
@@ -29,21 +28,6 @@ export const getChannelTitle = (channel?: GroupChannel, currentUserId?: string, 
     .filter(({ userId }) => userId !== currentUserId)
     .map(({ nickname }) => nickname || stringSet.NO_NAME)
     .join(', ');
-};
-
-export const getUserTeam = (channel?: GroupChannel, currentUserId?: string) => {
-  let tag = '';
-
-  const memberList = channel.members.filter((item) => item.userId !== currentUserId);
-  if (memberList.length > 0) {
-    const member = memberList[0];
-    if (!!member.metaData['company']) {
-      const professionals = member.metaData['professional'];
-      tag = !!professionals ? getGlobalUserTag(professionals) : member.metaData['team'];
-    }
-  }
-
-  return tag;
 };
 
 export const getLastMessageCreatedAt = ({ channel, locale, stringSet = LabelStringSet }) => {
@@ -107,4 +91,4 @@ export const getLastMessageText = (channel?: GroupChannel, stringSet = LabelStri
   return channel?.lastMessage ? getPrettyLastMessage(channel?.lastMessage, stringSet) : '';
 };
 
-export const getChannelUnreadMessageCount = (channel?: GroupChannel) => (channel?.unreadMessageCount ? channel.unreadMessageCount : 0);
+export const getChannelUnreadMessageCount = (channel?: GroupChannel) => channel?.unreadMessageCount ? channel.unreadMessageCount : 0;

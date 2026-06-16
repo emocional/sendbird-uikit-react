@@ -23,7 +23,9 @@
   "main": "cjs/index.js",
   "types": "types/index.d.ts",
   "style": "dist/index.css",
-  "files": ["**/*"],
+  "files": [
+    "**/*"
+  ],
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/emocional/sendbird-uikit-react.git"
@@ -36,8 +38,5 @@
   "bugs": {
     "url": "https://community.sendbird.com"
   },
-  "homepage": "https://sendbird.com",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com/"
-  }
+  "homepage": "https://sendbird.com"
 }

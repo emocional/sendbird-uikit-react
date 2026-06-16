@@ -78,8 +78,6 @@ export function UserListItem({
     <div
       className={classnames(itemClassName, ...(Array.isArray(className) ? className : [className]))}
       ref={parentRef}
-      style={{ cursor: 'pointer' }}
-      onClick={() => onSubmit(user.userId)}
     >
 
       <ContextMenu
@@ -103,9 +101,9 @@ export function UserListItem({
             )}
           </>
         )}
-        menuItems={(closeDropdown) =>
-          renderUserProfile ? (
-            renderUserProfile({
+        menuItems={(closeDropdown) => (
+          renderUserProfile
+            ? renderUserProfile({
               user,
               currentUserId: currentUser ?? '',
               close: closeDropdown,
@@ -135,7 +133,9 @@ export function UserListItem({
         color={LabelColors.ONBACKGROUND_1}
       >
         {user.nickname || stringSet.NO_NAME}
-        {currentUser === user.userId && stringSet.CHANNEL_SETTING__MEMBERS__YOU}
+        {(currentUser === user.userId) && (
+          stringSet.CHANNEL_SETTING__MEMBERS__YOU
+        )}
       </Label>
       {!user.nickname && (
         <Label

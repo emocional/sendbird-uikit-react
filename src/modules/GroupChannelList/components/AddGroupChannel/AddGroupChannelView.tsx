@@ -13,7 +13,6 @@ type Props = {
   onBeforeCreateChannel: CreateChannelProviderProps['onBeforeCreateChannel'];
   onCreateChannelClick: CreateChannelProviderProps['onCreateChannelClick'];
   onChannelCreated: CreateChannelProviderProps['onChannelCreated'];
-  userQuery?(): UserListQuery;
 };
 
 export const AddGroupChannelView = ({
@@ -22,7 +21,6 @@ export const AddGroupChannelView = ({
   onBeforeCreateChannel,
   onCreateChannelClick,
   onChannelCreated,
-  userQuery,
 }: Props) => {
   const { state: { config } } = useSendbird();
 
@@ -36,17 +34,17 @@ export const AddGroupChannelView = ({
       >
         <EmocionalAddChannelIcon />
       </IconButton>
-      <CreateChannel
-        onCancel={() => onChangeCreateChannelVisible(false)}
-        showCreateChannel={createChannelVisible}
-        onChannelCreated={(channel) => {
-          onChannelCreated?.(channel);
-          onChangeCreateChannelVisible(false);
-        }}
-        onBeforeCreateChannel={onBeforeCreateChannel}
-        onCreateChannelClick={onCreateChannelClick}
-        userQuery={userQuery}
-      />
+      {createChannelVisible && (
+        <CreateChannel
+          onCancel={() => onChangeCreateChannelVisible(false)}
+          onChannelCreated={(channel) => {
+            onChannelCreated?.(channel);
+            onChangeCreateChannelVisible(false);
+          }}
+          onBeforeCreateChannel={onBeforeCreateChannel}
+          onCreateChannelClick={onCreateChannelClick}
+        />
+      )}
     </>
   );
 };

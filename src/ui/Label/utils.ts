@@ -3,32 +3,19 @@ import { ObjectValues } from '../../utils/typeHelpers/objectValues';
 
 export function changeTypographyToClassName(type?: ObjectValues<typeof Typography>) {
   switch (type) {
-    case Typography.H_1:
-      return 'sendbird-label--h-1';
-    case Typography.H_2:
-      return 'sendbird-label--h-2';
-    case Typography.SUBTITLE_1:
-      return 'sendbird-label--subtitle-1';
-    case Typography.SUBTITLE_2:
-      return 'sendbird-label--subtitle-2';
-    case Typography.BODY_1:
-      return 'sendbird-label--body-1';
-    case Typography.BODY_2:
-      return 'sendbird-label--body-2';
-    case Typography.BUTTON_1:
-      return 'sendbird-label--button-1';
-    case Typography.BUTTON_2:
-      return 'sendbird-label--button-2';
-    case Typography.BUTTON_3:
-      return 'sendbird-label--button-3';
-    case Typography.CAPTION_1:
-      return 'sendbird-label--caption-1';
-    case Typography.CAPTION_2:
-      return 'sendbird-label--caption-2';
-    case Typography.CAPTION_3:
-      return 'sendbird-label--caption-3';
-    default:
-      return '';
+    case Typography.H_1: return 'sendbird-label--h-1';
+    case Typography.H_2: return 'sendbird-label--h-2';
+    case Typography.SUBTITLE_1: return 'sendbird-label--subtitle-1';
+    case Typography.SUBTITLE_2: return 'sendbird-label--subtitle-2';
+    case Typography.BODY_1: return 'sendbird-label--body-1';
+    case Typography.BODY_2: return 'sendbird-label--body-2';
+    case Typography.BUTTON_1: return 'sendbird-label--button-1';
+    case Typography.BUTTON_2: return 'sendbird-label--button-2';
+    case Typography.BUTTON_3: return 'sendbird-label--button-3';
+    case Typography.CAPTION_1: return 'sendbird-label--caption-1';
+    case Typography.CAPTION_2: return 'sendbird-label--caption-2';
+    case Typography.CAPTION_3: return 'sendbird-label--caption-3';
+    default: return '';
   }
 }
 

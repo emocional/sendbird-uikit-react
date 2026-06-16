@@ -20,7 +20,6 @@ export const AppLayout = (props: AppLayoutProps) => {
     currentChannel,
     setCurrentChannel,
     enableLegacyChannelModules,
-    userQuery,
   } = props;
 
   const { state } = useSendbird();

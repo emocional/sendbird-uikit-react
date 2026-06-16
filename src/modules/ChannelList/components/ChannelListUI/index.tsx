@@ -21,7 +21,6 @@ export interface ChannelListUIProps {
   renderPlaceHolderError?: (props: void) => React.ReactElement;
   renderPlaceHolderLoading?: (props: void) => React.ReactElement;
   renderPlaceHolderEmptyList?: (props: void) => React.ReactElement;
-  userQuery?(): UserListQuery;
 }
 
 /**
@@ -31,7 +30,7 @@ export interface ChannelListUIProps {
  * https://docs.sendbird.com/docs/chat/uikit/v3/react/introduction/group-channel-migration-guide
  */
 const ChannelListUI: React.FC<ChannelListUIProps> = (props: ChannelListUIProps) => {
-  const { renderHeader, renderChannelPreview, renderPlaceHolderError, renderPlaceHolderLoading, renderPlaceHolderEmptyList, userQuery } = props;
+  const { renderHeader, renderChannelPreview, renderPlaceHolderError, renderPlaceHolderLoading, renderPlaceHolderEmptyList } = props;
 
   const {
     onThemeChange,
@@ -115,7 +114,7 @@ const ChannelListUI: React.FC<ChannelListUIProps> = (props: ChannelListUIProps) 
       channels={allChannels}
       onLoadMore={fetchChannelList}
       initialized={initialized}
-      renderAddChannel={() => <AddChannel userQuery={userQuery}/>}
+      renderAddChannel={() => <AddChannel />}
     />
   );
 };

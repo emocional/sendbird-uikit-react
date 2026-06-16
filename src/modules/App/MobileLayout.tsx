@@ -46,7 +46,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
     highlightedMessage,
     setHighlightedMessage,
     enableLegacyChannelModules,
-    userQuery,
   } = props;
   const [panel, setPanel] = useState(PANELS.CHANNEL_LIST);
 
@@ -122,7 +121,6 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
       setPanel(PANELS.CHANNEL);
     },
     onUserProfileUpdated: onProfileEditSuccess,
-    userQuery,
   };
 
   const channelProps: ChannelProps & GroupChannelProps = {

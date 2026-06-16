@@ -17,18 +17,13 @@ import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface ModalHeaderProps {
   titleText: string;
-  setSearcher?: Dispatch<SetStateAction<string>>;
   onCloseClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
-export const ModalHeader = ({ titleText, setSearcher, onCloseClick }: ModalHeaderProps): ReactElement => (
+export const ModalHeader = ({ titleText, onCloseClick }: ModalHeaderProps): ReactElement => (
   <div className="sendbird-modal__header">
-    {!setSearcher ? (
-      <Label type={LabelTypography.H_1} color={LabelColors.ONBACKGROUND_1}>
-        {titleText}
-      </Label>
-    ) : (
-      <input placeholder="Buscar" onChange={(e) => setSearcher(e.target.value)} className="sendbird-modal__search" />
-    )}
+    <Label type={LabelTypography.H_1} color={LabelColors.ONBACKGROUND_1}>
+      {titleText}
+    </Label>
     <div className="sendbird-modal__close">
       <IconButton width="32px" height="32px" onClick={onCloseClick}>
         <Icon type={IconTypes.CLOSE} fillColor={IconColors.DEFAULT} width="24px" height="24px" />
@@ -84,7 +79,6 @@ export const ModalFooter = ({
 export interface ModalProps {
   children?: ReactNode;
   className?: string;
-  setSearcher?: Dispatch<SetStateAction<string>>;
   contentClassName?: string | Array<string>;
   isCloseOnClickOutside?: boolean;
   isFullScreenOnMobile?: boolean;
@@ -111,7 +105,6 @@ export function Modal(props: ModalProps): ReactElement {
     submitText,
     disabled = false,
     hideFooter = false,
-    setSearcher,
     type = ButtonTypes.DANGER,
     renderHeader,
     onSubmit = noop,

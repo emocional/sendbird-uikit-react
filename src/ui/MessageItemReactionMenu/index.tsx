@@ -56,8 +56,8 @@ export function MessageEmojiMenu({
           <IconButton
             className="sendbird-message-item-reaction-menu__trigger"
             ref={triggerRef}
-            width="24px"
-            height="24px"
+            width="32px"
+            height="32px"
             onClick={(): void => {
               toggleDropdown();
             }}
@@ -67,8 +67,8 @@ export function MessageEmojiMenu({
               testID="sendbird-message-item-reaction-menu__trigger__icon"
               type={IconTypes.EMOJI_MORE}
               fillColor={IconColors.CONTENT_INVERSE}
-              width="16px"
-              height="16px"
+              width="24px"
+              height="24px"
             />
           </IconButton>
         )}
@@ -89,8 +89,8 @@ export function MessageEmojiMenu({
                 return (
                   <ReactionButton
                     key={emoji.key}
-                    width="28px"
-                    height="28px"
+                    width="36px"
+                    height="36px"
                     selected={isReacted}
                     onClick={() => {
                       closeDropdown();
@@ -100,11 +100,16 @@ export function MessageEmojiMenu({
                   >
                     <ImageRenderer
                       url={emoji.url}
-                      width="20px"
-                      height="20px"
+                      width="28px"
+                      height="28px"
                       placeHolder={({ style }) => (
                         <div style={style}>
-                          <Icon type={IconTypes.QUESTION} fillColor={IconColors.ON_BACKGROUND_3} width="20px" height="20px" />
+                          <Icon
+                            type={IconTypes.QUESTION}
+                            fillColor={IconColors.ON_BACKGROUND_3}
+                            width="28px"
+                            height="28px"
+                          />
                         </div>
                       )}
                     />

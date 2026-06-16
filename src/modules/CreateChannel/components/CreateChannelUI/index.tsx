@@ -11,9 +11,7 @@ import EmocionalCreateChannelInvite, { useEmocionalSkipChannelTypeSelection } fr
 
 export interface CreateChannelUIProps {
   onCancel?(): void;
-  renderStepOne?: (props: void) => React.ReactElement;
-  userQuery?(): UserListQuery;
-  showCreateChannel?: boolean;
+  renderStepOne?:(props: void) => React.ReactElement;
 }
 
 const CreateChannel: React.FC<CreateChannelUIProps> = (props: CreateChannelUIProps) => {

@@ -46,7 +46,7 @@ export interface GroupChannelListItemViewProps extends GroupChannelListItemBasic
 export const GroupChannelListItemView = ({
   channel,
   tabIndex,
-  userTeam,
+  isTyping,
   isSelected,
   channelName,
   channelTag,
@@ -77,13 +77,16 @@ export const GroupChannelListItemView = ({
     },
     {
       delay: 1000,
-    }
+    },
   );
 
   return (
     <>
       <div
-        className={['sendbird-channel-preview', isSelected ? 'sendbird-channel-preview--active' : ''].join(' ')}
+        className={[
+          'sendbird-channel-preview',
+          isSelected ? 'sendbird-channel-preview--active' : '',
+        ].join(' ')}
         role="link"
         tabIndex={tabIndex}
         {...(isMobile ? { ...onLongPress } : { onClick })}
@@ -96,7 +99,12 @@ export const GroupChannelListItemView = ({
             <div className="sendbird-channel-preview__content__upper__header">
               {(channel.isBroadcast || false) && (
                 <div className="sendbird-channel-preview__content__upper__header__broadcast-icon">
-                  <Icon type={IconTypes.BROADCAST} fillColor={IconColors.SECONDARY} height="16px" width="16px" />
+                  <Icon
+                    type={IconTypes.BROADCAST}
+                    fillColor={IconColors.SECONDARY}
+                    height="16px"
+                    width="16px"
+                  />
                 </div>
               )}
               <Label
@@ -131,57 +139,35 @@ export const GroupChannelListItemView = ({
                   title="Frozen"
                   className="sendbird-channel-preview__content__upper__header__frozen-icon"
                 >
-                  {channelName}
-                </Label>
-                {!!userTeam && (
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: 'black',
-                      borderRadius: 12,
-                      textAlign: 'center',
-                      width: 'min-content',
-                      whiteSpace: 'nowrap',
-                      padding: '2px 6px 2px 6px',
-                      backgroundColor: isSelected ? 'white' : '#FAFAFAFF',
-                    }}
-                  >
-                    {userTeam}
-                  </div>
-                )}
-              </div>
-              {channel.isFrozen && (
-                <div title="Frozen" className="sendbird-channel-preview__content__upper__header__frozen-icon">
-                  <Icon type={IconTypes.FREEZE} fillColor={IconColors.PRIMARY} height={12} width={12} />
+                  <Icon
+                    type={IconTypes.FREEZE}
+                    fillColor={IconColors.PRIMARY}
+                    height={12}
+                    width={12}
+                  />
                 </div>
               )}
             </div>
-            {getChannelUnreadMessageCount(channel) ? ( // return number
-              <Badge count={getChannelUnreadMessageCount(channel)} />
-            ) : (
-              <>
-                {!channel.isEphemeral && isMessageStatusEnabled && (
-                  <MessageStatus
-                    className="sendbird-channel-preview__content__upper__last-message-at"
-                    channel={channel}
-                    message={channel.lastMessage as CoreMessageType}
-                    isDateSeparatorConsidered={false}
-                  />
-                )}
-                {!channel.isEphemeral && !isMessageStatusEnabled && (
-                  <Label
-                    className="sendbird-channel-preview__content__upper__last-message-at"
-                    type={LabelTypography.CAPTION_3}
-                    color={LabelColors.ONBACKGROUND_2}
-                  >
-                    {getLastMessageCreatedAt({
-                      channel,
-                      locale: dateLocale,
-                      stringSet,
-                    })}
-                  </Label>
-                )}
-              </>
+            {!channel.isEphemeral && isMessageStatusEnabled && (
+              <MessageStatus
+                className="sendbird-channel-preview__content__upper__last-message-at"
+                channel={channel}
+                message={channel.lastMessage as CoreMessageType}
+                isDateSeparatorConsidered={false}
+              />
+            )}
+            {!channel.isEphemeral && !isMessageStatusEnabled && (
+              <Label
+                className="sendbird-channel-preview__content__upper__last-message-at"
+                type={LabelTypography.CAPTION_3}
+                color={LabelColors.ONBACKGROUND_2}
+              >
+                {getLastMessageCreatedAt({
+                  channel,
+                  locale: dateLocale,
+                  stringSet,
+                })}
+              </Label>
             )}
           </div>
           <div className="sendbird-channel-preview__content__lower">
@@ -225,7 +211,11 @@ export const GroupChannelListItemView = ({
             }
           </div>
         </div>
-        {!isMobile && <div className="sendbird-channel-preview__action">{renderChannelAction({ channel })}</div>}
+        {!isMobile && (
+          <div className="sendbird-channel-preview__action">
+            {renderChannelAction({ channel })}
+          </div>
+        )}
       </div>
       {/*
         Event from portal is transferred to parent
@@ -248,7 +238,10 @@ export const GroupChannelListItemView = ({
             }}
             className="sendbird-channel-preview__leave-label--mobile"
           >
-            <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
+            <Label
+              type={LabelTypography.SUBTITLE_1}
+              color={LabelColors.ONBACKGROUND_1}
+            >
               {stringSet.CHANNEL_PREVIEW_MOBILE_LEAVE}
             </Label>
           </TextButton>

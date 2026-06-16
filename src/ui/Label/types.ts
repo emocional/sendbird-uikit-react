@@ -14,7 +14,6 @@ export const Typography = {
 } as const;
 
 export const Colors = {
-  EMOCIONAL_BORDER: 'EMOCIONAL_BORDER',
   ONBACKGROUND_1: 'ONBACKGROUND_1',
   ONBACKGROUND_2: 'ONBACKGROUND_2',
   ONBACKGROUND_3: 'ONBACKGROUND_3',

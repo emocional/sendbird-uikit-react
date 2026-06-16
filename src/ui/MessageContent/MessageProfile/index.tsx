@@ -12,7 +12,7 @@ export interface MessageProfileProps extends MessageContentProps {
   className?: string;
   isByMe?: boolean;
   displayThreadReplies?: boolean;
-  bottom?: string;
+  bottom?: string
 }
 
 export function MessageProfile({
@@ -31,7 +31,7 @@ export function MessageProfile({
 
   const { disableUserProfile, renderUserProfile } = useUserProfileContext();
 
-  if (isByMe || chainTop || !isSendableMessage(message)) {
+  if (isByMe || chainBottom || !isSendableMessage(message)) {
     return null;
   }
 
@@ -47,15 +47,15 @@ export function MessageProfile({
           }
           // TODO: Divide getting profileUrl logic to utils
           ref={avatarRef}
-          width="36px"
-          height="36px"
+          width="28px"
+          height="28px"
           bottom={bottom}
           onClick={(): void => {
             if (!disableUserProfile) toggleDropdown();
           }}
         />
       )}
-      menuItems={(closeDropdown) =>
+      menuItems={(closeDropdown) => (
         renderUserProfile ? (
           renderUserProfile({
             user: message.sender,
@@ -68,7 +68,7 @@ export function MessageProfile({
             /**
              * parentRef: For catching location(x, y) of MenuItems
              * parentContainRef: For toggling more options(menus & reactions)
-             */
+            */
             parentRef={avatarRef}
             parentContainRef={avatarRef}
             closeDropdown={closeDropdown}
@@ -77,7 +77,7 @@ export function MessageProfile({
             <UserProfile user={message.sender} onSuccess={closeDropdown} />
           </MenuItems>
         )
-      }
+      )}
     />
   );
 }

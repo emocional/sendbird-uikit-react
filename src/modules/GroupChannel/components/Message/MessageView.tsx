@@ -5,7 +5,6 @@ import { type EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { FileMessage, UserMessage, UserMessageCreateParams, UserMessageUpdateParams } from '@sendbird/chat/message';
 import format from 'date-fns/format';
-import es from 'date-fns/locale/es';
 
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { MAX_USER_MENTION_COUNT, MAX_USER_SUGGESTION_COUNT, ThreadReplySelectType } from '../../context/const';
@@ -218,7 +217,7 @@ const MessageView = (props: MessageViewProps) => {
           mentionedUserIds.splice(i, 1);
           return true;
         }
-      })
+      }),
     );
   }, [mentionedUserIds]);
 
@@ -362,9 +361,9 @@ const MessageView = (props: MessageViewProps) => {
           filterEmojiCategoryIds,
           markAsUnread,
         })}
-        {/* Suggested Replies */}
-        {shouldRenderSuggestedReplies &&
-          renderSuggestedReplies({
+        { /* Suggested Replies */ }
+        {
+          shouldRenderSuggestedReplies && renderSuggestedReplies({
             replyOptions: getSuggestedReplies(message),
             onSendMessage: sendUserMessage,
             type: groupChannel?.suggestedRepliesDirection,
@@ -447,11 +446,11 @@ const MessageView = (props: MessageViewProps) => {
             }}
             onKeyDown={(e) => {
               if (
-                displaySuggestedMentionList &&
-                mentionSuggestedUsers?.length > 0 &&
-                ((e.key === MessageInputKeys.Enter && ableMention) ||
-                  e.key === MessageInputKeys.ArrowUp ||
-                  e.key === MessageInputKeys.ArrowDown)
+                displaySuggestedMentionList
+                && mentionSuggestedUsers?.length > 0
+                && ((e.key === MessageInputKeys.Enter && ableMention)
+                  || e.key === MessageInputKeys.ArrowUp
+                  || e.key === MessageInputKeys.ArrowDown)
               ) {
                 setMessageInputEvent(e);
                 return true;
@@ -478,12 +477,12 @@ const MessageView = (props: MessageViewProps) => {
       ref={messageScrollRef}
     >
       {/* date-separator */}
-      {hasSeparator &&
-        (renderedCustomSeparator || (
+      {hasSeparator
+        && (renderedCustomSeparator || (
           <DateSeparator>
-            <Label type={LabelTypography.CAPTION_2} color={LabelColors.EMOCIONAL_BORDER}>
+            <Label type={LabelTypography.CAPTION_2} color={LabelColors.ONBACKGROUND_2}>
               {format(message.createdAt, stringSet.DATE_FORMAT__MESSAGE_LIST__DATE_SEPARATOR, {
-                locale: es,
+                locale: dateLocale,
               })}
             </Label>
           </DateSeparator>

@@ -18,7 +18,6 @@ import useCreateChannel from '../../context/useCreateChannel';
 
 export interface InviteUsersProps {
   onCancel?: () => void;
-  showCreateChannel?: boolean;
   userListQuery?(): UserListQuery;
 }
 
@@ -48,7 +47,9 @@ const InviteUsers: React.FC<InviteUsersProps> = ({
   const [selectedUsers, setSelectedUsers] = useState<Record<string, boolean>>({});
   const { stringSet } = useContext(LocalizationContext);
   const [usersDataSource, setUsersDataSource] = useState<UserListQuery | null>(null);
+  const selectedCount = Object.keys(selectedUsers).length;
   const titleText = stringSet.MODAL__CREATE_CHANNEL__TITLE;
+  const submitText = stringSet.BUTTON__CREATE;
   const { isMobile } = useMediaQueryContext();
   const [scrollableAreaHeight, setScrollableAreaHeight] = useState<number>(window.innerHeight);
 
@@ -60,7 +61,7 @@ const InviteUsers: React.FC<InviteUsersProps> = ({
         setUsers(it);
       });
     }
-  }, [userQueryCreator]);
+  }, []);
 
   // To fix navbar break in mobile we set dynamic height to the scrollable area
   useEffect(() => {
@@ -73,74 +74,105 @@ const InviteUsers: React.FC<InviteUsersProps> = ({
     };
   }, []);
 
-  useEffect(() => {
-    if (!!createChatAuto) {
-      for (let i = 0; i < users.length; i++) {
-        handleSubmit(users[i].userId);
-      }
-    }
-  }, [users]);
+  return (
+    <Modal
+      isFullScreenOnMobile
+      titleText={titleText}
+      submitText={submitText}
+      type={ButtonTypes.PRIMARY}
+      // Disable the create button if no users are selected,
+      // but if there's only the logged-in user in the user list,
+      // then the create button should be enabled
+      disabled={users.length > 1 && Object.keys(selectedUsers).length === 0}
+      onCancel={onCancel}
+      onSubmit={() => {
+        const selectedUserList = Object.keys(selectedUsers).length > 0
+          ? Object.keys(selectedUsers)
+          : [userId];
+        const _onChannelCreated = onChannelCreated ?? onCreateChannel;
+        const _onCreateChannelClick = onCreateChannelClick ?? overrideInviteUser;
 
-  const handleSubmit = (id: string) => {
-    const selectedUserList = [id];
-    const _onChannelCreated = onChannelCreated ?? onCreateChannel;
-    const _onCreateChannelClick = onCreateChannelClick ?? overrideInviteUser;
+        if (typeof _onCreateChannelClick === 'function') {
+          _onCreateChannelClick({
+            users: selectedUserList,
+            onClose: onCancel ?? noop,
+            channelType: type,
+          });
+          return;
+        }
 
-    if (typeof _onCreateChannelClick === 'function') {
-      _onCreateChannelClick({
-        users: selectedUserList,
-        onClose: onCancel ?? noop,
-        channelType: type,
-      });
-      return;
-    }
-
-    if (onBeforeCreateChannel) {
-      const params = onBeforeCreateChannel(selectedUserList);
-      setChannelType(params, type);
-      createChannel(params).then((channel) => _onChannelCreated?.(channel));
-    } else {
-      const params: GroupChannelCreateParams = {};
-      params.invitedUserIds = selectedUserList;
-      params.isDistinct = true;
-      if (userId) {
-        params.operatorUserIds = [userId];
-      }
-      setChannelType(params, type);
-      // do not have custom params
-      createChannel(params).then((channel) => _onChannelCreated?.(channel));
-    }
-    onCancel?.();
-  };
-
-  return !!showCreateChannel ? (
-    <Modal isFullScreenOnMobile titleText={titleText} onCancel={onCancel} hideFooter setSearcher={searcherFilter}>
-      <div
-        className="sendbird-create-channel--scroll"
-        style={isMobile ? { height: `calc(${scrollableAreaHeight}px - 200px)` } : {}}
-        onScroll={(e) => {
-          if (!usersDataSource) return;
-          const eventTarget = e.target as HTMLDivElement;
-          const { hasNext, isLoading } = usersDataSource;
-          const fetchMore = eventTarget.clientHeight + eventTarget.scrollTop + BUFFER > eventTarget.scrollHeight;
-
-          if (hasNext && fetchMore && !isLoading) {
-            usersDataSource.next().then((usersBatch) => {
-              if ('filterFn' in usersDataSource && usersDataSource.filterFn !== undefined) {
-                usersBatch = usersBatch.filter(usersDataSource.filterFn);
-              }
-              setUsers([...users, ...usersBatch]);
-            });
+        if (onBeforeCreateChannel) {
+          const params = onBeforeCreateChannel(selectedUserList);
+          setChannelType(params, type);
+          createChannel(params).then((channel) => _onChannelCreated?.(channel));
+        } else {
+          const params: GroupChannelCreateParams = {};
+          params.invitedUserIds = selectedUserList;
+          params.isDistinct = false;
+          if (userId) {
+            params.operatorUserIds = [userId];
           }
-        }}
-      >
-        {users.map(
-          (user) =>
-            !filterUser(idsToFilter)(user.userId) && <UserListItem key={user.userId} user={user} onSubmit={(item) => handleSubmit(item)} />
-        )}
+          setChannelType(params, type);
+          // do not have custom params
+          createChannel(params).then((channel) => _onChannelCreated?.(channel));
+        }
+        onCancel?.();
+      }}
+    >
+      <div>
+        <Label
+          color={(selectedCount > 0) ? LabelColors.PRIMARY : LabelColors.ONBACKGROUND_3}
+          type={LabelTypography.CAPTION_1}
+        >
+          {`${selectedCount} ${stringSet.MODAL__INVITE_MEMBER__SELECTED}`}
+        </Label>
+        <div
+          className="sendbird-create-channel--scroll"
+          style={isMobile ? { height: `calc(${scrollableAreaHeight}px - 200px)` } : {}}
+          onScroll={(e) => {
+            if (!usersDataSource) return;
+            const eventTarget = e.target as HTMLDivElement;
+            const { hasNext, isLoading } = usersDataSource;
+            const fetchMore = (
+              (eventTarget.clientHeight + eventTarget.scrollTop + BUFFER) > eventTarget.scrollHeight
+            );
+
+            if (hasNext && fetchMore && !isLoading) {
+              usersDataSource.next().then((usersBatch) => {
+                setUsers([
+                  ...users,
+                  ...usersBatch,
+                ]);
+              });
+            }
+          }}
+        >
+          {
+            users.map((user) => (!filterUser(idsToFilter)(user.userId)) && (
+              <UserListItem
+                key={user.userId}
+                user={user}
+                checkBox
+                checked={selectedUsers[user.userId]}
+                onChange={
+                  (event) => {
+                    const modifiedSelectedUsers = {
+                      ...selectedUsers,
+                      [event.target.id]: event.target.checked,
+                    };
+                    if (!event.target.checked) {
+                      delete modifiedSelectedUsers[event.target.id];
+                    }
+                    setSelectedUsers(modifiedSelectedUsers);
+                  }
+                }
+              />
+            ))
+          }
+        </div>
       </div>
     </Modal>
-  ) : null;
+  );
 };
 
 export default InviteUsers;

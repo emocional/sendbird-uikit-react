@@ -18,11 +18,17 @@
 
   box-sizing: border-box;
   @include themed() {
-    border-bottom: 1px solid #dee1e580;
+    border-bottom: 1px solid t(on-bg-4);
     background-color: t(bg-0);
   }
   @include mobile() {
     width: 100%;
+  }
+
+  &.sendbird-channel-header--allow-edit {
+    .sendbird-channel-header__title {
+      cursor: pointer;
+    }
   }
 
   .sendbird-channel-header__title {
@@ -30,6 +36,23 @@
     flex-direction: row;
     height: 48px;
     border-radius: 4px;
+
+    &:hover {
+      @include themed() {
+        background: t(bg-1);
+      }
+    }
+    &:focus {
+      outline: none;
+      @include themed() {
+        background: t(bg-2);
+      }
+    }
+    &:active {
+      @include themed() {
+        border: solid 2px t(primary-3);
+      }
+    }
 
     .sendbird-channel-header__title__left {
       width: 48px;

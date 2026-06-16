@@ -5,8 +5,6 @@
   flex-direction: row;
   position: relative;
   width: 100%;
-  padding-right: 16px;
-  padding-left: 16px;
 
   &.incoming {
     justify-content: flex-start;
@@ -44,7 +42,9 @@
     flex-shrink: 0;
 
     .sendbird-message-content__left__avatar {
-      margin-top: 10px;
+      bottom: 2px;
+      left: 0;
+      position: absolute;
       &.multiple {
         border: 2px solid;
         @include themed() {
@@ -60,7 +60,6 @@
 
   .sendbird-message-content__middle {
     align-items: flex-start;
-    justify-content: center;
     display: inline-flex;
     flex-direction: column;
     position: relative;
@@ -94,19 +93,14 @@
       position: relative;
       text-overflow: ellipsis;
       width: 100%;
-      font-weight: bold;
     }
 
     .sendbird-message-content__middle__quote-message {
       display: inline-flex;
       position: relative;
       width: 100%;
-      &.outgoing {
-        justify-content: flex-end;
-      }
-      &.incoming {
-        justify-content: flex-start;
-      }
+      &.outgoing { justify-content: flex-end; }
+      &.incoming { justify-content: flex-start; }
 
       &:hover {
         cursor: pointer;
@@ -115,10 +109,12 @@
   }
 
   .sendbird-message-content__right {
-    position: absolute;
-    z-index: 10;
-    right: 8px;
-    top: -10px;
+    display: inline-flex;
+    margin-left: 4px;
+    padding-top: 18px;
+    position: relative;
+    width: 50px;
+    &.use-reactions { width: 70px; }
 
     &.chain-top {
       padding-top: 2px;
@@ -131,14 +127,8 @@
     .sendbird-message-content-menu {
       display: none;
       flex-direction: row;
-      background-color: white;
-      border: 1px solid #fafafaff;
-      border-radius: 8px;
-      height: min-content;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      flex-direction: row;
-      justify-content: space-between;
-      min-width: 80px;
+      height: 32px;
+      position: relative;
 
       &.sendbird-mouse-hover {
         display: inline-flex;
@@ -184,9 +174,7 @@
     justify-content: flex-end;
     position: relative;
     width: 50px;
-    &.use-reactions {
-      width: 70px;
-    }
+    &.use-reactions { width: 70px; }
 
     &.use-quote {
       .sendbird-message-content-menu {
@@ -217,12 +205,8 @@
       display: inline-flex;
       position: relative;
       width: 100%;
-      &.outgoing {
-        justify-content: flex-end;
-      }
-      &.incoming {
-        justify-content: flex-start;
-      }
+      &.outgoing { justify-content: flex-end; }
+      &.incoming { justify-content: flex-start; }
     }
 
     .sendbird-message-content__middle__body-container {
@@ -317,33 +301,23 @@
   max-width: 400px;
   position: relative;
   width: 100%;
-  @include themed() {
-    background-color: t(bg-1);
-  }
+  @include themed() { background-color: t(bg-1); }
 
   &.primary {
-    @include themed() {
-      background-color: t(primary-3);
-    }
+    @include themed() { background-color: t(primary-3); }
   }
 
   &.mouse-hover,
   &:hover {
-    @include themed() {
-      background-color: t(bg-2);
-    }
+    @include themed() { background-color: t(bg-2); }
 
     &.primary {
-      @include themed() {
-        background-color: t(primary-4);
-      }
+      @include themed() { background-color: t(primary-4); }
     }
   }
 
   &.image-grid {
-    @include themed() {
-      background-color: t(bg-1);
-    }
+    @include themed() { background-color: t(bg-1); }
   }
 }
 

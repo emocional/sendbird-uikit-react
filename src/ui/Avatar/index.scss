@@ -1,7 +1,7 @@
 @import '../../styles/variables';
 
 .sendbird-avatar {
-  border-radius: 6px;
+  border-radius: 50%;
   display: inline-block;
   overflow: hidden;
   position: relative;
@@ -19,7 +19,7 @@
     top: 50%;
     transform: translate(-50%, -50%);
     @include themed() {
-      background-color: #fafafbff;
+      background-color: t(bg--3-3);
     }
   }
 
@@ -80,7 +80,7 @@
     display: flex;
     justify-content: center;
     @include themed() {
-      background-color: #dee1e5ff;
+      background-color: t(bg--3-3);
     }
     &.text {
       @include themed() {
@@ -88,7 +88,7 @@
       }
     }
   }
-
+  
   .sendbird-avatar-text {
     font-family: Roboto;
     font-size: 8px;

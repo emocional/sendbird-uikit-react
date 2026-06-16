@@ -27,9 +27,7 @@ const initialState = {
   overrideInviteUser: undefined,
 };
 
-// TODO: this interface is duplicated
 export interface UserListQuery {
-  filterFn?: (user: User) => boolean;
   hasNext?: boolean;
   next(): Promise<Array<User>>;
   get isLoading(): boolean;
