@@ -14,6 +14,9 @@ El resto del código Emocional está en `src/emo/`.
 | `src/modules/GroupChannel/components/GroupChannelHeader/GroupChannelHeaderView.tsx` | Avatar online, badge empresa, sin botón info | `@emo-integration` |
 | `src/modules/GroupChannelList/components/GroupChannelListItem/index.tsx` | Tag de canal | `@emo-integration` |
 | `src/modules/GroupChannelList/components/GroupChannelListHeader/index.tsx` | Cabecera lista simplificada | `@emo-integration` |
+| `src/modules/GroupChannelList/components/GroupChannelListUI/index.scss` | Ancho fluido lista (`100%`, no 320px) | `@emo-integration` |
+| `src/modules/GroupChannelList/components/GroupChannelListHeader/index.scss` | Cabecera lista ancho fluido | `@emo-integration` |
+| `src/modules/GroupChannelList/components/GroupChannelListItem/index.scss` | Ítems lista ancho fluido + truncado flex | `@emo-integration` |
 | `src/modules/GroupChannel/components/TypingIndicator.tsx` | Texto typing Emocional | `@emo-integration` |
 | `src/modules/Message/context/MessageProvider.tsx` | `isByMe` → layout entrante | `@emo-integration` |
 | `src/ui/MessageContent/index.tsx` | `isByMe` → layout entrante; menú Emocional + reply inline | `@emo-integration` |

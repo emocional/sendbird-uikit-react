@@ -34,7 +34,7 @@
   position: relative;
   cursor: pointer;
   box-sizing: border-box;
-  width: 320px;
+  width: 100%; // @emo-integration — fluid width (was 320px)
   height: 80px;
   display: flex;
   flex-direction: row;
@@ -43,9 +43,6 @@
   padding: 12px 16px 12px 16px;
   @include themed() {
     border-bottom: solid 1px t(on-bg-4);
-  }
-  @include mobile() {
-    width: 100%;
   }
 
   &:focus {
@@ -57,7 +54,8 @@
     height: 56px;
   }
   .sendbird-channel-preview__content {
-    width: 100%;
+    flex: 1;
+    min-width: 0;
     height: 100%;
     margin-left: 16px;
     @include mobile() {
@@ -68,7 +66,8 @@
     .sendbird-channel-preview__content__upper {
       display: flex;
       justify-content: space-between;
-      width: 216px;
+      width: 100%; // @emo-integration (was 216px)
+      min-width: 0;
       height: 16px;
 
       @include mobile() {
@@ -76,6 +75,8 @@
       }
       .sendbird-channel-preview__content__upper__header {
         display: flex;
+        flex: 1;
+        min-width: 0;
         justify-content: flex-start;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -86,7 +87,8 @@
         .sendbird-channel-preview__content__upper__header__channel-name {
           overflow: hidden;
           text-overflow: ellipsis;
-          max-width: 128px;
+          flex: 1;
+          min-width: 0;
           word-break: break-all;
           white-space: nowrap;
         }
@@ -112,7 +114,8 @@
 
     .sendbird-channel-preview__content__lower {
       margin-top: 8px;
-      width: 216px;
+      width: 100%; // @emo-integration (was 216px)
+      min-width: 0;
       height: 32px;
       display: flex;
       justify-content: space-between;

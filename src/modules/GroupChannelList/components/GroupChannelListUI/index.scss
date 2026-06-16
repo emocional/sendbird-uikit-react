@@ -8,16 +8,13 @@
 @import '../../../../styles/variables';
 
 .sendbird-channel-list {
-  width: 320px;
+  width: 100%; // @emo-integration — fluid width in grid layout (was 320px)
   height: 100%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   @include themed() {
     background-color: t(bg-0);
-  }
-  @include mobile() {
-    width: 100%;
   }
 }
 
