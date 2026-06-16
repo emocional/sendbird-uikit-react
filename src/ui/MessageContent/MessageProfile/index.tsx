@@ -7,6 +7,8 @@ import UserProfile from '../../UserProfile';
 import { MessageContentProps } from '../index';
 import { useUserProfileContext } from '../../../lib/UserProfileContext';
 import { classnames } from '../../../utils/utils';
+// @emo-integration
+import { EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT } from '../../../emo/integration/message-layout';
 
 export interface MessageProfileProps extends MessageContentProps {
   className?: string;
@@ -25,15 +27,22 @@ export function MessageProfile({
   message,
   channel,
   userId,
+  chainTop = false,
   chainBottom = false,
 }: MessageProfileProps) {
   const avatarRef = useRef(null);
 
   const { disableUserProfile, renderUserProfile } = useUserProfileContext();
 
-  if (isByMe || chainBottom || !isSendableMessage(message)) {
+  const hideAvatar = EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT
+    ? chainTop
+    : (isByMe || chainBottom);
+
+  if (hideAvatar || !isSendableMessage(message)) {
     return null;
   }
+
+  const avatarSize = EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT ? '40px' : '28px';
 
   return (
     <ContextMenu
@@ -47,8 +56,8 @@ export function MessageProfile({
           }
           // TODO: Divide getting profileUrl logic to utils
           ref={avatarRef}
-          width="28px"
-          height="28px"
+          width={avatarSize}
+          height={avatarSize}
           bottom={bottom}
           onClick={(): void => {
             if (!disableUserProfile) toggleDropdown();

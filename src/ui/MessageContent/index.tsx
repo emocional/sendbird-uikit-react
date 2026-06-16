@@ -8,7 +8,8 @@ import { MessageEmojiMenu, MessageEmojiMenuProps } from '../MessageItemReactionM
 import Label, { LabelColors, LabelTypography } from '../Label';
 import EmojiReactions, { EmojiReactionsProps } from '../EmojiReactions';
 // @emo-integration
-import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
+import { EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT, resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
+import { EmocionalMessageHeader } from '../../emo/integration/message-header';
 import { EmocionalMessageMenu, EmocionalReplyButton } from '../../emo/integration/message-menu';
 
 import AdminMessage from '../AdminMessage';
@@ -136,7 +137,11 @@ export function MessageContent(props: MessageContentProps): ReactElement {
   const {
     renderSenderProfile = (props: MessageProfileProps) => <MessageProfile {...props} />,
     renderMessageBody = (props: MessageBodyProps) => <MessageBody {...props} />,
-    renderMessageHeader = (props: MessageHeaderProps) => <MessageHeader {...props} />,
+    renderMessageHeader = (props: MessageHeaderProps) => (
+      EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT
+        ? <EmocionalMessageHeader {...props} />
+        : <MessageHeader {...props} />
+    ),
     renderMessageMenu = (props: MessageMenuProps) => <EmocionalMessageMenu {...props} />,
     renderEmojiMenu = (props: MessageEmojiMenuProps) => <MessageEmojiMenu {...props} />,
     renderEmojiReactions = (props: EmojiReactionsProps) => <EmojiReactions {...props} />,
@@ -442,7 +447,7 @@ export function MessageContent(props: MessageContentProps): ReactElement {
             </div>
           )}
           {/* message timestamp when sent by others */}
-          {(!isByMe && !chainBottom) && (
+          {(!isByMe && !chainBottom && !EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT) && (
             <Label
               className={classnames(
                 'sendbird-message-content__middle__body-container__created-at',

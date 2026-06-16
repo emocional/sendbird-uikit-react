@@ -1,6 +1,6 @@
 @import '../../styles/variables';
 
-/* MessageContent — alineación izquierda (todos como entrantes) */
+/* MessageContent — avatar | (nombre + hora) / mensaje */
 
 .sendbird-conversation .sendbird-msg-hoc {
   width: 100%;
@@ -51,6 +51,9 @@
   .sendbird-message-content__left {
     display: flex;
     flex-shrink: 0;
+    width: 40px;
+    min-width: 40px;
+    margin-right: 10px;
 
     .sendbird-message-content__left__avatar {
       position: static;
@@ -58,20 +61,29 @@
       left: auto;
       margin-top: 0;
     }
+
+    .sendbird-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+    }
   }
 
   .sendbird-message-content__middle {
     justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
 
     .sendbird-message-content__middle__sender-name {
       font-weight: bold;
       margin-left: 0;
-      margin-bottom: 4px;
+      margin-bottom: 0;
       text-align: left;
     }
 
     .sendbird-message-content__middle__body-container {
       align-items: flex-start;
+      width: 100%;
     }
   }
 
@@ -103,6 +115,26 @@
   }
 }
 
+.sendbird-conversation .emo-message-header {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 4px;
+
+  &__name {
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  &__time {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
 .sendbird-conversation .sendbird-message-content.incoming,
 .sendbird-conversation .sendbird-message-content.outgoing,
 .sendbird-conversation .sendbird-message-content__left.incoming,
@@ -113,6 +145,10 @@
 .sendbird-conversation .sendbird-message-content__right.outgoing {
   margin-left: 0;
   margin-right: auto;
+}
+
+.sendbird-conversation .sendbird-message-content__middle__body-container__created-at {
+  display: none;
 }
 
 .sendbird-conversation .sendbird-text-message-item-body {
