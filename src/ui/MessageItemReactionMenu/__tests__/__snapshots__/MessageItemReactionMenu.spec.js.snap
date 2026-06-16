@@ -10,7 +10,7 @@ exports[`ui/MessageItemReactionMenu should do a snapshot test of the MessageItem
     >
       <button
         class="sendbird-message-item-reaction-menu__trigger sendbird-iconbutton "
-        style="height: 32px; width: 32px;"
+        style="height: 24px; width: 24px;"
         type="button"
       >
         <span
@@ -20,7 +20,7 @@ exports[`ui/MessageItemReactionMenu should do a snapshot test of the MessageItem
             class="sendbird-message-item-reaction-menu__trigger__icon sendbird-icon sendbird-icon-emoji-more sendbird-icon-color--content-inverse"
             data-testid="sendbird-message-item-reaction-menu__trigger__icon"
             role="button"
-            style="width: 24px; min-width: 24px; height: 24px; min-height: 24px;"
+            style="width: 16px; min-width: 16px; height: 16px; min-height: 16px;"
             tabindex="0"
           >
             <test-file-stub />

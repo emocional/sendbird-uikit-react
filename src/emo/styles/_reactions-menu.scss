@@ -1,0 +1,87 @@
+@import '../../styles/variables';
+
+/* Menú flotante y reacciones — fork §8 / NOT-PORTED §3.2 */
+
+.sendbird-message-content-menu {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0;
+}
+
+.emo-message-hover-action {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sendbird-message-content-menu__reaction-menu,
+.sendbird-message-content-menu__normal-menu {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sendbird-message-item-reaction-menu__trigger,
+.sendbird-message-menu .sendbird-iconbutton {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+}
+
+.sendbird-emoji-reactions {
+  border-radius: 16px;
+  padding: 4px 6px 2px 6px;
+  min-height: 20px;
+
+  @include themed() {
+    background-color: #fafafbff;
+    border: 1px solid #dee1e580;
+  }
+}
+
+.sendbird-emoji-reactions .sendbird-context-menu {
+  height: 24px;
+}
+
+.sendbird-emoji-reactions__add-reaction-badge {
+  width: 28px;
+  height: 20px;
+  top: -2px;
+}
+
+.sendbird-reaction-badge--is-add {
+  width: 28px;
+  height: 20px;
+
+  @include themed() {
+    background-color: #fafafbff;
+    border: 1px solid #dee1e580;
+  }
+
+  &:hover {
+    @include themed() {
+      border: 1px solid #dee1e580;
+    }
+  }
+}
+
+.sendbird-reaction-badge--selected,
+.sendbird-reaction-badge {
+  @include themed() {
+    background-color: #fafafbff;
+    border: 1px solid #dee1e580;
+  }
+
+  &:hover {
+    @include themed() {
+      border: 1px solid #c2c7ccff;
+    }
+  }
+}
+
+.sendbird-reaction-badge--selected {
+  @include themed() {
+    background-color: #f4f4f5ff;
+    border: 1px solid #c2c7ccff;
+  }
+}

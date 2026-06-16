@@ -7,6 +7,8 @@ import { copyToClipboard, isUserMessage, isFailedMessage } from '../../../utils'
 import { useLocalization } from '../../../lib/LocalizationContext';
 import { useMessageMenuContext } from '../MessageMenuProvider';
 import { MenuItem, MenuItemProps } from './BasicItems';
+// @emo-integration
+import { EMO_MESSAGE_MENU_TRIGGER_SIZE } from '../../../emo/integration/message-menu';
 
 export interface TriggerIconProps {
   ref: MutableRefObject<any>;
@@ -23,16 +25,16 @@ export const TriggerIcon = ({
   return (
     <IconButton
       ref={ref}
-      width="32px"
-      height="32px"
+      width={EMO_MESSAGE_MENU_TRIGGER_SIZE.button}
+      height={EMO_MESSAGE_MENU_TRIGGER_SIZE.button}
       onClick={onClick}
       onBlur={onBlur}
     >
       {renderIcon({
         type: IconTypes.MORE,
         fillColor: IconColors.CONTENT_INVERSE,
-        width: '24px',
-        height: '24px',
+        width: EMO_MESSAGE_MENU_TRIGGER_SIZE.icon,
+        height: EMO_MESSAGE_MENU_TRIGGER_SIZE.icon,
       })}
     </IconButton>
   );

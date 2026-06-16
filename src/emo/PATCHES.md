@@ -16,7 +16,10 @@ El resto del código Emocional está en `src/emo/`.
 | `src/modules/GroupChannelList/components/GroupChannelListHeader/index.tsx` | Cabecera lista simplificada | `@emo-integration` |
 | `src/modules/GroupChannel/components/TypingIndicator.tsx` | Texto typing Emocional | `@emo-integration` |
 | `src/modules/Message/context/MessageProvider.tsx` | `isByMe` → layout entrante | `@emo-integration` |
-| `src/ui/MessageContent/index.tsx` | `isByMe` → layout entrante | `@emo-integration` |
+| `src/ui/MessageContent/index.tsx` | `isByMe` → layout entrante; menú Emocional + reply inline | `@emo-integration` |
+| `src/ui/MessageMenu/menuItems/MessageMenuItems.tsx` | Trigger compacto 24px | `@emo-integration` |
+| `src/ui/MessageItemReactionMenu/index.tsx` | Trigger y picker compactos | `@emo-integration` |
+| `src/ui/EmojiReactions/index.tsx` | Picker compacto | `@emo-integration` |
 | `src/ui/*MessageItemBody*` / `QuoteMessage` / `EmojiReactions` / etc. | `isByMe` → layout entrante | `@emo-integration` |
 | `src/modules/OpenChannel/components/OpenChannelMessage/index.tsx` | `isByMe` → layout entrante | `@emo-integration` |
 | `src/modules/GroupChannelList/components/GroupChannelListItem/GroupChannelListItemView.tsx` | Render tag + avatar online | `@emo-integration` |

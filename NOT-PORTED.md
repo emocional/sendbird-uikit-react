@@ -51,7 +51,8 @@ Para lo implementado en código, ver [`src/emo/README.md`](./src/emo/README.md) 
 | Alineación mensajes a la izquierda | `message-layout.ts` + `_messages.scss` |
 | Burbujas sin color / hover fila | `_text-message-body.scss`, `_messages.scss` |
 | Contenedor conversación sin borde/padding lateral | `_conversation.scss` |
-| Reacciones: radio contenedor | `_messages.scss` |
+| Reacciones: radio contenedor y badges | `_reactions-menu.scss` |
+| Menú hover: reply inline + trigger compacto | `message-menu.tsx`, `_reactions-menu.scss` |
 | Botones primarios morados | `overrides.scss` (selector genérico) |
 | Modal invite: `hideFooter`, scroll móvil, búsqueda en header | `EmocionalInviteUsers` + `emocional-modal-search-header.scss` |
 
@@ -89,8 +90,8 @@ Referencias de diff: `git diff 742e337b..emo/fork-3.26.0-baseline -- <archivo>`
 
 | Área | Archivos fork | Qué falta |
 |------|---------------|-----------|
-| **Reacciones emoji** | `src/ui/EmojiReactions/index.scss` (si existía diff), contenedor en `MessageContent` | Estilos de badges y botones; solo `border-radius` del contenedor |
-| **Menú contextual** | `src/ui/MessageItemMenu`, `MessageItemReactionMenu` | Layout flotante, reply — en fork ligado a `MessageContent` SCSS |
+| **Reacciones emoji** | `src/ui/EmojiReactions/index.tsx`, `MessageItemReactionMenu` | **Portado** — tamaños 28/20px + `_reactions-menu.scss` |
+| **Menú contextual** | `MessageMenu`, `MessageContent` | **Portado** — `EmocionalMessageMenu`, `EmocionalReplyButton`, trigger 24px |
 | **Item de canal** | `src/modules/GroupChannelList/components/GroupChannelListItem/index.scss` | Tipografía, padding, estados hover más allá de `--active` |
 | **Modales genéricos** | `src/ui/Modal/index.scss` | Bordes, padding, responsive — solo cubierto el modal invite Emocional |
 | **Iconos** | `src/ui/Icon/index.scss` | Mapeos de color adicionales |

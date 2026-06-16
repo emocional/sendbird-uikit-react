@@ -16,6 +16,8 @@ import {
   getEmojiListByCategoryIds,
 } from '../../utils';
 import { SpaceFromTriggerType } from '../../types';
+// @emo-integration
+import { EMO_REACTION_MENU_TRIGGER_SIZE, EMO_REACTION_PICKER_SIZE } from '../../emo/integration/message-menu';
 
 export interface MessageEmojiMenuProps {
   className?: string | Array<string>;
@@ -56,8 +58,8 @@ export function MessageEmojiMenu({
           <IconButton
             className="sendbird-message-item-reaction-menu__trigger"
             ref={triggerRef}
-            width="32px"
-            height="32px"
+            width={EMO_REACTION_MENU_TRIGGER_SIZE.button}
+            height={EMO_REACTION_MENU_TRIGGER_SIZE.button}
             onClick={(): void => {
               toggleDropdown();
             }}
@@ -67,8 +69,8 @@ export function MessageEmojiMenu({
               testID="sendbird-message-item-reaction-menu__trigger__icon"
               type={IconTypes.EMOJI_MORE}
               fillColor={IconColors.CONTENT_INVERSE}
-              width="24px"
-              height="24px"
+              width={EMO_REACTION_MENU_TRIGGER_SIZE.icon}
+              height={EMO_REACTION_MENU_TRIGGER_SIZE.icon}
             />
           </IconButton>
         )}
@@ -89,8 +91,8 @@ export function MessageEmojiMenu({
                 return (
                   <ReactionButton
                     key={emoji.key}
-                    width="36px"
-                    height="36px"
+                    width={EMO_REACTION_PICKER_SIZE.button}
+                    height={EMO_REACTION_PICKER_SIZE.button}
                     selected={isReacted}
                     onClick={() => {
                       closeDropdown();
@@ -100,15 +102,15 @@ export function MessageEmojiMenu({
                   >
                     <ImageRenderer
                       url={emoji.url}
-                      width="28px"
-                      height="28px"
+                      width={EMO_REACTION_PICKER_SIZE.icon}
+                      height={EMO_REACTION_PICKER_SIZE.icon}
                       placeHolder={({ style }) => (
                         <div style={style}>
                           <Icon
                             type={IconTypes.QUESTION}
                             fillColor={IconColors.ON_BACKGROUND_3}
-                            width="28px"
-                            height="28px"
+                            width={EMO_REACTION_PICKER_SIZE.icon}
+                            height={EMO_REACTION_PICKER_SIZE.icon}
                           />
                         </div>
                       )}

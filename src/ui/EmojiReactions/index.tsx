@@ -26,6 +26,7 @@ import { getIsReactionEnabled } from '../../utils/getIsReactionEnabled';
 import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 // @emo-integration
 import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
+import { EMO_REACTION_PICKER_SIZE } from '../../emo/integration/message-menu';
 
 export interface EmojiReactionsProps {
   className?: string | Array<string>;
@@ -138,8 +139,8 @@ const EmojiReactions = ({
                   return (
                     <ReactionButton
                       key={emoji.key}
-                      width="36px"
-                      height="36px"
+                      width={EMO_REACTION_PICKER_SIZE.button}
+                      height={EMO_REACTION_PICKER_SIZE.button}
                       selected={isReacted}
                       onClick={(e): void => {
                         closeDropdown();
@@ -150,15 +151,15 @@ const EmojiReactions = ({
                     >
                       <ImageRenderer
                         url={emoji?.url || ''}
-                        width="28px"
-                        height="28px"
+                        width={EMO_REACTION_PICKER_SIZE.icon}
+                        height={EMO_REACTION_PICKER_SIZE.icon}
                         placeHolder={({ style }): ReactElement => (
                           <div style={style}>
                             <Icon
                               type={IconTypes.QUESTION}
                               fillColor={IconColors.ON_BACKGROUND_3}
-                              width="28px"
-                              height="28px"
+                              width={EMO_REACTION_PICKER_SIZE.icon}
+                              height={EMO_REACTION_PICKER_SIZE.icon}
                             />
                           </div>
                         )}

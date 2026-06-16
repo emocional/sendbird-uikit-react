@@ -9,6 +9,7 @@ import Label, { LabelColors, LabelTypography } from '../Label';
 import EmojiReactions, { EmojiReactionsProps } from '../EmojiReactions';
 // @emo-integration
 import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
+import { EmocionalMessageMenu, EmocionalReplyButton } from '../../emo/integration/message-menu';
 
 import AdminMessage from '../AdminMessage';
 import QuoteMessage from '../QuoteMessage';
@@ -136,7 +137,7 @@ export function MessageContent(props: MessageContentProps): ReactElement {
     renderSenderProfile = (props: MessageProfileProps) => <MessageProfile {...props} />,
     renderMessageBody = (props: MessageBodyProps) => <MessageBody {...props} />,
     renderMessageHeader = (props: MessageHeaderProps) => <MessageHeader {...props} />,
-    renderMessageMenu = (props: MessageMenuProps) => <MessageMenu {...props} />,
+    renderMessageMenu = (props: MessageMenuProps) => <EmocionalMessageMenu {...props} />,
     renderEmojiMenu = (props: MessageEmojiMenuProps) => <MessageEmojiMenu {...props} />,
     renderEmojiReactions = (props: EmojiReactionsProps) => <EmojiReactions {...props} />,
     renderMobileMenuOnLongPress = (props: MobileBottomSheetProps) => <MobileMenu {...props} />,
@@ -543,6 +544,12 @@ export function MessageContent(props: MessageContentProps): ReactElement {
                 filterEmojiCategoryIds,
               })
             )}
+            <EmocionalReplyButton
+              channel={channel}
+              message={message}
+              replyType={replyType}
+              setQuoteMessage={setQuoteMessage}
+            />
             {renderMessageMenu({
               className: 'sendbird-message-content-menu__normal-menu',
               channel,
