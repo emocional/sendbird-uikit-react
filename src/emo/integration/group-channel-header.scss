@@ -36,8 +36,18 @@
   overflow: hidden;
 }
 
+.emo-group-channel-header__identity {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
 .emo-group-channel-header__name {
-  flex: 1 1 0;
+  flex: 0 1 auto;
   min-width: 0;
   font-weight: 700;
   overflow: hidden;
@@ -46,7 +56,7 @@
 }
 
 .emo-group-channel-header__tag {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   max-width: 9rem;
   overflow: hidden;
   text-overflow: ellipsis;

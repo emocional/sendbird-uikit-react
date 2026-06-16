@@ -49,22 +49,24 @@ export const EmocionalGroupChannelHeaderProfile = ({
         width={40}
         height={40}
       />
-      <Label
-        className="emo-group-channel-header__name"
-        type={LabelTypography.SUBTITLE_2}
-        color={LabelColors.ONBACKGROUND_1}
-      >
-        {channelTitle}
-      </Label>
-      {roleTag && (
+      <div className="emo-group-channel-header__identity">
         <Label
-          className="emo-channel-preview__tag emo-group-channel-header__tag"
-          type={LabelTypography.CAPTION_2}
+          className="emo-group-channel-header__name"
+          type={LabelTypography.SUBTITLE_2}
           color={LabelColors.ONBACKGROUND_1}
         >
-          {roleTag}
+          {channelTitle}
         </Label>
-      )}
+        {roleTag && (
+          <Label
+            className="emo-channel-preview__tag emo-group-channel-header__tag"
+            type={LabelTypography.CAPTION_2}
+            color={LabelColors.ONBACKGROUND_1}
+          >
+            {roleTag}
+          </Label>
+        )}
+      </div>
     </div>
   );
 };
