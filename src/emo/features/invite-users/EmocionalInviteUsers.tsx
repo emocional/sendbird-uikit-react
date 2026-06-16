@@ -133,7 +133,7 @@ export const EmocionalInviteUsers = ({
         <EmocionalModalSearchHeader
           titleText={titleText}
           searchValue={searchTerm}
-          onSearchChange={handleSearchChange}
+          onSearchChange={searcherFilter ? handleSearchChange : undefined}
           onCloseClick={onCancel}
         />
       )}

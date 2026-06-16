@@ -138,7 +138,7 @@ describe('ui/MessageContent', () => {
       container.querySelector('.sendbird-message-content-menu.outgoing')
     ).toBeNull();
     expect(
-      container.getElementsByClassName('sendbird-message-content__middle__sender-name').length
+      container.getElementsByClassName('emo-message-header__name').length
     ).toBeGreaterThan(0);
     expect(
       container.getElementsByClassName('sendbird-message-content-reactions').length
@@ -148,7 +148,10 @@ describe('ui/MessageContent', () => {
     ).toBeNull();
     expect(
       container.querySelector('.sendbird-message-content__middle__body-container__created-at.right')
-    ).toBeTruthy();
+    ).toBeNull();
+    expect(
+      container.getElementsByClassName('emo-message-header__time').length
+    ).toBeGreaterThan(0);
     expect(
       container.querySelector('.sendbird-message-content-menu.incoming')
     ).toBeTruthy();
@@ -239,7 +242,7 @@ describe('ui/MessageContent', () => {
       />
     );
     expect(
-      container.getElementsByClassName('sendbird-message-content__middle__sender-name').length
+      container.getElementsByClassName('emo-message-header').length
     ).toBe(0);
     expect(
       container.querySelector('.sendbird-message-content__right.chain-top')
@@ -249,40 +252,33 @@ describe('ui/MessageContent', () => {
     ).toBeTruthy();
   });
 
-  it('should not render components when chainBottom is true & isByMe is true', () => {
+  it('should hide avatar on chainTop but keep it on chainBottom (Emocional layout)', () => {
     const message = createMockMessage();
-    const { container } = render(
+    const chainTopRender = render(
       <MessageContent
         userId="sendbird-user-001"
         message={message}
         channel={createMockChannel()}
-        isByMe
-        chainBottom
+        chainTop
       />
     );
     expect(
-      container.getElementsByClassName('sendbird-message-content__left__avatar').length
+      chainTopRender.container.getElementsByClassName('sendbird-message-content__left__avatar').length
     ).toBe(0);
-    expect(
-      container.getElementsByClassName('sendbird-message-content__middle__body-container__created-at').length
-    ).toBe(0);
-  });
-  it('should not render components when chainBottom is true & isByMe is false', () => {
-    const message = createMockMessage();
-    const { container } = render(
+
+    const chainBottomRender = render(
       <MessageContent
         userId="sendbird-user-002"
         message={message}
         channel={createMockChannel()}
-        isByMe={false}
         chainBottom
       />
     );
     expect(
-      container.getElementsByClassName('sendbird-message-content__left__avatar').length
-    ).toBe(0);
+      chainBottomRender.container.getElementsByClassName('sendbird-message-content__left__avatar').length
+    ).toBeGreaterThan(0);
     expect(
-      container.getElementsByClassName('sendbird-message-content__middle__body-container__created-at').length
+      chainBottomRender.container.getElementsByClassName('sendbird-message-content__middle__body-container__created-at').length
     ).toBe(0);
   });
 

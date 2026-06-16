@@ -13,23 +13,23 @@ exports[`ui/MessageContent should do a snapshot test of the MessageContent DOM 1
         class="sendbird-context-menu"
       >
         <div
-          class="sendbird-message-content__left__avatar sendbird-avatar"
+          class="sendbird-message-content__left__avatar emo-message-avatar sendbird-avatar"
           role="button"
-          style="height: 28px; width: 28px; z-index: 0; bottom: 2px;"
+          style="height: 40px; width: 40px; z-index: 0; bottom: 2px;"
           tabindex="0"
         >
           <div
             class="sendbird-avatar-img sendbird-image-renderer"
-            style="width: 100%; min-width: min(400px, 28px); max-width: 400px;"
+            style="width: 100%; min-width: min(400px, 40px); max-width: 400px;"
           >
             <div
               class="sendbird-avatar-img--default"
-              style="width: 28px; height: 28px;"
+              style="width: 40px; height: 40px;"
             >
               <div
                 class=" sendbird-icon sendbird-icon-user sendbird-icon-color--content"
                 role="button"
-                style="width: 16.099999999999998px; min-width: 16.099999999999998px; height: 16.099999999999998px; min-height: 16.099999999999998px;"
+                style="width: 23px; min-width: 23px; height: 23px; min-height: 23px;"
                 tabindex="0"
               >
                 <test-file-stub />
@@ -43,11 +43,20 @@ exports[`ui/MessageContent should do a snapshot test of the MessageContent DOM 1
       class="sendbird-message-content__middle"
       data-testid="sendbird-message-content__middle"
     >
-      <span
-        class="sendbird-message-content__middle__sender-name sendbird-label sendbird-label--caption-2 sendbird-label--color-onbackground-2"
+      <div
+        class="emo-message-header"
       >
-        Mathew
-      </span>
+        <span
+          class="emo-message-header__name sendbird-label sendbird-label--caption-2 sendbird-label--color-onbackground-2"
+        >
+          Mathew
+        </span>
+        <span
+          class="emo-message-header__time sendbird-label sendbird-label--caption-3 sendbird-label--color-onbackground-3"
+        >
+          mock-date
+        </span>
+      </div>
       <div
         class="sendbird-message-content__middle__body-container"
       >
@@ -60,15 +69,10 @@ exports[`ui/MessageContent should do a snapshot test of the MessageContent DOM 1
             First second third
           </div>
         </span>
-        <span
-          class="sendbird-message-content__middle__body-container__created-at right sendbird-label sendbird-label--caption-3 sendbird-label--color-onbackground-2"
-        >
-          mock-date
-        </span>
       </div>
     </div>
     <div
-      class="sendbird-message-content__right"
+      class="sendbird-message-content__right emo-message-content__right"
       data-testid="sendbird-message-content__right"
     >
       <div

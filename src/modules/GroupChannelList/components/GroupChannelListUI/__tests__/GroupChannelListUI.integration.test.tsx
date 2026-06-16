@@ -151,7 +151,8 @@ describe('GroupChannelListUI Integration Tests', () => {
       initialized: true,
     });
 
-    expect(container.getElementsByClassName('sendbird-channel-header--allow-edit')[0]).toBeInTheDocument();
+    expect(container.getElementsByClassName('emo-channel-list-header__title')[0]).toBeInTheDocument();
+    expect(container.getElementsByClassName('sendbird-channel-header--allow-edit').length).toBe(0);
   });
 
   it('handle isTypingIndicatorEnabled', () => {
@@ -166,8 +167,9 @@ describe('GroupChannelListUI Integration Tests', () => {
       initialized: true,
     });
 
-    expect(screen.getByText(mockStringSet.TYPING_INDICATOR__IS_TYPING, { exact: false })).toBeInTheDocument();
-    expect(screen.getByText(mockStringSet.TYPING_INDICATOR__ARE_TYPING, { exact: false })).toBeInTheDocument();
+    expect(screen.queryByText(mockStringSet.TYPING_INDICATOR__IS_TYPING, { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText(mockStringSet.TYPING_INDICATOR__ARE_TYPING, { exact: false })).not.toBeInTheDocument();
+    expect(screen.getByText('test-group-channel-1')).toBeInTheDocument();
   });
 
   it('handle onChannelSelect', () => {

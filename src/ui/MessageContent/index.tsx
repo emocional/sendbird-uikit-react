@@ -393,7 +393,7 @@ export function MessageContent(props: MessageContentProps): ReactElement {
           )}
         >
           {/* message status component when sent by me */}
-          {(isByMe && !chainBottom) && (
+          {(computedIsByMe && !chainBottom && !EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT) && (
             <div
               className={classnames(
                 'sendbird-message-content__middle__body-container__created-at',

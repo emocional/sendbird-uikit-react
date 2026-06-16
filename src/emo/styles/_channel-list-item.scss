@@ -93,6 +93,25 @@ $emo-channel-preview-meta-width: 76px;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+
+    &.sendbird-message-status {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      width: auto;
+      height: auto;
+
+      .sendbird-message-status__icon {
+        position: relative;
+        top: 0;
+        flex-shrink: 0;
+      }
+
+      .sendbird-message-status__text {
+        margin-left: 4px;
+        line-height: 1;
+      }
+    }
   }
 
   .emo-channel-preview__unread {
