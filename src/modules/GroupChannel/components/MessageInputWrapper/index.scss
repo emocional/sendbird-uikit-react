@@ -21,10 +21,7 @@
     position: relative;
     width: 100%;
     box-sizing: border-box;
-    padding: 0px 24px;
-    @include mobile() {
-      padding: 0px 16px;
-    }
+    padding: 0; // @emo-integration (was 0 24px / 16px mobile)
   }
 }
 

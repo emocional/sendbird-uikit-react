@@ -5,14 +5,24 @@
   padding-right: 16px;
 
   .sendbird-ui-header__left {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    max-width: none;
     margin-right: 8px;
+  }
+
+  .sendbird-ui-header__left.sendbird-ui-header--is-desktop,
+  .sendbird-ui-header__left.sendbird-ui-header--is-mobile {
+    max-width: none;
   }
 
   .sendbird-ui-header__right {
     flex-shrink: 0;
     margin-left: 8px;
+  }
+
+  .sendbird-ui-header__right.sendbird-ui-header--is-desktop {
+    max-width: none;
   }
 }
 
@@ -22,14 +32,13 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
-  width: 100%;
+  flex: 1;
   overflow: hidden;
 }
 
 .emo-group-channel-header__name {
-  flex: 0 1 auto;
+  flex: 1 1 0;
   min-width: 0;
-  max-width: 100%;
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -37,7 +46,11 @@
 }
 
 .emo-group-channel-header__tag {
-  flex-shrink: 0;
+  flex: 0 1 auto;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sendbird-chat-header__icon_back {

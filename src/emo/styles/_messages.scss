@@ -3,8 +3,9 @@
 /* MessageContent — fork §8 / NOT-PORTED §3.1 */
 
 .sendbird-message-content {
-  padding-left: 16px;
-  padding-right: 16px;
+  padding-left: 0;
+  padding-right: 0;
+  margin: 0;
 
   .sendbird-message-content__middle {
     max-width: none;
@@ -31,7 +32,7 @@
       position: static;
       bottom: auto;
       left: auto;
-      margin-top: 10px;
+      margin-top: 0;
     }
   }
 
@@ -40,6 +41,8 @@
 
     .sendbird-message-content__middle__sender-name {
       font-weight: bold;
+      margin-left: 0;
+      margin-bottom: 0;
     }
   }
 

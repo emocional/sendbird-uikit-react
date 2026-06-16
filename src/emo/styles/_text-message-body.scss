@@ -3,7 +3,7 @@
 /* TextMessageItemBody — sin burbujas de color (fork + isByMe entrante) */
 
 .sendbird-text-message-item-body {
-  padding: 0 0 0 12px;
+  padding: 0;
   border-radius: 0;
 
   &.incoming,
