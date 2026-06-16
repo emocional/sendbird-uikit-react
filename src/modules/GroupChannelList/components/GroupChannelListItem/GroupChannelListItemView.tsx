@@ -153,7 +153,9 @@ export const GroupChannelListItemView = ({
                   {'@'}
                 </MentionUserLabel>
               ) : null}
-              {unreadCount > 0 ? <Badge count={unreadCount} /> : null}
+              {unreadCount > 0 ? (
+                <Badge className="emo-channel-preview__badge" count={unreadCount} />
+              ) : null}
             </div>
           )}
         </div>
