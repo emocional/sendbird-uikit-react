@@ -5,6 +5,9 @@
 .sendbird-conversation {
   border-radius: 0;
   border: none;
+  margin: 0;
+  flex: 1;
+  min-height: 0;
 
   @include themed() {
     border: none;

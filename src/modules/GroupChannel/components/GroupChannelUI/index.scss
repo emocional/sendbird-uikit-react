@@ -10,9 +10,9 @@
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  border: none; // @emo-integration — embedded in dashboard column (was 1px themed border)
   @include themed() {
     background-color: t(bg-0);
-    border: 1px solid t(on-bg-4);
   }
 }
 
