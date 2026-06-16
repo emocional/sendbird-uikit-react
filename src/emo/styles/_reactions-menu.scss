@@ -2,8 +2,7 @@
 
 /* Menú flotante y reacciones — fork §8 / NOT-PORTED §3.2 */
 
-.sendbird-message-content-menu {
-  display: inline-flex;
+.sendbird-conversation .sendbird-message-content-menu {
   flex-direction: row;
   align-items: center;
   gap: 0;

@@ -83,16 +83,26 @@ $emo-message-avatar-gap: 14px;
   }
 }
 
-/* Menú hover — anclado a la esquina inferior derecha del bloque con fondo */
+/* Menú hover — esquina inferior derecha, colgando un poco por debajo del bloque */
+$emo-message-menu-overhang: 6px;
+
+.sendbird-conversation .sendbird-message-content {
+  overflow: visible;
+}
+
 .sendbird-conversation .sendbird-message-content .emo-message-content__right.sendbird-message-content__right {
   position: absolute;
   z-index: 10;
-  inset: auto $emo-message-content-padding-x $emo-message-content-padding-y auto;
+  right: $emo-message-content-padding-x;
+  bottom: -$emo-message-menu-overhang;
+  top: auto;
+  left: auto;
   display: inline-flex;
   margin: 0;
   padding: 0;
   width: auto;
   height: auto;
+  pointer-events: none;
 
   &.chain-top {
     padding-top: 0;
@@ -103,18 +113,32 @@ $emo-message-avatar-gap: 14px;
   }
 
   .sendbird-message-content-menu {
+    display: none;
+    pointer-events: auto;
     background-color: white;
     border: 1px solid #fafafaff;
     border-radius: 8px;
     height: min-content;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    display: inline-flex;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
     gap: 0;
     min-width: auto;
     position: relative;
+
+    &.sendbird-mouse-hover {
+      display: inline-flex;
+    }
+  }
+}
+
+.sendbird-conversation .sendbird-message-content.incoming:hover,
+.sendbird-conversation .sendbird-message-content.incoming.mouse-hover {
+  .emo-message-content__right.sendbird-message-content__right {
+    .sendbird-message-content-menu {
+      display: inline-flex;
+    }
   }
 }
 
