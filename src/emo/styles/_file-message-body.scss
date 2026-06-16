@@ -1,0 +1,56 @@
+@import '../../styles/variables';
+
+/* Adjuntos enviados en el historial (FileMessageItemBody) */
+
+$emo-attachment-bg: #fafafbff;
+$emo-attachment-bg-hover: #f4f4f5ff;
+$emo-attachment-border: #dee1e580;
+$emo-attachment-radius: 12px;
+
+.sendbird-conversation .sendbird-file-message-item-body {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 8px 12px;
+  border-radius: $emo-attachment-radius;
+  border: 1px solid $emo-attachment-border;
+  box-sizing: border-box;
+
+  &.incoming,
+  &.outgoing {
+    @include themed() {
+      background-color: $emo-attachment-bg;
+    }
+  }
+
+  &.mouse-hover,
+  &:hover {
+    &.incoming,
+    &.outgoing {
+      @include themed() {
+        background-color: $emo-attachment-bg-hover;
+      }
+    }
+  }
+
+  &.reactions {
+    border-radius: $emo-attachment-radius $emo-attachment-radius 0 0;
+  }
+
+  .sendbird-file-message-item-body__file-icon {
+    flex-shrink: 0;
+    margin-right: 8px;
+
+    @include themed() {
+      background-color: #ffffff;
+      border: 1px solid $emo-attachment-border;
+    }
+  }
+
+  .sendbird-file-message-item-body__file-name {
+    position: static;
+    top: auto;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+}

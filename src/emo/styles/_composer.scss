@@ -13,6 +13,8 @@ $emo-input-line-height: 22px;
 $emo-input-padding-x: 20px;
 $emo-input-padding-y: 12px;
 $emo-input-actions-width: 44px;
+$emo-pending-bg: #fafafbff;
+$emo-pending-radius: 12px;
 
 .sendbird-conversation .sendbird-message-input {
   position: relative;
@@ -119,6 +121,30 @@ $emo-input-actions-width: 44px;
     order: -1;
     margin: 0;
     flex-shrink: 0;
+    padding: 10px 12px;
+    border-radius: $emo-pending-radius;
+    background-color: $emo-pending-bg;
+    border: 1px solid $emo-input-border;
+    box-sizing: border-box;
+
+    @include themed() {
+      background-color: $emo-pending-bg;
+      border: 1px solid $emo-input-border;
+    }
+  }
+
+  .sendbird-message-input__pending-card__body {
+    @include themed() {
+      background-color: #ffffff;
+      border: 1px solid $emo-input-border;
+    }
+  }
+
+  .sendbird-message-input__pending-file__image-placeholder {
+    @include themed() {
+      background-color: #ffffff;
+      border: 1px solid $emo-input-border;
+    }
   }
 
   .sendbird-message-input--textarea {
