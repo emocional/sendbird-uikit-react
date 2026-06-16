@@ -245,6 +245,76 @@ describe('Emocional product suite (emo-front contract)', () => {
       fireEvent.change(screen.getByPlaceholderText('Buscar'), { target: { value: 'Ana' } });
       expect(onSearch).toHaveBeenCalledWith('Ana');
     });
+
+    it('recarga la lista al escribir en el buscador', async () => {
+      let nicknameFilter = '';
+      const mockStringSet = {
+        MODAL__CREATE_CHANNEL__TITLE: 'Nuevo chat',
+        BUTTON__CANCEL: 'Cancelar',
+        NO_NAME: '(No name)',
+      };
+
+      mockUseCreateChannel.mockReturnValue({
+        state: {
+          onCreateChannelClick: undefined,
+          onBeforeCreateChannel: undefined,
+          onChannelCreated: jest.fn(),
+          onCreateChannel: jest.fn(),
+          overrideInviteUser: undefined,
+          type: 'GROUP',
+        },
+        actions: {
+          createChannel: jest.fn(),
+        },
+      } as ReturnType<typeof useCreateChannel>);
+
+      mockUseSendbird.mockReturnValue({
+        state: {
+          config: {
+            userId: 'me',
+            searcherFilter: (value: string) => {
+              nicknameFilter = value;
+            },
+            logger: { error: jest.fn() },
+          },
+          stores: { sdkStore: { sdk: { groupChannel: {} } } },
+        },
+        actions: {},
+      } as ReturnType<typeof useSendbird>);
+
+      const userListQuery = jest.fn(() => ({
+        hasNext: true,
+        isLoading: false,
+        next: jest.fn().mockResolvedValue(
+          nicknameFilter
+            ? [buildUser({ userId: 'peer-2', nickname: 'Ana López' })]
+            : [
+              buildUser({ userId: 'peer-1', nickname: 'Carlos' }),
+              buildUser({ userId: 'peer-2', nickname: 'Ana López' }),
+            ],
+        ),
+      }));
+
+      render(
+        <LocalizationContext.Provider value={{ stringSet: mockStringSet, dateLocale: undefined }}>
+          <EmocionalInviteUsers userListQuery={userListQuery} />
+        </LocalizationContext.Provider>,
+      );
+
+      await waitFor(() => {
+        expect(screen.getByText('Carlos')).toBeInTheDocument();
+        expect(screen.getByText('Ana López')).toBeInTheDocument();
+      });
+
+      fireEvent.change(screen.getByPlaceholderText('Buscar'), { target: { value: 'Ana' } });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Carlos')).not.toBeInTheDocument();
+        expect(screen.getByText('Ana López')).toBeInTheDocument();
+      });
+
+      expect(userListQuery.mock.calls.length).toBeGreaterThan(1);
+    });
   });
 
   describe('flujo invite distinct 1:1', () => {

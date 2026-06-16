@@ -5,10 +5,11 @@ $emo-input-bg: #ffffff;
 $emo-input-placeholder: #bcc1ca;
 $emo-input-text: #323842;
 $emo-input-radius: 9999px;
-$emo-input-min-height: 48px;
+$emo-input-min-height: 40px;
 $emo-input-font-size: 14px;
-$emo-input-line-height: 22px;
-$emo-input-padding-x: 20px;
+$emo-input-line-height: 20px;
+$emo-input-padding-x: 16px;
+$emo-input-padding-y: 8px;
 
 .sendbird-modal__header.emo-modal-search-header {
   display: flex;
@@ -23,7 +24,8 @@ $emo-input-padding-x: 20px;
     width: 100%;
     min-width: 0;
     min-height: $emo-input-min-height;
-    padding: 12px $emo-input-padding-x;
+    height: $emo-input-min-height;
+    padding: $emo-input-padding-y $emo-input-padding-x;
     border: 1px solid $emo-input-border;
     border-radius: $emo-input-radius;
     background-color: $emo-input-bg;

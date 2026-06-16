@@ -9,6 +9,7 @@ import './emocional-modal-search-header.scss';
 export interface EmocionalModalSearchHeaderProps {
   titleText: string;
   searchPlaceholder?: string;
+  searchValue?: string;
   onSearchChange?: (value: string) => void;
   onCloseClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
@@ -16,6 +17,7 @@ export interface EmocionalModalSearchHeaderProps {
 export const EmocionalModalSearchHeader = ({
   titleText,
   searchPlaceholder = 'Buscar',
+  searchValue = '',
   onSearchChange,
   onCloseClick,
 }: EmocionalModalSearchHeaderProps): React.ReactElement => (
@@ -23,7 +25,9 @@ export const EmocionalModalSearchHeader = ({
     {onSearchChange ? (
       <input
         className="emo-modal-search-header__input"
+        type="search"
         placeholder={searchPlaceholder}
+        value={searchValue}
         onChange={(event) => onSearchChange(event.target.value)}
       />
     ) : (

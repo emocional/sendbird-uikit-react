@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useState } from 'react';
 import type { User } from '@sendbird/chat';
 
 import '../../../modules/CreateChannel/components/InviteUsers/invite-users.scss';
@@ -47,23 +47,45 @@ export const EmocionalInviteUsers = ({
   const { userId, searcherFilter, logger } = config;
   const idsToFilter = [userId];
   const [users, setUsers] = useState<User[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const { stringSet } = useContext(LocalizationContext);
   const [usersDataSource, setUsersDataSource] = useState<UserListQuery | null>(null);
   const titleText = stringSet.MODAL__CREATE_CHANNEL__TITLE;
   const { isMobile } = useMediaQueryContext();
   const [scrollableAreaHeight, setScrollableAreaHeight] = useState<number>(window.innerHeight);
 
+  const handleSearchChange = useCallback((value: string) => {
+    searcherFilter?.(value);
+    setSearchTerm(value);
+  }, [searcherFilter]);
+
   useEffect(() => {
     const query = userListQuery?.();
-    if (!query || query.isLoading || !query.hasNext) {
+    if (!query || query.isLoading) {
       return;
     }
 
+    let cancelled = false;
     setUsersDataSource(query);
+    setUsers([]);
+
     query.next().then((batch) => {
+      if (cancelled) {
+        return;
+      }
       setUsers(applyEmocionalUserListFilter(query, batch));
+    }).catch((error) => {
+      if (cancelled) {
+        return;
+      }
+      logger?.error?.('EmocionalInviteUsers: failed to load users', error);
+      setUsers([]);
     });
-  }, [userListQuery]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userListQuery, searchTerm, logger]);
 
   useEffect(() => {
     const updateHeight = () => setScrollableAreaHeight(window.innerHeight);
@@ -110,7 +132,8 @@ export const EmocionalInviteUsers = ({
       renderHeader={() => (
         <EmocionalModalSearchHeader
           titleText={titleText}
-          onSearchChange={searcherFilter}
+          searchValue={searchTerm}
+          onSearchChange={handleSearchChange}
           onCloseClick={onCancel}
         />
       )}
