@@ -48,7 +48,11 @@ export function MessageProfile({
     <ContextMenu
       menuTrigger={(toggleDropdown: () => void): ReactElement => (
         <Avatar
-          className={classnames(className, displayThreadReplies && 'use-thread-replies')}
+          className={classnames(
+            className,
+            displayThreadReplies && 'use-thread-replies',
+            EMOCIONAL_FORCE_INCOMING_MESSAGE_LAYOUT && 'emo-message-avatar',
+          )}
           src={
             channel?.members?.find((member) => member?.userId === message.sender.userId)?.profileUrl
             || message.sender.profileUrl

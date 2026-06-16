@@ -1,6 +1,7 @@
 @import '../../styles/variables';
 
 $emo-chat-padding-x: 16px;
+$emo-chat-padding-y: 12px;
 
 /* GroupChannelUI — padding en mensajes/compositor; contenedor sin huecos extra */
 
@@ -29,8 +30,7 @@ $emo-chat-padding-x: 16px;
 }
 
 .sendbird-conversation__messages .sendbird-conversation__messages-padding {
-  padding-left: $emo-chat-padding-x;
-  padding-right: $emo-chat-padding-x;
+  padding: $emo-chat-padding-y $emo-chat-padding-x;
 }
 
 .sendbird-conversation__messages {
@@ -39,6 +39,20 @@ $emo-chat-padding-x: 16px;
     padding-top: 8px;
     padding-bottom: 8px;
     margin: 0;
+  }
+
+  .sendbird-separator {
+    justify-content: center;
+
+    .sendbird-separator__left,
+    .sendbird-separator__right {
+      width: 40px;
+      flex: 0 0 40px;
+    }
+
+    .sendbird-separator__text {
+      margin: 0 12px;
+    }
   }
 }
 

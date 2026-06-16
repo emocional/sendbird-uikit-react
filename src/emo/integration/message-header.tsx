@@ -21,7 +21,7 @@ export function EmocionalMessageHeader(props: MessageHeaderProps) {
   return (
     <div className="emo-message-header">
       <Label
-        className="emo-message-header__name sendbird-message-content__middle__sender-name"
+        className="emo-message-header__name"
         type={LabelTypography.CAPTION_2}
         color={LabelColors.ONBACKGROUND_2}
       >

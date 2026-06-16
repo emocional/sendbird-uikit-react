@@ -1,8 +1,8 @@
 @import '../../styles/variables';
 
-/* TextMessageItemBody — sin burbujas de color (fork + isByMe entrante) */
+/* TextMessageItemBody — sin burbuja ni fondo */
 
-.sendbird-text-message-item-body {
+.sendbird-conversation .sendbird-text-message-item-body {
   padding: 0;
   border-radius: 0;
 
@@ -31,6 +31,27 @@
         @include themed() {
           background-color: transparent;
         }
+      }
+    }
+  }
+}
+
+.sendbird-conversation .sendbird-file-message-item-body,
+.sendbird-conversation .sendbird-unknown-message-item-body,
+.sendbird-conversation .sendbird-og-message-item-body__text-bubble {
+  &.incoming,
+  &.outgoing {
+    @include themed() {
+      background-color: transparent;
+    }
+  }
+
+  &.mouse-hover,
+  &:hover {
+    &.incoming,
+    &.outgoing {
+      @include themed() {
+        background-color: transparent;
       }
     }
   }
