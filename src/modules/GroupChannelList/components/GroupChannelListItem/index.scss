@@ -35,13 +35,14 @@
   cursor: pointer;
   box-sizing: border-box;
   width: 100%; // @emo-integration — fluid width (was 320px)
-  height: auto; // @emo-integration — content-driven height (was 80px)
-  min-height: 0;
+  height: 70px; // @emo-integration — match list header row height
+  min-height: 70px;
+  max-height: 70px;
   display: flex;
   flex-direction: row;
-  align-items: flex-start; // @emo-integration (was center)
-  justify-content: flex-start; // @emo-integration (was center)
-  padding: 12px 16px 12px 16px;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 16px;
   @include themed() {
     border-bottom: solid 1px t(on-bg-4);
   }
@@ -51,8 +52,9 @@
   }
 
   .sendbird-channel-preview__avatar {
-    width: 56px;
-    height: 56px;
+    width: 32px; // @emo-integration (was 56px)
+    height: 32px;
+    flex: 0 0 32px;
   }
   .sendbird-channel-preview__content {
     flex: 1;
@@ -175,7 +177,7 @@
 }
 
 .sendbird-channel-preview--active {
-  padding: 12px 16px 12px 12px;
+  padding: 0 16px;
   @include themed() {
     border-left: solid 4px t(primary-3);
     border-bottom: solid 1px t(on-bg-4);

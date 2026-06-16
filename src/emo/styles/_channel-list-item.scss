@@ -1,103 +1,87 @@
 @import '../../styles/variables';
 
-/* GroupChannelListItem — layout fluido (avatar + nombre / tag / último mensaje) */
+$emo-channel-list-row-height: 70px;
 
-.sendbird-channel-list .sendbird-channel-preview {
-  align-items: flex-start;
-  justify-content: flex-start;
+/* GroupChannelListItem — misma altura que cabecera; avatar | nombre+rol | fecha */
+
+.sendbird-channel-list .sendbird-channel-preview.emo-channel-preview {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 12px;
   width: 100%;
-  height: auto;
-  min-height: 0;
-  padding: 12px 16px;
+  height: $emo-channel-list-row-height;
+  min-height: $emo-channel-list-row-height;
+  max-height: $emo-channel-list-row-height;
+  padding: 0 16px;
+  box-sizing: border-box;
   border-bottom: 1px solid #dee1e580;
 
   @include themed() {
     border-bottom: solid 1px #dee1e580;
   }
 
-  .sendbird-channel-preview__avatar {
+  .sendbird-channel-preview__avatar.emo-channel-preview__avatar {
     width: 32px;
     height: 32px;
-    flex-shrink: 0;
-    margin-top: 2px;
+    flex: 0 0 32px;
+    overflow: visible;
+
+    .emo-connection-status-channel-avatar {
+      width: 32px;
+      height: 32px;
+    }
+
+    .sendbird-avatar {
+      width: 32px;
+      height: 32px;
+    }
   }
 
-  .emo-channel-preview__content {
+  .emo-channel-preview__identity {
     flex: 1;
     min-width: 0;
-    margin-left: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-  }
-
-  .emo-channel-preview__upper {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-    width: 100%;
-    height: auto;
-    min-width: 0;
-  }
-
-  .emo-channel-preview__title {
-    flex: 1;
-    min-width: 0;
-    display: flex;
-    align-items: center;
+    justify-content: center;
     gap: 4px;
     overflow: hidden;
-
-    .sendbird-channel-preview__content__upper__header__channel-name {
-      flex: 1;
-      min-width: 0;
-      font-weight: 700;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .sendbird-channel-preview__content__upper__header__total-members {
-      flex-shrink: 0;
-      margin-top: 0;
-    }
   }
 
-  .emo-channel-preview__timestamp {
-    flex-shrink: 0;
-    margin-left: 0;
-    margin-bottom: 0;
+  .emo-channel-preview__name {
+    min-width: 0;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  .emo-channel-preview__tag {
-    align-self: flex-start;
-    margin-top: 0;
+  .emo-channel-preview__meta {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    margin-left: 8px;
   }
 
-  .emo-channel-preview__lower {
+  .emo-channel-preview__timestamp {
+    white-space: nowrap;
+    margin: 0;
+  }
+
+  .emo-channel-preview__unread {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
-    width: 100%;
-    height: auto;
-    min-width: 0;
-    margin-top: 0;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+  }
 
-    .sendbird-channel-preview__content__lower__last-message {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .sendbird-channel-preview__content__lower__unread-message-count {
-      flex-shrink: 0;
-      margin-left: 0;
-      margin-bottom: 0;
-    }
+  .sendbird-channel-preview__action {
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
   }
 
   &:hover {
@@ -108,7 +92,7 @@
 }
 
 .sendbird-channel-preview.sendbird-channel-preview--active {
-  padding: 12px 16px;
+  padding: 0 16px;
   border-left: none;
 
   @include themed() {
@@ -116,7 +100,7 @@
     border-bottom: solid 1px #dee1e580;
   }
 
-  .sendbird-channel-preview__content__upper__header__channel-name {
+  .emo-channel-preview__name {
     @include themed() {
       color: inherit;
     }
