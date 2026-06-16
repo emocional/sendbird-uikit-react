@@ -50,10 +50,14 @@ $emo-channel-list-row-height: 70px;
 
   .emo-channel-preview__name {
     min-width: 0;
-    font-weight: 700;
+    font-weight: 400;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+
+    &--unread {
+      font-weight: 700;
+    }
   }
 
   .emo-channel-preview__tag {
@@ -74,18 +78,23 @@ $emo-channel-list-row-height: 70px;
     justify-content: center;
     gap: 4px;
     margin-left: 8px;
+    min-height: 40px;
   }
 
   .emo-channel-preview__timestamp {
     white-space: nowrap;
     margin: 0;
+    min-height: 16px;
+    line-height: 16px;
   }
 
   .emo-channel-preview__unread {
     display: flex;
     flex-direction: row;
     align-items: center;
+    justify-content: flex-end;
     gap: 4px;
+    min-height: 20px;
   }
 
   .sendbird-channel-preview__action {
@@ -100,7 +109,7 @@ $emo-channel-list-row-height: 70px;
     }
 
     .emo-channel-preview__timestamp {
-      display: none;
+      visibility: hidden;
     }
   }
 }

@@ -98,7 +98,10 @@ export const GroupChannelListItemView = ({
         </div>
         <div className="emo-channel-preview__identity">
           <Label
-            className="emo-channel-preview__name"
+            className={[
+              'emo-channel-preview__name',
+              showUnread ? 'emo-channel-preview__name--unread' : '',
+            ].join(' ')}
             testID="sendbird-channel-preview__content__upper__header__channel-name"
             type={LabelTypography.SUBTITLE_2}
             color={LabelColors.ONBACKGROUND_1}

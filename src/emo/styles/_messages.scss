@@ -46,15 +46,17 @@ $emo-message-avatar-gap: 14px;
   }
 }
 
-.sendbird-conversation .sendbird-message-content.incoming,
-.sendbird-conversation .sendbird-message-content.outgoing {
+.sendbird-conversation .sendbird-message-content.incoming {
   &.mouse-hover,
   &:hover {
     @include themed() {
-      background-color: transparent;
+      background-color: #fafafbff;
     }
   }
+}
 
+.sendbird-conversation .sendbird-message-content.incoming,
+.sendbird-conversation .sendbird-message-content.outgoing {
   .sendbird-message-content__left {
     display: flex;
     flex-shrink: 0;
