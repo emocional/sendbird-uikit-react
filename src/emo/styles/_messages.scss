@@ -173,16 +173,23 @@ $emo-message-avatar-gap: 14px;
 
 .sendbird-conversation .sendbird-message-content-reactions {
   align-self: flex-start;
+  border: none;
   border-radius: 0;
+  padding: 0;
+  margin: 0;
   background-color: transparent;
+  box-shadow: none;
 
   @include themed() {
     background-color: transparent;
+    border: none;
   }
 
-  &.primary {
+  &.primary,
+  &.image-grid {
     @include themed() {
       background-color: transparent;
+      border: none;
     }
   }
 
@@ -190,6 +197,57 @@ $emo-message-avatar-gap: 14px;
   &:hover {
     @include themed() {
       background-color: transparent;
+      border: none;
+    }
+
+    &.primary {
+      @include themed() {
+        background-color: transparent;
+        border: none;
+      }
+    }
+  }
+
+  .sendbird-emoji-reactions {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    min-height: 0;
+    background-color: transparent;
+    box-shadow: none;
+
+    @include themed() {
+      background-color: transparent;
+      border: none;
+    }
+  }
+
+  .sendbird-reaction-badge,
+  .sendbird-reaction-badge--is-add {
+    @include themed() {
+      background-color: #fafafbff;
+      border: solid 1px #dee1e580;
+    }
+
+    &:hover {
+      @include themed() {
+        border: solid 1px #c2c7ccff;
+      }
+    }
+  }
+
+  .sendbird-reaction-badge--selected {
+    @include themed() {
+      background-color: #f4f4f5ff;
+      border: solid 1px #c2c7ccff;
+    }
+
+    &:hover {
+      @include themed() {
+        background-color: #f4f4f5ff;
+        border: solid 1px #c2c7ccff;
+      }
     }
   }
 }
