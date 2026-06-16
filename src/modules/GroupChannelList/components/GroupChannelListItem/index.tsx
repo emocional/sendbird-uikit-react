@@ -7,6 +7,8 @@ import { useLocalization } from '../../../../lib/LocalizationContext';
 import { GroupChannelListItemBasicProps, GroupChannelListItemView } from './GroupChannelListItemView';
 import { useGroupChannelList } from '../../context/useGroupChannelList';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import { resolveEmocionalChannelListTag } from '../../../../emo/integration/group-channel-list-item';
 
 export interface GroupChannelListItemProps extends GroupChannelListItemBasicProps {}
 
@@ -38,6 +40,7 @@ export const GroupChannelListItem = ({
       channel={channel}
       tabIndex={tabIndex}
       channelName={utils.getChannelTitle(channel, userId, stringSet)}
+      channelTag={resolveEmocionalChannelListTag(channel, userId)}
       isTyping={isTypingIndicatorEnabled && isTyping}
       isSelected={isSelected}
       isMessageStatusEnabled={isMessageStatusEnabled}

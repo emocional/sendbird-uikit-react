@@ -1,11 +1,13 @@
 import './create-channel-ui.scss';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import InviteUsers from '../InviteUsers';
 
 import SelectChannelType from '../SelectChannelType';
 import useCreateChannel from '../../context/useCreateChannel';
+// @emo-integration
+import EmocionalCreateChannelInvite, { useEmocionalSkipChannelTypeSelection } from '../../../../emo/integration/create-channel';
 
 export interface CreateChannelUIProps {
   onCancel?(): void;
@@ -14,6 +16,7 @@ export interface CreateChannelUIProps {
 
 const CreateChannel: React.FC<CreateChannelUIProps> = (props: CreateChannelUIProps) => {
   const { onCancel, renderStepOne } = props;
+  const skipChannelTypeSelection = useEmocionalSkipChannelTypeSelection();
 
   const {
     state: {
@@ -25,10 +28,25 @@ const CreateChannel: React.FC<CreateChannelUIProps> = (props: CreateChannelUIPro
     },
   } = useCreateChannel();
 
+  useEffect(() => {
+    if (skipChannelTypeSelection && pageStep === 0) {
+      setPageStep(1);
+    }
+  }, [skipChannelTypeSelection, pageStep, setPageStep]);
+
+  const handleInviteCancel = () => {
+    if (skipChannelTypeSelection) {
+      onCancel?.();
+      return;
+    }
+    setPageStep(0);
+    onCancel?.();
+  };
+
   return (
     <>
       {
-        pageStep === 0 && (
+        !skipChannelTypeSelection && pageStep === 0 && (
           renderStepOne?.() || (
             <SelectChannelType
               onCancel={onCancel}
@@ -38,13 +56,17 @@ const CreateChannel: React.FC<CreateChannelUIProps> = (props: CreateChannelUIPro
       }
       {
         pageStep === 1 && (
-          <InviteUsers
-            userListQuery={userListQuery}
-            onCancel={() => {
-              setPageStep(0);
-              onCancel?.();
-            }}
-          />
+          skipChannelTypeSelection ? (
+            <EmocionalCreateChannelInvite
+              userListQuery={userListQuery}
+              onCancel={handleInviteCancel}
+            />
+          ) : (
+            <InviteUsers
+              userListQuery={userListQuery}
+              onCancel={handleInviteCancel}
+            />
+          )
         )
       }
     </>

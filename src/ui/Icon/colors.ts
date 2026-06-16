@@ -1,5 +1,7 @@
 /* eslint-disable no-redeclare */
 export const Colors = {
+  // @emo-integration
+  EMOCIONAL: 'EMOCIONAL',
   DEFAULT: 'DEFAULT',
   PRIMARY: 'PRIMARY',
   PRIMARY_2: 'PRIMARY_2',

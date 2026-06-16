@@ -3,6 +3,8 @@ import { Colors } from './colors';
 
 export function changeColorToClassName(color: Colors): string {
   switch (color) {
+    // @emo-integration
+    case Colors.EMOCIONAL: return 'sendbird-icon-color--emocional';
     case Colors.PRIMARY: return 'sendbird-icon-color--primary';
     case Colors.PRIMARY_2: return 'sendbird-icon-color--primary-2';
     case Colors.SECONDARY: return 'sendbird-icon-color--secondary';

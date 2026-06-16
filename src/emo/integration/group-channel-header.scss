@@ -1,0 +1,16 @@
+.emo-group-channel-header__middle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.emo-group-channel-header__company {
+  flex-shrink: 0;
+}
+
+.sendbird-chat-header.emo-group-channel-header {
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+}

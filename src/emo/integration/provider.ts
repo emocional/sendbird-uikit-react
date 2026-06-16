@@ -8,8 +8,11 @@ import {
 /** Extrae props Emocional del SendbirdProvider con defaults. */
 export const resolveEmocionalProviderProps = (
   props: EmocionalProviderProps,
-): Required<EmocionalStateConfigFields> => ({
+): EmocionalStateConfigFields => ({
   enableAutoChat: props.enableAutoChat ?? EMOCIONAL_CONFIG_DEFAULTS.enableAutoChat,
+  ...(props.searcherFilter ? { searcherFilter: props.searcherFilter } : {}),
+  defaultLocale: props.defaultLocale ?? EMOCIONAL_CONFIG_DEFAULTS.defaultLocale,
+  skipChannelTypeSelection: props.skipChannelTypeSelection ?? EMOCIONAL_CONFIG_DEFAULTS.skipChannelTypeSelection,
 });
 
 /** Fragmento para `SendbirdState.config` (store en runtime). */
@@ -17,6 +20,9 @@ export const toEmocionalConfigState = (
   props: EmocionalStateConfigFields,
 ): EmocionalStateConfigFields => ({
   enableAutoChat: props.enableAutoChat ?? EMOCIONAL_CONFIG_DEFAULTS.enableAutoChat,
+  searcherFilter: props.searcherFilter,
+  defaultLocale: props.defaultLocale ?? EMOCIONAL_CONFIG_DEFAULTS.defaultLocale,
+  skipChannelTypeSelection: props.skipChannelTypeSelection ?? EMOCIONAL_CONFIG_DEFAULTS.skipChannelTypeSelection,
 });
 
 /** Defaults para `initialState.config`. */

@@ -1,0 +1,16 @@
+.emo-connection-status-channel-avatar {
+  position: relative;
+  display: inline-flex;
+}
+
+.emo-connection-status-channel-avatar__dot {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #4ade80;
+  border: 2px solid var(--sendbird-light-background-50, #fff);
+  box-sizing: border-box;
+}

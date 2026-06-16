@@ -16,7 +16,8 @@ import { TypingIndicatorText } from '../../../GroupChannel/components/TypingIndi
 import { GroupChannelPreviewActionProps } from '../GroupChannelPreviewAction';
 
 import Badge from '../../../../ui/Badge';
-import ChannelAvatar from '../../../../ui/ChannelAvatar';
+// @emo-integration
+import ConnectionStatusChannelAvatar from '../../../../emo/features/connection-status/ConnectionStatusChannelAvatar';
 import Icon, { IconColors, IconTypes } from '../../../../ui/Icon';
 import Label, { LabelColors, LabelTypography } from '../../../../ui/Label';
 import MentionUserLabel from '../../../../ui/MentionUserLabel';
@@ -38,6 +39,7 @@ export interface GroupChannelListItemBasicProps {
 
 export interface GroupChannelListItemViewProps extends GroupChannelListItemBasicProps {
   channelName: string;
+  channelTag?: string | null;
   isMessageStatusEnabled?: boolean;
 }
 
@@ -47,6 +49,7 @@ export const GroupChannelListItemView = ({
   isTyping,
   isSelected,
   channelName,
+  channelTag,
   isMessageStatusEnabled = true,
   onClick = noop,
   onLeaveChannel = () => Promise.resolve(),
@@ -89,7 +92,7 @@ export const GroupChannelListItemView = ({
         {...(isMobile ? { ...onLongPress } : { onClick })}
       >
         <div className="sendbird-channel-preview__avatar">
-          <ChannelAvatar channel={channel} userId={userId} theme={theme} />
+          <ConnectionStatusChannelAvatar channel={channel} userId={userId} theme={theme} />
         </div>
         <div className="sendbird-channel-preview__content">
           <div className="sendbird-channel-preview__content__upper">
@@ -112,6 +115,18 @@ export const GroupChannelListItemView = ({
               >
                 {channelName}
               </Label>
+              {channelTag && (
+                <Label
+                  className={[
+                    'emo-channel-preview__tag',
+                    isSelected ? 'emo-channel-preview__tag--selected' : '',
+                  ].join(' ')}
+                  type={LabelTypography.CAPTION_2}
+                  color={LabelColors.ONBACKGROUND_1}
+                >
+                  {channelTag}
+                </Label>
+              )}
               <Label
                 className="sendbird-channel-preview__content__upper__header__total-members"
                 type={LabelTypography.CAPTION_2}

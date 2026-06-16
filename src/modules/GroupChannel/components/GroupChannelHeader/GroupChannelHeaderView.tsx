@@ -3,13 +3,14 @@ import React from 'react';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 
 import { IconColors, IconTypes } from '../../../../ui/Icon';
-import ChannelAvatar from '../../../../ui/ChannelAvatar';
-import { getChannelTitle } from './utils';
-import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
-import { useLocalization } from '../../../../lib/LocalizationContext';
 import Header, { type HeaderCustomProps } from '../../../../ui/Header';
 import { classnames } from '../../../../utils/utils';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import {
+  EmocionalGroupChannelHeaderLeft,
+  EmocionalGroupChannelHeaderMiddle,
+} from '../../../../emo/integration/group-channel-header';
 
 export interface GroupChannelHeaderViewProps extends HeaderCustomProps {
   className?: string;
@@ -35,40 +36,26 @@ export const GroupChannelHeaderView = ({
   const { state } = useSendbird();
   const { config } = state;
   const { userId, theme } = config;
-  const { isMobile } = useMediaQueryContext();
-
-  const { stringSet } = useLocalization();
+  const iconColor = theme === 'dark' ? IconColors.CONTENT_INVERSE : IconColors.PRIMARY;
 
   const isMuted = currentChannel?.myMutedState === 'muted';
-  const iconColor = theme === 'dark' ? IconColors.CONTENT_INVERSE : IconColors.PRIMARY;
-  const channelTitle = getChannelTitle(currentChannel, userId, stringSet);
 
   return (
     <Header
-      className={classnames('sendbird-chat-header', className)}
+      className={classnames('sendbird-chat-header', 'emo-group-channel-header', className)}
       renderLeft={renderLeft ?? (() => (
-        <>
-          {isMobile && (
-            <Header.Icon
-              className="sendbird-chat-header__icon_back"
-              onClick={onBackClick}
-              type={IconTypes.ARROW_LEFT}
-              color={IconColors.PRIMARY}
-              width="24px"
-              height="24px"
-            />
-          )}
-          <ChannelAvatar
-            theme={theme}
-            channel={currentChannel}
-            userId={userId}
-            height={32}
-            width={32}
-          />
-        </>
+        <EmocionalGroupChannelHeaderLeft
+          currentChannel={currentChannel}
+          userId={userId}
+          theme={theme}
+          onBackClick={onBackClick}
+        />
       ))}
       renderMiddle={renderMiddle ?? (() => (
-        <Header.Title title={channelTitle} />
+        <EmocionalGroupChannelHeaderMiddle
+          currentChannel={currentChannel}
+          userId={userId}
+        />
       ))}
       renderRight={renderRight ?? (() => (
         <>

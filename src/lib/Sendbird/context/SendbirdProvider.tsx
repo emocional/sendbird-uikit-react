@@ -40,6 +40,9 @@ import { useMarkAsDeliveredScheduler } from '../../hooks/useMarkAsDeliveredSched
 
 /* Utils */
 import getStringSet from '../../../ui/Label/stringSet';
+// @emo-integration
+import { resolveEmocionalLocalization } from '../../../emo/locales/get-emocional-string-set';
+import '../../../emo/integration/styles';
 import { getCaseResolvedReplyType } from '../../utils/resolvedReplyType';
 import { DEFAULT_MULTIPLE_FILES_MESSAGE_LIMIT, DEFAULT_UPLOAD_SIZE_LIMIT, VOICE_RECORDER_DEFAULT_MAX, VOICE_RECORDER_DEFAULT_MIN } from '../../../utils/consts';
 import { EmojiReactionListRoot, MenuRoot } from '../../../ui/ContextMenu';
@@ -339,6 +342,9 @@ const SendbirdContextManager = ({
     pubSub,
     userListQuery,
     emocionalConfig.enableAutoChat,
+    emocionalConfig.defaultLocale,
+    emocionalConfig.skipChannelTypeSelection,
+    emocionalConfig.searcherFilter,
     htmlTextDirection,
     forceLeftToRightMessageLayout,
     markAsReadScheduler,
@@ -385,6 +391,8 @@ const InternalSendbirdProvider = (props: SendbirdProviderProps & { logger: Logge
     dateLocale,
   } = props;
 
+  const emocionalConfig = resolveEmocionalProviderProps(props);
+
   const defaultProps: TwoDepthPartial<SendbirdState> = deleteNullish({
     config: {
       renderUserProfile: props?.renderUserProfile,
@@ -422,14 +430,16 @@ const InternalSendbirdProvider = (props: SendbirdProviderProps & { logger: Logge
 
   const storeRef = useRef(createSendbirdContextStore(defaultProps));
 
-  const localeStringSet = useMemo(() => {
-    return { ...getStringSet('en'), ...stringSet };
-  }, [stringSet]);
+  const localePack = useMemo(() => resolveEmocionalLocalization({
+    defaultLocale: emocionalConfig.defaultLocale,
+    stringSet,
+    dateLocale,
+  }), [emocionalConfig.defaultLocale, stringSet, dateLocale]);
 
   return (
     <SendbirdContext.Provider value={storeRef.current}>
       <MediaQueryProvider logger={storeRef.current.getState().config.logger} breakpoint={breakpoint}>
-        <LocalizationProvider stringSet={localeStringSet} dateLocale={dateLocale}>
+        <LocalizationProvider stringSet={localePack.stringSet} dateLocale={localePack.dateLocale}>
           <VoiceMessageProvider>
             <GlobalModalProvider>
               {children}

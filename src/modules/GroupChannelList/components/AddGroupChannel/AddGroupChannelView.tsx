@@ -1,8 +1,8 @@
 import React from 'react';
 
 import IconButton from '../../../../ui/IconButton';
-import Icon, { IconColors, IconTypes } from '../../../../ui/Icon';
-
+// @emo-integration
+import EmocionalAddChannelIcon from '../../../../emo/integration/add-group-channel';
 import CreateChannel from '../../../CreateChannel';
 import { CreateChannelProviderProps } from '../../../CreateChannel/context/CreateChannelProvider';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
@@ -32,12 +32,7 @@ export const AddGroupChannelView = ({
         disabled={!config.isOnline}
         onClick={() => onChangeCreateChannelVisible(true)}
       >
-        <Icon
-          type={IconTypes.CREATE}
-          fillColor={IconColors.PRIMARY}
-          width={'24px'}
-          height={'24px'}
-        />
+        <EmocionalAddChannelIcon />
       </IconButton>
       {createChannelVisible && (
         <CreateChannel
