@@ -20,17 +20,3 @@
     padding-right: 0;
   }
 }
-
-/* DateSeparator — color borde Emocional sin parchear Label/types */
-.sendbird-separator__left,
-.sendbird-separator__right {
-  @include themed() {
-    background-color: #dee1e580;
-  }
-}
-
-.sendbird-separator .sendbird-label--color-onbackground-2 {
-  @include themed() {
-    color: #c2c7ccff;
-  }
-}

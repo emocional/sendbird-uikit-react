@@ -6,7 +6,7 @@ exports[`ui/DateSeparator should do a snapshot test of the DateSeparator DOM 1`]
     class="example-classname sendbird-separator"
   >
     <div
-      class="sendbird-separator__left sendbird-color--onbackground-4--background-color"
+      class="sendbird-separator__left sendbird-color--emocional_border--background-color"
     />
     <div
       class="sendbird-separator__text"
@@ -18,7 +18,7 @@ exports[`ui/DateSeparator should do a snapshot test of the DateSeparator DOM 1`]
       </span>
     </div>
     <div
-      class="sendbird-separator__right sendbird-color--onbackground-4--background-color"
+      class="sendbird-separator__right sendbird-color--emocional_border--background-color"
     />
   </div>
 </DocumentFragment>

@@ -19,6 +19,10 @@ El resto del código Emocional está en `src/emo/`.
 | `src/ui/MessageContent/index.tsx` | `isByMe` → layout entrante; menú Emocional + reply inline | `@emo-integration` |
 | `src/ui/MessageMenu/menuItems/MessageMenuItems.tsx` | Trigger compacto 24px | `@emo-integration` |
 | `src/ui/MessageItemReactionMenu/index.tsx` | Trigger y picker compactos | `@emo-integration` |
+| `src/modules/GroupChannel/components/Message/MessageView.tsx` | Separador de fecha ES + `EMOCIONAL_BORDER` | `@emo-integration` |
+| `src/ui/DateSeparator/index.tsx` | Color borde Emocional por defecto | `@emo-integration` |
+| `src/ui/Label/types.ts` + `utils.ts` | `LabelColors.EMOCIONAL_BORDER` | `@emo-integration` |
+| `src/utils/color.ts` | `Colors.EMOCIONAL_BORDER` | `@emo-integration` |
 | `src/ui/EmojiReactions/index.tsx` | Picker compacto | `@emo-integration` |
 | `src/ui/*MessageItemBody*` / `QuoteMessage` / `EmojiReactions` / etc. | `isByMe` → layout entrante | `@emo-integration` |
 | `src/modules/OpenChannel/components/OpenChannelMessage/index.tsx` | `isByMe` → layout entrante | `@emo-integration` |
@@ -41,7 +45,7 @@ Inventario completo: [`NOT-PORTED.md`](../../NOT-PORTED.md) (raíz del repo).
 | `userQuery` propagado por `App` | **No necesario**: `emo-front` usa `userListQuery` en `SendbirdProvider` (upstream ya lo propaga) |
 | `showCreateChannel` | **No necesario**: upstream monta `CreateChannel` solo cuando el modal está visible |
 | `isByMe = false` global | **Implementado** vía `resolveEmocionalIsByMe` + overrides SCSS |
-| Parche masivo `MessageContent` / modales upstream | **Pendiente** — overrides parciales en `src/emo/styles/`; ver [`NOT-PORTED.md`](../../NOT-PORTED.md) §3 |
+| Parche masivo `MessageContent` / modales upstream | **Sustituido** por `src/emo/styles/` + enganches puntuales |
 | `Modal.setSearcher` | **Evitado**: búsqueda vía `renderHeader` + `EmocionalModalSearchHeader` (sin parchear `Modal`) |
 
 ## Qué no tocar en upstream salvo enganche

@@ -3,6 +3,7 @@ import { truncateString } from '../index';
 
 describe('color', () => {
   it('check all color enum exist', () => {
+    expect(Colors.EMOCIONAL_BORDER).not.toBe(undefined);
     expect(Colors.ONBACKGROUND_1).not.toBe(undefined);
     expect(Colors.ONBACKGROUND_2).not.toBe(undefined);
     expect(Colors.ONBACKGROUND_3).not.toBe(undefined);
@@ -14,6 +15,10 @@ describe('color', () => {
 
   it('change color enum to proper className', () => {
     for (const color of Object.values(Colors)) {
+      if (color === Colors.EMOCIONAL_BORDER) {
+        expect(changeColorToClassName(color)).toBe('sendbird-color--emocional_border');
+        continue;
+      }
       expect(changeColorToClassName(color)).toBe(`sendbird-color--${color.toLowerCase().replace('_', '-')}`);
     }
 

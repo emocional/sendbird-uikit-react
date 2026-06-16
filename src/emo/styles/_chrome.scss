@@ -1,0 +1,74 @@
+@import '../../styles/variables';
+
+/* Headers, avatar, iconos — fork §8 §3.2–3.4 */
+
+.sendbird-avatar {
+  border-radius: 6px;
+
+  .sendbird-avatar-img {
+    @include themed() {
+      background-color: #fafafbff;
+    }
+  }
+
+  .sendbird-avatar-img--default {
+    @include themed() {
+      background-color: #dee1e5ff;
+    }
+  }
+}
+
+.sendbird-chat-header {
+  height: 70px;
+  min-height: 70px;
+  border-bottom: 1px solid #dee1e580;
+
+  @include themed() {
+    border-bottom: 1px solid #dee1e580;
+  }
+}
+
+.sendbird-channel-header {
+  width: 100%;
+  border-bottom: 1px solid #dee1e580;
+
+  @include themed() {
+    border-bottom: 1px solid #dee1e580;
+  }
+
+  &.sendbird-channel-header--allow-edit {
+    .sendbird-channel-header__title {
+      cursor: default;
+    }
+  }
+
+  .sendbird-channel-header__title {
+    &:hover,
+    &:focus,
+    &:active {
+      @include themed() {
+        background: transparent;
+        border: none;
+      }
+    }
+  }
+}
+
+.sendbird-icon-color--emocional [class*='fill'] {
+  @include themed() {
+    fill: #d4d4d8ff;
+  }
+}
+
+.sendbird-separator__left,
+.sendbird-separator__right {
+  @include themed() {
+    background-color: #dee1e580;
+  }
+}
+
+.sendbird-separator .sendbird-label--color-emocional_border {
+  @include themed() {
+    color: #c2c7ccff;
+  }
+}

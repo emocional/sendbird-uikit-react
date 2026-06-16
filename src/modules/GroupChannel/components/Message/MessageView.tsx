@@ -4,7 +4,11 @@ import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import { type EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { FileMessage, UserMessage, UserMessageCreateParams, UserMessageUpdateParams } from '@sendbird/chat/message';
-import format from 'date-fns/format';
+// @emo-integration
+import {
+  formatEmocionalMessageDateSeparator,
+  resolveEmocionalDateSeparatorLabelColor,
+} from '../../../../emo/integration/date-separator';
 
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { MAX_USER_MENTION_COUNT, MAX_USER_SUGGESTION_COUNT, ThreadReplySelectType } from '../../context/const';
@@ -174,7 +178,7 @@ const MessageView = (props: MessageViewProps) => {
     filterEmojiCategoryIds,
   } = deleteNullish(props);
 
-  const { dateLocale, stringSet } = useLocalization();
+  const { stringSet } = useLocalization();
   const { state } = useSendbird();
 
   const {
@@ -480,10 +484,11 @@ const MessageView = (props: MessageViewProps) => {
       {hasSeparator
         && (renderedCustomSeparator || (
           <DateSeparator>
-            <Label type={LabelTypography.CAPTION_2} color={LabelColors.ONBACKGROUND_2}>
-              {format(message.createdAt, stringSet.DATE_FORMAT__MESSAGE_LIST__DATE_SEPARATOR, {
-                locale: dateLocale,
-              })}
+            <Label type={LabelTypography.CAPTION_2} color={resolveEmocionalDateSeparatorLabelColor()}>
+              {formatEmocionalMessageDateSeparator(
+                message.createdAt,
+                stringSet.DATE_FORMAT__MESSAGE_LIST__DATE_SEPARATOR,
+              )}
             </Label>
           </DateSeparator>
         ))}

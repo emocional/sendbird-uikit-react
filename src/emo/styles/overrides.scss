@@ -1,33 +1,14 @@
 @import './tokens.scss';
+@import './chrome.scss';
+@import './channel-list-item.scss';
 @import './messages.scss';
 @import './text-message-body.scss';
 @import './composer.scss';
 @import './conversation.scss';
 @import './reactions-menu.scss';
+@import './modals.scss';
 
 /* Overrides visuales Emocional — import único desde integration/root */
-
-.sendbird-channel-preview.sendbird-channel-preview--active {
-  background-color: #f4f4f5;
-}
-
-.sendbird-chat-header {
-  border-bottom-color: #dee1e580;
-}
-
-.sendbird-message-content__middle__body-container__body {
-  border-color: #dee1e580;
-}
-
-/* Avatares — fork §8 */
-.sendbird-avatar {
-  border-radius: 6px;
-}
-
-/* Cabecera lista de canales */
-.sendbird-channel-header {
-  border-bottom-color: #dee1e580;
-}
 
 .emo-channel-list-header__title {
   display: flex;
@@ -56,4 +37,8 @@
   &:hover {
     background-color: #3d1688;
   }
+}
+
+.sendbird-message-content__middle__body-container__body {
+  border-color: #dee1e580;
 }

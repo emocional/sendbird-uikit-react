@@ -8,6 +8,8 @@ import {
 } from '../../utils/color';
 
 import Label, { LabelTypography, LabelColors } from '../Label';
+// @emo-integration
+import { resolveEmocionalDateSeparatorColor } from '../../emo/integration/date-separator';
 
 export interface DateSeparatorProps {
   children?: string | ReactElement;
@@ -18,7 +20,7 @@ export interface DateSeparatorProps {
 const DateSeparator = ({
   children = undefined,
   className = '',
-  separatorColor = Colors.ONBACKGROUND_4,
+  separatorColor = resolveEmocionalDateSeparatorColor(),
 }: DateSeparatorProps): ReactElement => {
 
   return (

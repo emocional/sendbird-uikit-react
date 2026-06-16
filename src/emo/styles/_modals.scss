@@ -1,0 +1,37 @@
+@import '../../styles/variables';
+
+/* Modal genérico — fork §8 (incl. fix solapamiento cerrar/búsqueda) */
+
+.sendbird-modal {
+  inset: 0;
+  z-index: 10001;
+}
+
+.sendbird-modal__content {
+  @media only screen and (max-width: 350px) {
+    width: 300px;
+  }
+
+  @media only screen and (min-width: 351px) and (max-width: 475px) {
+    width: 350px;
+  }
+
+  .sendbird-modal__search {
+    width: 100%;
+    max-width: 280px;
+    outline: none;
+    border-radius: 16px;
+    padding: 8px 12px;
+    border: 1px solid #dee1e6;
+  }
+
+  @media only screen and (max-width: 475px) {
+    .custom-class {
+      max-width: 300px;
+    }
+  }
+}
+
+.sendbird-modal__backdrop {
+  inset: 0;
+}

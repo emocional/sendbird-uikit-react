@@ -21,6 +21,7 @@ export function changeTypographyToClassName(type?: ObjectValues<typeof Typograph
 
 export function changeColorToClassName(color?: ObjectValues<typeof Colors>) {
   switch (color) {
+    case Colors.EMOCIONAL_BORDER: return 'sendbird-label--color-emocional_border';
     case Colors.ONBACKGROUND_1: return 'sendbird-label--color-onbackground-1';
     case Colors.ONBACKGROUND_2: return 'sendbird-label--color-onbackground-2';
     case Colors.ONBACKGROUND_3: return 'sendbird-label--color-onbackground-3';
