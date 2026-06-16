@@ -3,7 +3,7 @@ import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { MultipleFilesMessageCreateParams, UploadableFileInfo } from '@sendbird/chat/message';
 import { MultipleFilesMessage } from '@sendbird/chat/message';
 
-import type { Logger } from '../../../../lib/SendbirdState';
+import type { Logger } from '../../../../lib/Sendbird/types';
 import type { Nullable } from '../../../../types';
 import PUBSUB_TOPICS from '../../../../lib/pubSub/topics';
 import { scrollIntoLast as scrollIntoLastForChannel } from '../utils';
@@ -38,7 +38,10 @@ export interface FileUploadedPayload {
   uploadableFileInfo: UploadableFileInfo,
   error: Error,
 }
-export type SendMFMFunctionType = (files: Array<File>, quoteMessage?: SendableMessageType) => Promise<MultipleFilesMessage>;
+export type SendMFMFunctionType = (
+  files: Array<File>,
+  quoteMessage?: SendableMessageType,
+) => Promise<MultipleFilesMessage>;
 
 /**
  * pubSub is used instead of messagesDispatcher to avoid redundantly calling
@@ -83,7 +86,7 @@ export const useSendMultipleFilesMessage = ({
       }
       logger.info('Channel: Start sending MFM', { messageParams });
       try {
-        currentChannel.sendMultipleFilesMessage(messageParams)
+        currentChannel?.sendMultipleFilesMessage(messageParams)
           .onFileUploaded((requestId, index, uploadableFileInfo: UploadableFileInfo, error) => {
             logger.info('Channel: onFileUploaded during sending MFM', {
               requestId,

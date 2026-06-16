@@ -16,8 +16,6 @@ import {
   UnreadChannelFilter,
 } from '@sendbird/chat/groupChannel';
 
-import { RenderUserProfileProps } from '../../../types';
-
 import setupChannelList, { pubSubHandler, pubSubHandleRemover } from '../utils';
 import { uuidv4 } from '../../../utils/uuid';
 import { noop } from '../../../utils/utils';
@@ -26,14 +24,14 @@ import { DELIVERY_RECEIPT } from '../../../utils/consts';
 import * as channelListActions from '../dux/actionTypes';
 import { ChannelListActionTypes } from '../dux/actionTypes';
 
-import { UserProfileProvider } from '../../../lib/UserProfileContext';
-import useSendbirdStateContext from '../../../hooks/useSendbirdStateContext';
+import { UserProfileProvider, UserProfileProviderProps } from '../../../lib/UserProfileContext';
 import channelListReducers from '../dux/reducers';
 import channelListInitialState from '../dux/initialState';
 import { CHANNEL_TYPE } from '../../CreateChannel/types';
 import useActiveChannelUrl from './hooks/useActiveChannelUrl';
 import { useFetchChannelList } from './hooks/useFetchChannelList';
 import useHandleReconnectForChannelList from '../../Channel/context/hooks/useHandleReconnectForChannelList';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface ApplicationUserListQueryInternal {
   limit?: number;
@@ -49,14 +47,14 @@ export interface GroupChannelListQueryParamsInternal {
   userIdsExactFilter?: Array<string>;
   userIdsIncludeFilter?: Array<string>;
   userIdsIncludeFilterQueryType?: QueryType;
-  nicknameContainsFilter?: string;
+  nicknameContainsFilter?: string | null;
   channelNameContainsFilter?: string;
-  customTypesFilter?: Array<string>;
-  customTypeStartsWithFilter?: string;
-  channelUrlsFilter?: Array<string>;
+  customTypesFilter?: Array<string> | null;
+  customTypeStartsWithFilter?: string | null;
+  channelUrlsFilter?: Array<string> | null;
   superChannelFilter?: SuperChannelFilter;
   publicChannelFilter?: PublicChannelFilter;
-  metadataOrderKeyFilter?: string;
+  metadataOrderKeyFilter?: string | null;
   memberStateFilter?: MyMemberStateFilter;
   hiddenChannelFilter?: HiddenChannelFilter;
   unreadChannelFilter?: UnreadChannelFilter;
@@ -75,7 +73,8 @@ type OverrideInviteUserType = {
   channelType: CHANNEL_TYPE;
 };
 
-export interface ChannelListProviderProps {
+export interface ChannelListProviderProps extends
+  Pick<UserProfileProviderProps, 'disableUserProfile' | 'renderUserProfile'> {
   allowProfileEdit?: boolean;
   onBeforeCreateChannel?(users: Array<string>): GroupChannelCreateParams;
   overrideInviteUser?(params: OverrideInviteUserType): void;
@@ -86,8 +85,6 @@ export interface ChannelListProviderProps {
   queries?: ChannelListQueries;
   children?: React.ReactElement;
   className?: string | string[];
-  renderUserProfile?: (props: RenderUserProfileProps) => React.ReactElement;
-  disableUserProfile?: boolean;
   disableAutoSelect?: boolean;
   activeChannelUrl?: string;
   typingChannels?: Array<GroupChannel>;
@@ -100,36 +97,22 @@ export interface ChannelListProviderInterface extends ChannelListProviderProps {
   initialized: boolean;
   loading: boolean;
   allChannels: GroupChannel[];
-  currentChannel: GroupChannel;
-  channelListQuery: GroupChannelListQueryParamsInternal;
+  currentChannel: GroupChannel | null;
+  channelListQuery: GroupChannelListQueryParamsInternal | null;
   currentUserId: string;
   channelListDispatcher: React.Dispatch<ChannelListActionTypes>;
   channelSource: GroupChannelListQuerySb | null;
   fetchChannelList: () => void;
 }
 
-const ChannelListContext = React.createContext<ChannelListProviderInterface | null>({
-  disableUserProfile: true,
-  allowProfileEdit: true,
-  onBeforeCreateChannel: null,
-  onThemeChange: null,
-  onProfileEditSuccess: null,
-  onChannelSelect: null,
-  queries: {},
-  className: null,
-  initialized: false,
-  loading: false,
-  allChannels: [],
-  currentChannel: null,
-  channelListQuery: {},
-  currentUserId: null,
-  channelListDispatcher: null,
-  channelSource: null,
-  typingChannels: [],
-  fetchChannelList: noop,
-  reconnectOnIdle: true,
-});
+const ChannelListContext = React.createContext<ChannelListProviderInterface | null>(null);
 
+/**
+ * @deprecated This provider is deprecated and will be removed in the next major update.
+ * Please use the `GroupChannelListProvider` from '@sendbird/uikit-react/GroupChannelList' instead.
+ * For more information, please refer to the migration guide:
+ * https://docs.sendbird.com/docs/chat/uikit/v3/react/introduction/group-channel-migration-guide
+ */
 const ChannelListProvider: React.FC<ChannelListProviderProps> = (props: ChannelListProviderProps) => {
   // destruct props
   const {
@@ -153,25 +136,21 @@ const ChannelListProvider: React.FC<ChannelListProviderProps> = (props: ChannelL
   const disableAutoSelect = props?.disableAutoSelect || !!activeChannelUrl;
   const onChannelSelect = props?.onChannelSelect || noop;
   // fetch store from <SendbirdProvider />
-  const globalStore = useSendbirdStateContext();
-  const { config, stores } = globalStore;
+  const { state } = useSendbird();
+  const { config, stores } = state;
   const { sdkStore } = stores;
-  const { pubSub, logger, onUserProfileMessage } = config;
+  const { pubSub, logger } = config;
   const {
     markAsDeliveredScheduler,
     disableMarkAsDelivered = false,
-    isTypingIndicatorEnabledOnChannelList = false,
-    isMessageReceiptStatusEnabledOnChannelList = false,
     isOnline,
   } = config;
   const sdk = sdkStore?.sdk;
   const { premiumFeatureList = [] } = sdk?.appInfo ?? {};
 
   // derive some variables
-  // enable if it is true atleast once(both are flase by default)
-  const userDefinedDisableUserProfile = disableUserProfile || config?.disableUserProfile;
-  const userDefinedRenderProfile = config?.renderUserProfile;
-  const enableEditProfile = allowProfileEdit || config?.allowProfileEdit;
+  // enable if it is true at least once(both are false by default)
+  const enableEditProfile = allowProfileEdit || config.allowProfileEdit;
 
   const userFilledChannelListQuery = queries?.channelListQuery;
   const userFilledApplicationUserListQuery = queries?.applicationUserListQuery;
@@ -201,7 +180,7 @@ const ChannelListProvider: React.FC<ChannelListProviderProps> = (props: ChannelL
         channelListDispatcher,
         setChannelSource,
         onChannelSelect,
-        userFilledChannelListQuery,
+        userFilledChannelListQuery: { ...userFilledChannelListQuery },
         logger,
         sortChannelList,
         disableAutoSelect,
@@ -395,28 +374,21 @@ const ChannelListProvider: React.FC<ChannelListProviderProps> = (props: ChannelL
         ...channelListStore,
         allChannels: sortedChannels,
         typingChannels,
-        isTypingIndicatorEnabled:
-          isTypingIndicatorEnabled !== null ? isTypingIndicatorEnabled : isTypingIndicatorEnabledOnChannelList,
-        isMessageReceiptStatusEnabled:
-          isMessageReceiptStatusEnabled !== null
-            ? isMessageReceiptStatusEnabled
-            : isMessageReceiptStatusEnabledOnChannelList,
+        isTypingIndicatorEnabled: isTypingIndicatorEnabled ?? config.groupChannelList.enableTypingIndicator,
+        isMessageReceiptStatusEnabled: isMessageReceiptStatusEnabled ?? config.groupChannelList.enableMessageReceiptStatus,
         fetchChannelList,
       }}
     >
-      <UserProfileProvider
-        disableUserProfile={userDefinedDisableUserProfile ?? config?.disableUserProfile}
-        renderUserProfile={userDefinedRenderProfile}
-        onUserProfileMessage={onUserProfileMessage}
-      >
+      <UserProfileProvider {...props}>
         <div className={`sendbird-channel-list ${className}`}>{children}</div>
       </UserProfileProvider>
     </ChannelListContext.Provider>
   );
 };
 
-function useChannelListContext(): ChannelListProviderInterface {
-  const context: ChannelListProviderInterface = useContext(ChannelListContext);
+function useChannelListContext() {
+  const context = useContext(ChannelListContext);
+  if (!context) throw new Error('ChannelListContext not found. Use within the ChannelList module.');
   return context;
 }
 

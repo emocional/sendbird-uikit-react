@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useContext,
 } from 'react';
+import { RestrictedUser } from '@sendbird/chat';
 
 import Button, { ButtonTypes, ButtonSizes } from '../../../../ui/Button';
 import IconButton from '../../../../ui/IconButton';
@@ -13,17 +14,17 @@ import ContextMenu, { MenuItem, MenuItems } from '../../../../ui/ContextMenu';
 import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
 import { UserListItem } from '../ParticipantUI/ParticipantItem';
 import MutedParticipantsModal from './MutedParticipantsModal';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettingsProvider';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export const MutedParticipantList = (): ReactElement => {
-  const [mutedUsers, setMutedUsers] = useState([]);
+  const [mutedUsers, setMutedUsers] = useState<RestrictedUser[]>([]);
   const [hasNext, setHasNext] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
   const { channel } = useOpenChannelSettingsContext();
-  const state = useSendbirdStateContext();
+  const { state } = useSendbird();
   const currentUserId = state?.config?.userId;
   const { stringSet } = useContext(LocalizationContext);
 
@@ -96,14 +97,14 @@ export const MutedParticipantList = (): ReactElement => {
                               closeDropdown();
                             });
                           }}
-                          dataSbId="open_channel_setting_muted_member_context_menu_unmute"
+                          testID="open_channel_setting_muted_member_context_menu_unmute"
                         >
                           {stringSet.OPEN_CHANNEL_SETTING__MODERATION__UNMUTE}
                         </MenuItem>
                       </MenuItems>
                     )}
                   />
-                ) : null
+                ) : <></>
             )}
           />
         ))

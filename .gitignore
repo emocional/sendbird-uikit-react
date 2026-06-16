@@ -35,3 +35,14 @@ yarn-debug.log*
 yarn-error.log*
 
 .idea/
+
+*storybook.log
+
+# docs
+/docs
+
+# Snapshot test data
+/playwright-report/
+/playwright/.cache/
+/test-results/
+/blob-report/

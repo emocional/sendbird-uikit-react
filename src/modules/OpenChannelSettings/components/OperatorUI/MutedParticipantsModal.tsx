@@ -12,8 +12,9 @@ import Icon, { IconTypes, IconColors } from '../../../../ui/Icon';
 import ContextMenu, { MenuItem, MenuItems } from '../../../../ui/ContextMenu';
 import { noop } from '../../../../utils/utils';
 import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettingsProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
+import { MutedUserListQuery, User } from '@sendbird/chat';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 interface Props {
   onCancel(): void;
@@ -22,11 +23,11 @@ interface Props {
 export default function MutedParticipantsModal({
   onCancel,
 }: Props): ReactElement {
-  const [mutedUsers, setMutedUsers] = useState([]);
-  const [userListQuery, setUserListQuery] = useState(null);
+  const [mutedUsers, setMutedUsers] = useState<User[]>([]);
+  const [userListQuery, setUserListQuery] = useState<MutedUserListQuery | null>(null);
 
   const { channel } = useOpenChannelSettingsContext();
-  const state = useSendbirdStateContext();
+  const { state } = useSendbird();
   const currentUserId = state?.config?.userId;
   const { stringSet } = useContext(LocalizationContext);
 
@@ -34,10 +35,10 @@ export default function MutedParticipantsModal({
     const mutedUserListQuery = channel?.createMutedUserListQuery({
       limit: 10,
     });
-    mutedUserListQuery.next().then((users) => {
+    mutedUserListQuery?.next().then((users) => {
       setMutedUsers(users);
     });
-    setUserListQuery(mutedUserListQuery);
+    if (mutedUserListQuery) { setUserListQuery(mutedUserListQuery); }
   }, []);
   return (
     <div>
@@ -51,7 +52,7 @@ export default function MutedParticipantsModal({
         <div
           className="sendbird-more-members__popup-scroll"
           onScroll={(e) => {
-            const { hasNext } = userListQuery;
+            const hasNext = userListQuery?.hasNext;
             const target = e.target as HTMLTextAreaElement;
             const fetchMore = (
               target.clientHeight + target.scrollTop === target.scrollHeight
@@ -107,14 +108,14 @@ export default function MutedParticipantsModal({
                                   }));
                                 });
                               }}
-                              dataSbId="open_channel_setting_muted_member_context_menu_unmute"
+                              testID="open_channel_setting_muted_member_context_menu_unmute"
                             >
                               {stringSet.OPEN_CHANNEL_SETTING__MODERATION__UNMUTE}
                             </MenuItem>
                           </MenuItems>
                         )}
                       />
-                    ) : null
+                    ) : <></>
                 )}
               />
             ))}

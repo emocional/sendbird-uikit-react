@@ -1,7 +1,6 @@
 import './open-channel-ui.scss';
 
 import React, { useContext } from 'react';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettingsProvider';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
 
@@ -10,7 +9,8 @@ import OperatorUI from '../OperatorUI';
 import ParticipantUI from '../ParticipantUI';
 
 import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
-import Icon, { IconTypes } from '../../../../ui/Icon';
+import Icon, { IconColors, IconTypes } from '../../../../ui/Icon';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface OpenChannelUIProps {
   renderOperatorUI?: () => React.ReactElement;
@@ -26,9 +26,11 @@ const OpenChannelUI: React.FC<OpenChannelUIProps> = ({
     onCloseClick,
     isChannelInitialized,
   } = useOpenChannelSettingsContext();
-  const globalStore = useSendbirdStateContext();
-  const logger = globalStore?.config?.logger;
-  const user = globalStore?.stores?.userStore?.user;
+  const { state } = useSendbird();
+  const logger = state?.config?.logger;
+  const theme = state?.config?.theme;
+  const user = state?.stores?.userStore?.user;
+  const iconColor = theme === 'dark' ? IconColors.CONTENT_INVERSE : IconColors.PRIMARY;
 
   const { stringSet } = useContext(LocalizationContext);
   if (isChannelInitialized && !channel) {
@@ -62,10 +64,11 @@ const OpenChannelUI: React.FC<OpenChannelUIProps> = ({
               <Icon
                 type={IconTypes.CLOSE}
                 className="sendbird-openchannel-settings__close-icon"
+                fillColor={iconColor}
                 height="24px"
                 width="24px"
                 onClick={() => {
-                  onCloseClick();
+                  onCloseClick?.();
                 }}
               />
             </div>

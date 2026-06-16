@@ -72,20 +72,22 @@
 
   .sendbird-modal__header {
     margin-bottom: 16px;
+    padding-right: 40px;
   }
   .sendbird-modal__body {
     height: calc(100% - 116px);
+    overflow: auto;
   }
   .sendbird-modal__footer {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
+    margin-top: 32px;
+    text-align: right;
     @include mobile() {
       position: sticky;
       bottom: 24px;
     }
-    margin-top: 32px;
-    text-align: right;
     .sendbird-button:last-child {
       margin-left: 8px;
       min-width: 80px;

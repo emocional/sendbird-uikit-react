@@ -1,15 +1,21 @@
 import React from 'react';
 
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useChannelContext } from '../../context/ChannelProvider';
 import { getSuggestedReplies } from '../../../../utils';
 import { isDisabledBecauseFrozen, isDisabledBecauseMuted } from '../../context/utils';
 import MessageView, { MessageProps } from '../../../GroupChannel/components/Message/MessageView';
 import FileViewer from '../FileViewer';
 import RemoveMessageModal from '../RemoveMessageModal';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
-const Message = (props: MessageProps): React.ReactElement => {
-  const { config } = useSendbirdStateContext();
+/**
+ * @deprecated This component is deprecated and will be removed in the next major update.
+ * Please use the `GroupChannel` component from '@sendbird/uikit-react/GroupChannel' instead.
+ * For more information, please refer to the migration guide:
+ * https://docs.sendbird.com/docs/chat/uikit/v3/react/introduction/group-channel-migration-guide
+ */
+const Message = (props: MessageProps) => {
+  const { state: { config } } = useSendbird();
   const {
     initialized,
     currentGroupChannel,
@@ -32,9 +38,12 @@ const Message = (props: MessageProps): React.ReactElement => {
     onMessageAnimated,
     sendMessage,
     localMessages,
+    allMessages,
   } = useChannelContext();
 
   const { message } = props;
+
+  if (!currentGroupChannel) return null;
 
   return (
     <MessageView
@@ -49,7 +58,9 @@ const Message = (props: MessageProps): React.ReactElement => {
         && (
           config?.groupChannel?.showSuggestedRepliesFor === 'all_messages'
             ? true
-            : message.messageId === currentGroupChannel?.lastMessage?.messageId
+            : message.messageId === allMessages[allMessages.length - 1].messageId
+            // Use `allMessages[allMessages.length - 1]` instead of `currentGroupChannel.lastMessage`
+            // because lastMessage is not updated when **Bot** sends messages
         )
         // the options should appear only when there's no failed or pending messages
         && localMessages?.length === 0
@@ -75,7 +86,7 @@ const Message = (props: MessageProps): React.ReactElement => {
       updateUserMessage={(messageId, params) => {
         updateMessage({
           messageId,
-          message: params.message,
+          message: params.message ?? '',
           mentionedUsers: params.mentionedUsers,
           mentionTemplate: params.mentionedMessageTemplate,
         });

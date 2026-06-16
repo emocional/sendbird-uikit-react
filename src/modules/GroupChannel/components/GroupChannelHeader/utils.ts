@@ -1,12 +1,13 @@
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import { LabelStringSet } from '../../../../ui/Label';
+import { isDefaultChannelName } from '../../../../utils';
 
 export const getChannelTitle = (channel: GroupChannel, currentUserId: string, stringSet: { [label: string]: string }): string => {
   const LABEL_STRING_SET: { [label: string]: string } = stringSet || LabelStringSet;
   if (!channel?.name && !channel?.members) {
     return LABEL_STRING_SET.NO_TITLE;
   }
-  if (channel?.name && channel.name !== 'Group Channel') {
+  if (!isDefaultChannelName(channel)) {
     return channel.name;
   }
 

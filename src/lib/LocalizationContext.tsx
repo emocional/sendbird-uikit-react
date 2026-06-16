@@ -4,27 +4,28 @@ import getStringSet, { StringSet } from '../ui/Label/stringSet';
 import type { Locale } from 'date-fns';
 import es from 'date-fns/locale/es';
 
-const LocalizationContext = React.createContext({
-  stringSet: getStringSet('es'),
-  dateLocale: es,
-});
+const LocalizationContextDefault = {
+  stringSet: getStringSet('en'),
+  dateLocale: en,
+};
+const LocalizationContext = React.createContext(LocalizationContextDefault);
 
 interface LocalizationProviderProps {
   stringSet: StringSet;
-  dateLocale: Locale;
+  dateLocale?: Locale;
   children: React.ReactElement;
 }
 
 const LocalizationProvider = (props: LocalizationProviderProps): React.ReactElement => {
   const { children } = props;
-  return <LocalizationContext.Provider value={props}>{children}</LocalizationContext.Provider>;
+  return <LocalizationContext.Provider value={{ ...LocalizationContextDefault, ...props }}>{children}</LocalizationContext.Provider>;
 };
 
-export type UseLocalizationType = () => {
-  stringSet: StringSet;
-  dateLocale: Locale;
+const useLocalization = () => {
+  const context = React.useContext(LocalizationContext);
+  if (!context) {
+    throw new Error('`useLocalization` hook must be used within `SendbirdProvider` that includes `LocalizationProvider`.');
+  }
+  return context;
 };
-
-const useLocalization: UseLocalizationType = () => React.useContext(LocalizationContext);
-
 export { LocalizationContext, LocalizationProvider, useLocalization };

@@ -3,8 +3,18 @@ import { BaseChannel } from '@sendbird/chat';
 import { NodeNames, NodeTypes } from './const';
 import { USER_MENTION_TEMP_CHAR } from '../../modules/GroupChannel/context/const';
 
-export const sanitizeString = (str?: string) => {
-  return str?.replace(/[\u00A0-\u9999<>]/gim, (i) => ''.concat('&#', String(i.charCodeAt(0)), ';'));
+/**
+ * - Converts `<` and `>` characters to their HTML entities (`&#60;` and `&#62;`).
+ * - All other characters (including special symbols, emojis, and non-English text) remain unchanged.
+ */
+export const sanitizeString = (str: string = ''): string => {
+  if (!str) return '';
+  return str.replace(/[<>]/g, (char) => (char === '<' ? '&#60;' : '&#62;'));
+};
+
+export const stripZeroWidthSpace = (str: string = ''): string => {
+  if (!str) return '';
+  return str.replace(/\u200B/g, '');
 };
 
 /**
@@ -13,11 +23,7 @@ export const sanitizeString = (str?: string) => {
  * @returns Array of child nodes
  */
 export const nodeListToArray = (childNodes?: Node['childNodes'] | null) => {
-  try {
-    return Array.from(childNodes);
-  } catch (error) {
-    return [];
-  }
+  return childNodes ? Array.from(childNodes) : [];
 };
 
 export function isChannelTypeSupportsMultipleFilesMessage(channel: BaseChannel) {
@@ -33,24 +39,30 @@ function isHTMLElement(node: ChildNode): node is HTMLElement {
 export function extractTextAndMentions(childNodes: NodeListOf<ChildNode>) {
   let messageText = '';
   let mentionTemplate = '';
+  let isMentionedMessage = false;
+  const mentionedUserIds: string[] = [];
   childNodes.forEach((node) => {
     if (isHTMLElement(node) && node.nodeName === NodeNames.Span) {
       const { innerText, dataset = {} } = node;
       const { userid = '' } = dataset;
-      messageText += innerText;
+      if (userid) {
+        isMentionedMessage = true;
+        mentionedUserIds.push(userid);
+      }
+      messageText += stripZeroWidthSpace(innerText);
       mentionTemplate += `${USER_MENTION_TEMP_CHAR}{${userid}}`;
     } else if (isHTMLElement(node) && node.nodeName === NodeNames.Br) {
       messageText += '\n';
       mentionTemplate += '\n';
     } else if (isHTMLElement(node) && node.nodeName === NodeNames.Div) {
-      const { textContent = '' } = node;
+      const textContent = stripZeroWidthSpace(node.textContent ?? '');
       messageText += `\n${textContent}`;
       mentionTemplate += `\n${textContent}`;
     } else {
-      const { textContent = '' } = node;
+      const textContent = stripZeroWidthSpace(node.textContent ?? '');
       messageText += textContent;
       mentionTemplate += textContent;
     }
   });
-  return { messageText, mentionTemplate };
+  return { messageText, mentionTemplate, isMentionedMessage, mentionedUserIds };
 }

@@ -3,7 +3,15 @@ import isToday from 'date-fns/isToday';
 import format from 'date-fns/format';
 import isThisYear from 'date-fns/isThisYear';
 import isYesterday from 'date-fns/isYesterday';
-import { isAudio, isGif, isImage, isTemplateMessage, isVideo, isVoiceMessageMimeType } from '../../../../utils';
+import {
+  isAudio,
+  isDefaultChannelName,
+  isGif,
+  isImage,
+  isTemplateMessage,
+  isVideo,
+  isVoiceMessageMimeType,
+} from '../../../../utils';
 import { LabelStringSet } from '../../../../ui/Label';
 import { getGlobalUserTag } from '../../../../ui/UserListItem/utils';
 
@@ -11,7 +19,7 @@ export const getChannelTitle = (channel?: GroupChannel, currentUserId?: string, 
   if (!channel?.name && !channel?.members) {
     return stringSet.NO_TITLE;
   }
-  if (channel?.name && channel.name !== 'Group Channel') {
+  if (!isDefaultChannelName(channel)) {
     return channel.name;
   }
   if (channel?.members?.length === 1) {
@@ -45,15 +53,15 @@ export const getLastMessageCreatedAt = ({ channel, locale, stringSet = LabelStri
     return '';
   }
   if (isToday(createdAt)) {
-    return format(createdAt, 'p', optionalParam);
+    return format(createdAt, stringSet.DATE_FORMAT__LAST_MESSAGE_CREATED_AT__TODAY, optionalParam);
   }
   if (isYesterday(createdAt)) {
     return stringSet.MESSAGE_STATUS__YESTERDAY || 'Yesterday';
   }
   if (isThisYear(createdAt)) {
-    return format(createdAt, 'MMM d', optionalParam);
+    return format(createdAt, stringSet.DATE_FORMAT__LAST_MESSAGE_CREATED_AT__THIS_YEAR, optionalParam);
   }
-  return format(createdAt, 'yyyy/M/d', optionalParam);
+  return format(createdAt, stringSet.DATE_FORMAT__LAST_MESSAGE_CREATED_AT__PREVIOUS_YEAR, optionalParam);
 };
 
 export const getTotalMembers = (channel?: GroupChannel) => (channel?.memberCount ? channel.memberCount : 0);
@@ -95,7 +103,8 @@ const getPrettyLastMessage = (message = null, stringSet = LabelStringSet) => {
   return message.message ?? '';
 };
 
-export const getLastMessage = (channel?: GroupChannel, stringSet = LabelStringSet) =>
-  channel?.lastMessage ? getPrettyLastMessage(channel?.lastMessage, stringSet) : '';
+export const getLastMessageText = (channel?: GroupChannel, stringSet = LabelStringSet) => {
+  return channel?.lastMessage ? getPrettyLastMessage(channel?.lastMessage, stringSet) : '';
+};
 
 export const getChannelUnreadMessageCount = (channel?: GroupChannel) => (channel?.unreadMessageCount ? channel.unreadMessageCount : 0);

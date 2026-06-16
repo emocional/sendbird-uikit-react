@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { SendbirdError } from '@sendbird/chat';
 import { OpenChannel, OpenChannelListQuery } from '@sendbird/chat/openChannel';
 
-import { Logger } from '../../../../lib/SendbirdState';
+import type { Logger } from '../../../../lib/Sendbird/types';
 import OpenChannelListActionTypes from '../dux/actionTypes';
 import { OpenChannelListDispatcherType } from '../OpenChannelListInterfaces';
 
@@ -37,7 +37,7 @@ function useFetchNextCallback(
       });
       openChannelListQuery.next()
         .then((channelList) => {
-          callback(channelList, null);
+          callback(channelList, undefined);
           logger.info('OpenChannelList|useFetchNextCallback: Succeeded fetching channels', channelList);
           openChannelListDispatcher({
             type: OpenChannelListActionTypes.FETCH_OPEN_CHANNEL_LIST_SUCCESS,
@@ -45,7 +45,7 @@ function useFetchNextCallback(
           });
         })
         .catch((err) => {
-          callback(null, err);
+          callback(undefined, err);
           logger.error('OpenChannelList|useFetchNextCallback: Failed fetching channels', err);
           openChannelListDispatcher({
             type: OpenChannelListActionTypes.FETCH_OPEN_CHANNEL_LIST_FAILURE,

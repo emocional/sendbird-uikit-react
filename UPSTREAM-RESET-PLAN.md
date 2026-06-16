@@ -2,6 +2,8 @@
 
 Estrategia para traer **Sendbird UIKit 3.18.0** (última publicada) sin perder el fork actual, evaluar la UI, y reaplicar después lo documentado en [`FORK-FEATURES.md`](./FORK-FEATURES.md).
 
+**Qué no se portó del fork:** ver [`NOT-PORTED.md`](./NOT-PORTED.md).
+
 ## Principios
 
 1. **Nunca tocar `main` del fork actual** hasta tener claro el resultado del experimento.
@@ -9,6 +11,7 @@ Estrategia para traer **Sendbird UIKit 3.18.0** (última publicada) sin perder e
 3. **Fase 1 = upstream puro** (sin parches Emocional).
 4. **Fase 2 = evaluación visual** (con adaptación mínima del front).
 5. **Fase 3 = reaplicar cambios** uno a uno desde `FORK-FEATURES.md`, con commits pequeños.
+6. **Código Emocional en `src/emo/`** — features, tipos e integración; upstream solo enganches marcados `// @emo-integration` (ver `src/emo/PATCHES.md`).
 
 ---
 
@@ -70,7 +73,7 @@ git checkout -b experiment/upstream-3.18.0-vanilla upstream/v3.18.0
 | Código fuente | **Upstream tal cual** — no mergear `main` |
 | `package.json` → `name` | Mantener `@emocional/sendbird-uikit-react` (para no romper imports del front) **o** usar `@sendbird/uikit-react` solo si se cambia también el front |
 | `package.json` → `version` | `3.18.0-emo-vanilla.0` (pre-release semver, distinto del 3.26.0 del fork) |
-| CI / release-it / Renovate | **Desactivar o no usar** en esta rama (evitar publicar por accidente) |
+| CI / release-it / Renovate | Restaurados en rama experimental — **solo `main`** (ver `NOT-PORTED.md` §1) |
 | `.npmrc` / `publishConfig` | Opcional en fase experimental; solo hace falta si se publica a GH Packages |
 
 ### Build local
@@ -208,6 +211,8 @@ Los más conflictivos (evitar cherry-pick directo):
 ---
 
 ## Fase 4 — Cierre (solo si el experimento convence)
+
+**Estado:** en curso — `main` sustituido por `experiment/upstream-3.18.0-vanilla` (validación en staging, sin preview local).
 
 1. Renombrar o sustituir `experiment/upstream-3.18.0-vanilla` → `main` (vía PR, **no** force-push sin acuerdo).
 2. Versión del paquete: alinear semver (p. ej. `3.18.0-emo.1` o saltar a `4.0.0-emo` si se quiere dejar claro el corte).

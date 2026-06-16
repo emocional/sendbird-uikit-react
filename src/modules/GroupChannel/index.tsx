@@ -1,12 +1,13 @@
 import React from 'react';
 
-import { GroupChannelProvider, GroupChannelProviderProps } from './context/GroupChannelProvider';
+import { GroupChannelProvider } from './context/GroupChannelProvider';
+import { type GroupChannelProviderProps } from './context/types';
 import GroupChannelUI, { GroupChannelUIProps } from './components/GroupChannelUI';
 
 export interface GroupChannelProps extends GroupChannelProviderProps, GroupChannelUIProps { }
 export const GroupChannel = (props: GroupChannelProps) => {
   return (
-    <GroupChannelProvider {...props}>
+    <GroupChannelProvider {...props} >
       <GroupChannelUI {...props} />
     </GroupChannelProvider>
   );

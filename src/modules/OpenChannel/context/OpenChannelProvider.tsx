@@ -29,7 +29,7 @@ import useUpdateMessageCallback from './hooks/useUpdateMessageCallback';
 import useDeleteMessageCallback from './hooks/useDeleteMessageCallback';
 import useResendMessageCallback from './hooks/useResendMessageCallback';
 import useTrimMessageList from './hooks/useTrimMessageList';
-import useSendbirdStateContext from '../../../hooks/useSendbirdStateContext';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
 
 type OpenChannelQueries = {
   // https://sendbird.github.io/core-sdk-javascript/module-model_params_messageListParams-MessageListParams.html
@@ -84,7 +84,7 @@ interface OpenChannelInterface extends OpenChannelProviderProps, MessageStoreSta
   resendMessage: any;
 }
 
-const OpenChannelContext = React.createContext<OpenChannelInterface | null>(undefined);
+const OpenChannelContext = React.createContext<OpenChannelInterface | null>(null);
 
 const OpenChannelProvider: React.FC<OpenChannelProviderProps> = (props: OpenChannelProviderProps) => {
   const {
@@ -101,12 +101,12 @@ const OpenChannelProvider: React.FC<OpenChannelProviderProps> = (props: OpenChan
 
   // We didn't decide to support fetching participant list
   const fetchingParticipants = false;
-  const globalStore = useSendbirdStateContext();
+  const { state } = useSendbird();
 
-  const sdk = globalStore?.stores?.sdkStore?.sdk;
-  const sdkInit = globalStore?.stores?.sdkStore?.initialized;
-  const user = globalStore?.stores?.userStore?.user;
-  const config = globalStore?.config;
+  const sdk = state.stores.sdkStore.sdk;
+  const sdkInit = state.stores.sdkStore.initialized;
+  const user = state.stores.userStore.user;
+  const config = state.config;
 
   const {
     userId,
@@ -132,7 +132,7 @@ const OpenChannelProvider: React.FC<OpenChannelProviderProps> = (props: OpenChan
   } = messagesStore;
   // ref
   const messageInputRef = useRef(null); // useSendMessageCallback
-  const conversationScrollRef = useRef(null); // useScrollAfterSendMessageCallback
+  const conversationScrollRef = useRef<HTMLDivElement>(null); // useScrollAfterSendMessageCallback
 
   // const
   const userFilledMessageListParams = queries?.messageListParams;
@@ -172,7 +172,7 @@ const OpenChannelProvider: React.FC<OpenChannelProviderProps> = (props: OpenChan
   );
 
   const fetchMore: boolean = utils.shouldFetchMore(allMessages?.length, messageLimit);
-  // donot fetch more for streaming
+  // do not fetch more for streaming
   const onScroll = useScrollCallback(
     { currentOpenChannel, lastMessageTimestamp, fetchMore },
     { sdk, logger, messagesDispatcher, hasMore, userFilledMessageListParams },
@@ -324,8 +324,11 @@ const OpenChannelProvider: React.FC<OpenChannelProviderProps> = (props: OpenChan
   );
 };
 
-export type UseOpenChannelType = () => OpenChannelInterface;
-const useOpenChannelContext: UseOpenChannelType = () => React.useContext(OpenChannelContext);
+const useOpenChannelContext = () => {
+  const context = React.useContext(OpenChannelContext);
+  if (!context) throw new Error('OpenChannelContext not found. Use within the OpenChannel module');
+  return context;
+};
 
 export {
   OpenChannelProvider,

@@ -1,6 +1,7 @@
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { BaseMessage } from '@sendbird/chat/message';
 import type { SendableMessage } from '@sendbird/chat/lib/__definition';
+import { UIKIT_COMPATIBLE_FORM_VERSION } from './const';
 
 export function getComponentKeyFromMessage(message: BaseMessage | SendableMessage): string {
   if ('sendingStatus' in message) {
@@ -26,12 +27,38 @@ export function getMessageTopOffset(messageCreatedAt: number): number | null {
   return null;
 }
 
-export const isDisabledBecauseFrozen = (groupChannel?: GroupChannel) => {
+export const isDisabledBecauseFrozen = (groupChannel?: GroupChannel | null) => {
   if (!groupChannel) return false;
   return groupChannel.isFrozen && groupChannel.myRole !== 'operator';
 };
 
-export const isDisabledBecauseMuted = (groupChannel?: GroupChannel) => {
+export const isDisabledBecauseMuted = (groupChannel?: GroupChannel | null) => {
   if (!groupChannel) return false;
   return groupChannel.myMutedState === 'muted';
+};
+
+export const isDisabledBecauseSuggestedReplies = (
+  channel: GroupChannel | null | undefined,
+  enableSuggestedReplies: boolean,
+) => {
+  return enableSuggestedReplies
+    && Array.isArray(channel?.lastMessage?.extendedMessagePayload?.suggested_replies)
+    && !!channel?.lastMessage?.extendedMessagePayload?.disable_chat_input;
+};
+
+export const isFormVersionCompatible = (version: number) => {
+  return version <= UIKIT_COMPATIBLE_FORM_VERSION;
+};
+
+export const isDisabledBecauseMessageForm = (
+  allMessages: BaseMessage[],
+  enableFormTypeMessage: boolean,
+) => {
+  return enableFormTypeMessage
+    && allMessages.some((message) => (
+      !!message.messageForm
+      && !message.messageForm.isSubmitted
+      && !!message.extendedMessagePayload?.disable_chat_input
+      && isFormVersionCompatible(message.messageForm.version)
+    ));
 };

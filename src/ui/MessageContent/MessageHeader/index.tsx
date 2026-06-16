@@ -1,4 +1,4 @@
-import React, { ReactElement } from 'react';
+import React from 'react';
 import '../index.scss';
 import Label, { LabelColors, LabelTypography } from '../../Label';
 import { CoreMessageType, getClassName, getSenderName, SendableMessageType, UI_CONTAINER_TYPES } from '../../../utils';
@@ -12,9 +12,11 @@ export interface MessageHeaderProps {
   message: CoreMessageType;
 }
 
-export default function MessageHeader(props: MessageHeaderProps): ReactElement {
-  const { dateLocale } = useLocalization();
-  const { channel, message } = props;
+export const MessageHeader = (props: MessageHeaderProps) => {
+  const {
+    channel,
+    message,
+  } = props;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -38,4 +40,6 @@ export default function MessageHeader(props: MessageHeaderProps): ReactElement {
       </div>
     </div>
   );
-}
+};
+
+export default MessageHeader;

@@ -6,17 +6,18 @@ import { GroupChannelHandler, GroupChannel as GroupChannelClass } from '@sendbir
 
 import type { MobileLayoutProps } from './types';
 
-import GroupChannel from '../GroupChannel';
+import GroupChannel, { GroupChannelProps } from '../GroupChannel';
 import GroupChannelList from '../GroupChannelList';
-import Channel from '../Channel';
+import Channel, { ChannelProps } from '../Channel';
 import ChannelList from '../ChannelList';
 import ChannelSettings from '../ChannelSettings';
 import MessageSearch from '../MessageSearch';
 import Thread from '../Thread';
-import useSendbirdStateContext from '../../hooks/useSendbirdStateContext';
 import uuidv4 from '../../utils/uuid';
 import { ALL, useVoicePlayerContext } from '../../hooks/VoicePlayer';
 import { SendableMessageType } from '../../utils';
+import { APP_LAYOUT_ROOT } from './const';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 enum PANELS {
   CHANNEL_LIST = 'CHANNEL_LIST',
@@ -31,6 +32,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
     replyType,
     isMessageGroupingEnabled,
     isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop,
     allowProfileEdit,
     isReactionEnabled,
     showSearchIcon,
@@ -48,7 +50,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
   } = props;
   const [panel, setPanel] = useState(PANELS.CHANNEL_LIST);
 
-  const store = useSendbirdStateContext();
+  const { state: store } = useSendbird();
   const sdk = store?.stores?.sdkStore?.sdk;
   const userId = store?.config?.userId;
 
@@ -63,7 +65,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
 
   useEffect(() => {
     if (panel !== PANELS.CHANNEL) {
-      goToMessage(null, () => setHighlightedMessage(null));
+      goToMessage(null, () => setHighlightedMessage?.(null));
     }
   }, [panel]);
 
@@ -107,7 +109,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
     onProfileEditSuccess: onProfileEditSuccess,
     disableAutoSelect: true,
     onChannelSelect: (channel: GroupChannelClass | null) => {
-      setCurrentChannel(channel);
+      setCurrentChannel(channel ?? undefined);
       if (channel) {
         setPanel(PANELS.CHANNEL);
       } else {
@@ -123,7 +125,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
     userQuery,
   };
 
-  const channelProps = {
+  const channelProps: ChannelProps & GroupChannelProps = {
     channelUrl: currentChannel?.url || '',
     onChatHeaderActionClick: () => {
       setPanel(PANELS.CHANNEL_SETTINGS);
@@ -151,11 +153,12 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
     animatedMessage: highlightedMessage,
     onMessageAnimated: () => setHighlightedMessage?.(null),
     showSearchIcon,
-    startingPoint,
+    startingPoint: startingPoint ?? undefined,
     isReactionEnabled,
     replyType,
     isMessageGroupingEnabled,
     isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop,
     // for GroupChannel
     animatedMessageId: highlightedMessage,
     onReplyInThreadClick: ({ message }) => {
@@ -167,7 +170,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
   };
 
   return (
-    <div className="sb_mobile">
+    <div className="sb_mobile" id={APP_LAYOUT_ROOT}>
       {panel === PANELS.CHANNEL_LIST && (
         <div className="sb_mobile__panelwrap">
           {enableLegacyChannelModules ? <ChannelList {...channelListProps} /> : <GroupChannelList {...channelListProps} />}
@@ -220,7 +223,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = (props: MobileLayoutPro
               setCurrentChannel(channel);
               goToMessage(message, (messageId) => {
                 setPanel(PANELS.CHANNEL);
-                setHighlightedMessage(messageId);
+                setHighlightedMessage?.(messageId);
               });
             }}
           />

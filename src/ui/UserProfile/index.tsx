@@ -4,19 +4,19 @@ import type { GroupChannel, GroupChannelCreateParams } from '@sendbird/chat/grou
 import type { User } from '@sendbird/chat';
 
 import { LocalizationContext } from '../../lib/LocalizationContext';
-import { UserProfileContext } from '../../lib/UserProfileContext';
+import { useUserProfileContext } from '../../lib/UserProfileContext';
 import { getCreateGroupChannel } from '../../lib/selectors';
 import Avatar from '../Avatar/index';
 import Label, { LabelColors, LabelTypography } from '../Label';
 import Button, { ButtonTypes } from '../Button';
-import useSendbirdStateContext from '../../hooks/useSendbirdStateContext';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 interface Logger {
   info?(message: string, channel: GroupChannel): void;
 }
 
 interface Props {
-  user: User;
+  user?: User | null;
   currentUserId?: string;
   logger?: Logger;
   disableMessaging?: boolean;
@@ -30,12 +30,12 @@ function UserProfile({
   disableMessaging = false,
   onSuccess,
 }: Props): ReactElement {
-  const store = useSendbirdStateContext();
-  const createChannel = getCreateGroupChannel(store);
-  const logger = store?.config?.logger;
+  const { state } = useSendbird();
+  const createChannel = getCreateGroupChannel(state);
+  const logger = state?.config?.logger;
   const { stringSet } = useContext(LocalizationContext);
-  const currentUserId_ = currentUserId || store?.config?.userId;
-  const { onUserProfileMessage } = useContext(UserProfileContext);
+  const currentUserId_ = currentUserId || state?.config?.userId;
+  const { onStartDirectMessage } = useUserProfileContext();
   return (
     <div className="sendbird__user-profile">
       <section className="sendbird__user-profile-avatar">
@@ -62,16 +62,14 @@ function UserProfile({
                 // Create 1:1 channel
                 const params: GroupChannelCreateParams = {
                   isDistinct: false,
-                  invitedUserIds: [user?.userId],
+                  invitedUserIds: user?.userId ? [user?.userId] : [],
                   operatorUserIds: [currentUserId_],
                 };
-                onSuccess();
+                onSuccess?.();
                 createChannel(params)
                   .then((groupChannel) => {
                     logger.info('UserProfile, channel create', groupChannel);
-                    if (typeof onUserProfileMessage === 'function') {
-                      onUserProfileMessage?.(groupChannel);
-                    }
+                    onStartDirectMessage?.(groupChannel);
                   });
               }}
             >

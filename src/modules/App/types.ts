@@ -1,21 +1,30 @@
 import type { User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { Locale } from 'date-fns';
-import { ReplyType, UserListQuery, RenderUserProfileProps, SendBirdProviderConfig } from '../../types';
-import { CustomExtensionParams, SBUEventHandlers, SendbirdChatInitParams } from '../../lib/types';
+import {
+  ReplyType,
+  UserListQuery,
+  RenderUserProfileProps,
+  SendBirdProviderConfig,
+  HTMLTextDirection,
+} from '../../types';
+import { CustomExtensionParams, SBUEventHandlers, SendbirdChatInitParams } from '../../lib/Sendbird/types';
 import { SendableMessageType } from '../../utils';
 
 export interface AppLayoutProps {
   isReactionEnabled?: boolean;
   replyType?: 'NONE' | 'QUOTE_REPLY' | 'THREAD';
+  htmlTextDirection?: HTMLTextDirection;
+  forceLeftToRightMessageLayout?: boolean;
   isMessageGroupingEnabled?: boolean;
   isMultipleFilesMessageEnabled?: boolean;
+  autoscrollMessageOverflowToTop?: boolean;
   allowProfileEdit?: boolean;
   showSearchIcon?: boolean;
   onProfileEditSuccess?(user: User): void; // TODO: Unused props, deprecate it
   disableAutoSelect?: boolean;
   currentChannel?: GroupChannel;
-  setCurrentChannel: React.Dispatch<GroupChannel | null>;
+  setCurrentChannel: React.Dispatch<GroupChannel | undefined>;
   enableLegacyChannelModules: boolean;
   userQuery?(): UserListQuery;
 }
@@ -36,7 +45,7 @@ export interface DesktopLayoutProps extends AppLayoutProps, SubLayoutCommonProps
   showSettings: boolean;
   setShowSettings: React.Dispatch<boolean>;
   showSearch: boolean;
-  setShowSearch: React.Dispatch<boolean>;
+  setShowSearch: React.Dispatch<React.SetStateAction<boolean>>;
   // thread
   showThread: boolean;
   setShowThread: React.Dispatch<boolean>;

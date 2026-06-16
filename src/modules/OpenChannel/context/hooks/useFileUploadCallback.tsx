@@ -2,36 +2,31 @@ import React, { useCallback } from 'react';
 import type { OpenChannel } from '@sendbird/chat/openChannel';
 import type { FileMessageCreateParams } from '@sendbird/chat/message';
 
-import type { Logger } from '../../../../lib/SendbirdState';
+import type { Logger, SdkStore, ImageCompressionOptions } from '../../../../lib/Sendbird/types';
 import * as messageActionTypes from '../dux/actionTypes';
 import * as utils from '../utils';
-import { SdkStore } from '../../../../lib/types';
 import { compressImages } from '../../../../utils/compressImages';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useGlobalModalContext } from '../../../../hooks/useModal';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { ONE_MiB } from '../../../../utils/consts';
 import { ModalFooter } from '../../../../ui/Modal';
 import { ButtonTypes } from '../../../../ui/Button';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 interface DynamicParams {
-  currentOpenChannel: OpenChannel;
-  onBeforeSendFileMessage: (file: File) => FileMessageCreateParams;
+  currentOpenChannel: OpenChannel | null;
+  onBeforeSendFileMessage?: (file: File) => FileMessageCreateParams;
   checkScrollBottom: () => boolean;
-  imageCompression?: {
-    compressionRate?: number,
-    resizingWidth?: number | string,
-    resizingHeight?: number | string,
-  };
+  imageCompression?: ImageCompressionOptions;
 }
 interface StaticParams {
   sdk: SdkStore['sdk'];
   logger: Logger;
   messagesDispatcher: (props: { type: string, payload: any }) => void;
-  scrollRef: React.MutableRefObject<HTMLElement>;
+  scrollRef: React.RefObject<HTMLElement>;
 }
 
-type CallbackReturn = (files: Array<File> | File) => void;
+type CallbackReturn = (files: Array<File> | File) => Promise<void>;
 
 function useFileUploadCallback({
   currentOpenChannel,
@@ -42,28 +37,24 @@ function useFileUploadCallback({
 ): CallbackReturn {
   const { stringSet } = useLocalization();
   const { openModal } = useGlobalModalContext();
-  const { config } = useSendbirdStateContext();
-  const { uikitUploadSizeLimit } = config;
+  const { state: { config: { uikitUploadSizeLimit } } } = useSendbird();
 
   return useCallback(async (files) => {
-    if (sdk) {
-      /**
-       * OpenChannel does not currently support file lists.
-       * However, this change is made to maintain interface consistency with group channels.
-       */
-      const file = Array.isArray(files) ? files[0] : files;
-      const createCustomParams = onBeforeSendFileMessage && typeof onBeforeSendFileMessage === 'function';
+    if (!sdk) return;
+    const fileList = Array.isArray(files) ? files : [files];
 
-      const createParamsDefault = (file_): FileMessageCreateParams => {
-        const params: FileMessageCreateParams = {};
-        params.file = file_;
-        return params;
-      };
+    const createCustomParams = onBeforeSendFileMessage && typeof onBeforeSendFileMessage === 'function';
 
-      /**
-       * Validate file sizes
-       * The default value of uikitUploadSizeLimit is 25MiB
-       */
+    const createParamsDefault = (file: File): FileMessageCreateParams => {
+      const params: FileMessageCreateParams = {};
+      params.file = file;
+      return params;
+    };
+
+    for (let i = 0; i < fileList.length; i += 1) {
+      const file = fileList[i];
+
+      // Validate file size
       if (file.size > uikitUploadSizeLimit) {
         logger.info(`OpenChannel | useFileUploadCallback: Cannot upload file size exceeding ${uikitUploadSizeLimit}`);
         openModal({
@@ -85,6 +76,7 @@ function useFileUploadCallback({
       }
 
       // Image compression
+      // eslint-disable-next-line no-await-in-loop
       const { compressedFiles } = await compressImages({
         files: [file],
         imageCompression,
@@ -92,14 +84,13 @@ function useFileUploadCallback({
       });
       const [compressedFile] = compressedFiles;
 
-      // Send FileMessage
       if (createCustomParams) {
         logger.info('OpenChannel | useFileUploadCallback: Creating params using onBeforeSendFileMessage', onBeforeSendFileMessage);
       }
       const params = onBeforeSendFileMessage ? onBeforeSendFileMessage(compressedFile) : createParamsDefault(compressedFile);
       logger.info('OpenChannel | useFileUploadCallback: Uploading file message start', params);
 
-      currentOpenChannel.sendFileMessage(params)
+      currentOpenChannel?.sendFileMessage(params)
         .onPending((pendingMessage) => {
           messagesDispatcher({
             type: messageActionTypes.SENDING_MESSAGE_START,

@@ -1,22 +1,28 @@
-import { ThreadContextActionTypes } from '../dux/actionTypes';
 import { NEXT_THREADS_FETCH_SIZE, PREV_THREADS_FETCH_SIZE } from '../../consts';
 import { BaseMessage, ThreadedMessageListParams } from '@sendbird/chat/message';
-import { SendableMessageType } from '../../../../utils';
-import { CustomUseReducerDispatcher } from '../../../../lib/SendbirdState';
+import { CoreMessageType, SendableMessageType } from '../../../../utils';
 import { LoggerInterface } from '../../../../lib/Logger';
 import { useCallback } from 'react';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { ThreadListStateTypes } from '../../types';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 type Params = {
   anchorMessage?: SendableMessageType;
-  parentMessage: SendableMessageType;
+  parentMessage: SendableMessageType | null;
   isReactionEnabled?: boolean;
-  threadDispatcher: CustomUseReducerDispatcher;
   logger: LoggerInterface;
   threadListState: ThreadListStateTypes;
   oldestMessageTimeStamp: number;
   latestMessageTimeStamp: number;
+  initializeThreadListStart: () => void,
+  initializeThreadListSuccess: (parentMessage: BaseMessage, anchorMessage: SendableMessageType, threadedMessages: BaseMessage[]) => void,
+  initializeThreadListFailure: () => void,
+  getPrevMessagesStart: () => void,
+  getPrevMessagesSuccess: (threadedMessages: CoreMessageType[]) => void,
+  getPrevMessagesFailure: () => void,
+  getNextMessagesStart: () => void,
+  getNextMessagesSuccess: (threadedMessages: CoreMessageType[]) => void,
+  getNextMessagesFailure: () => void,
 };
 
 function getThreadMessageListParams(params?: Partial<ThreadedMessageListParams>): ThreadedMessageListParams {
@@ -24,6 +30,7 @@ function getThreadMessageListParams(params?: Partial<ThreadedMessageListParams>)
     prevResultSize: PREV_THREADS_FETCH_SIZE,
     nextResultSize: NEXT_THREADS_FETCH_SIZE,
     includeMetaArray: true,
+    isInclusive: true,
     ...params,
   };
 }
@@ -32,23 +39,28 @@ export const useThreadFetchers = ({
   isReactionEnabled,
   anchorMessage,
   parentMessage: staleParentMessage,
-  threadDispatcher,
   logger,
   oldestMessageTimeStamp,
   latestMessageTimeStamp,
   threadListState,
+  initializeThreadListStart,
+  initializeThreadListSuccess,
+  initializeThreadListFailure,
+  getPrevMessagesStart,
+  getPrevMessagesSuccess,
+  getPrevMessagesFailure,
+  getNextMessagesStart,
+  getNextMessagesSuccess,
+  getNextMessagesFailure,
 }: Params) => {
-  const { stores } = useSendbirdStateContext();
+  const { state: { stores } } = useSendbird();
   const timestamp = anchorMessage?.createdAt || 0;
 
   const initialize = useCallback(
     async (callback?: (messages: BaseMessage[]) => void) => {
       if (!stores.sdkStore.initialized || !staleParentMessage) return;
 
-      threadDispatcher({
-        type: ThreadContextActionTypes.INITIALIZE_THREAD_LIST_START,
-        payload: null,
-      });
+      initializeThreadListStart();
 
       try {
         const params = getThreadMessageListParams({ includeReactions: isReactionEnabled });
@@ -56,30 +68,29 @@ export const useThreadFetchers = ({
 
         const { threadedMessages, parentMessage } = await staleParentMessage.getThreadedMessagesByTimestamp(timestamp, params);
         logger.info('Thread | useGetThreadList: Initialize thread list succeeded.', { staleParentMessage, threadedMessages });
-        threadDispatcher({
-          type: ThreadContextActionTypes.INITIALIZE_THREAD_LIST_SUCCESS,
-          payload: { parentMessage, anchorMessage, threadedMessages },
-        });
+        initializeThreadListSuccess(parentMessage, anchorMessage, threadedMessages);
         setTimeout(() => callback?.(threadedMessages));
       } catch (error) {
         logger.info('Thread | useGetThreadList: Initialize thread list failed.', error);
-        threadDispatcher({
-          type: ThreadContextActionTypes.INITIALIZE_THREAD_LIST_FAILURE,
-          payload: error,
-        });
+        initializeThreadListFailure();
       }
     },
-    [stores.sdkStore.initialized, staleParentMessage, anchorMessage, isReactionEnabled],
+    [
+      stores.sdkStore.initialized,
+      staleParentMessage,
+      anchorMessage,
+      isReactionEnabled,
+      initializeThreadListStart,
+      initializeThreadListSuccess,
+      initializeThreadListFailure,
+    ],
   );
 
   const loadPrevious = useCallback(
     async (callback?: (messages: BaseMessage[]) => void) => {
       if (threadListState !== ThreadListStateTypes.INITIALIZED || oldestMessageTimeStamp === 0 || !staleParentMessage) return;
 
-      threadDispatcher({
-        type: ThreadContextActionTypes.GET_PREV_MESSAGES_START,
-        payload: null,
-      });
+      getPrevMessagesStart();
 
       try {
         const params = getThreadMessageListParams({ nextResultSize: 0, includeReactions: isReactionEnabled });
@@ -87,55 +98,56 @@ export const useThreadFetchers = ({
         const { threadedMessages, parentMessage } = await staleParentMessage.getThreadedMessagesByTimestamp(oldestMessageTimeStamp, params);
 
         logger.info('Thread | useGetPrevThreadsCallback: Fetch prev threads succeeded.', { parentMessage, threadedMessages });
-        threadDispatcher({
-          type: ThreadContextActionTypes.GET_PREV_MESSAGES_SUCESS,
-          payload: { parentMessage, threadedMessages },
-        });
+        getPrevMessagesSuccess(threadedMessages as CoreMessageType[]);
         setTimeout(() => callback?.(threadedMessages));
       } catch (error) {
         logger.info('Thread | useGetPrevThreadsCallback: Fetch prev threads failed.', error);
-        threadDispatcher({
-          type: ThreadContextActionTypes.GET_PREV_MESSAGES_FAILURE,
-          payload: error,
-        });
+        getPrevMessagesFailure();
       }
     },
-    [threadListState, oldestMessageTimeStamp, isReactionEnabled, staleParentMessage],
+    [
+      threadListState,
+      oldestMessageTimeStamp,
+      isReactionEnabled,
+      staleParentMessage,
+      getPrevMessagesStart,
+      getPrevMessagesSuccess,
+      getPrevMessagesFailure,
+    ],
   );
 
   const loadNext = useCallback(
     async (callback?: (messages: BaseMessage[]) => void) => {
       if (threadListState !== ThreadListStateTypes.INITIALIZED || latestMessageTimeStamp === 0 || !staleParentMessage) return;
 
-      threadDispatcher({
-        type: ThreadContextActionTypes.GET_NEXT_MESSAGES_START,
-        payload: null,
-      });
+      getNextMessagesStart();
 
       try {
         const params = getThreadMessageListParams({ prevResultSize: 0, includeReactions: isReactionEnabled });
 
         const { threadedMessages, parentMessage } = await staleParentMessage.getThreadedMessagesByTimestamp(latestMessageTimeStamp, params);
         logger.info('Thread | useGetNextThreadsCallback: Fetch next threads succeeded.', { parentMessage, threadedMessages });
-        threadDispatcher({
-          type: ThreadContextActionTypes.GET_NEXT_MESSAGES_SUCESS,
-          payload: { parentMessage, threadedMessages },
-        });
+        getNextMessagesSuccess(threadedMessages as CoreMessageType[]);
         setTimeout(() => callback?.(threadedMessages));
       } catch (error) {
         logger.info('Thread | useGetNextThreadsCallback: Fetch next threads failed.', error);
-        threadDispatcher({
-          type: ThreadContextActionTypes.GET_NEXT_MESSAGES_FAILURE,
-          payload: error,
-        });
+        getNextMessagesFailure();
       }
     },
-    [threadListState, latestMessageTimeStamp, isReactionEnabled, staleParentMessage],
+    [
+      threadListState,
+      latestMessageTimeStamp,
+      isReactionEnabled,
+      staleParentMessage,
+      getNextMessagesStart,
+      getNextMessagesSuccess,
+      getNextMessagesFailure,
+    ],
   );
 
   return {
-    initialize,
-    loadPrevious,
-    loadNext,
+    initializeThreadFetcher: initialize,
+    fetchPrevThreads: loadPrevious,
+    fetchNextThreads: loadNext,
   };
 };

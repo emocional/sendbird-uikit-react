@@ -11,9 +11,10 @@ import { useOpenChannelContext } from '../../context/OpenChannelProvider';
 import OpenChannelMessage from '../OpenChannelMessage';
 import { RenderMessageProps } from '../../../../types';
 import { MessageProvider } from '../../../Message/context/MessageProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useHandleOnScrollCallback } from '../../../../hooks/useHandleOnScrollCallback';
 import { compareMessagesForGrouping } from '../../../../utils/messages';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { useLocalization } from '../../../../lib/LocalizationContext';
 
 export type OpenChannelMessageListProps = {
   renderMessage?: (props: RenderMessageProps) => React.ReactElement;
@@ -23,20 +24,22 @@ export type OpenChannelMessageListProps = {
 /** @deprecated * */
 export type OpenchannelMessageListProps = OpenChannelMessageListProps;
 
-function OpenChannelMessageList(props: OpenChannelMessageListProps, ref: React.RefObject<HTMLDivElement>): ReactElement {
+function OpenChannelMessageList(props: OpenChannelMessageListProps, ref: React.ForwardedRef<HTMLDivElement>): ReactElement {
   const {
     isMessageGroupingEnabled = true,
     allMessages,
     hasMore,
     onScroll,
   } = useOpenChannelContext();
-  const store = useSendbirdStateContext();
-  const userId = store.config.userId;
-  const scrollRef = ref || useRef(null);
+  const { state } = useSendbird();
+  const { stringSet } = useLocalization();
+  const userId = state.config.userId;
+  const localRef = useRef<HTMLDivElement>(null);
+  const scrollRef = ref || localRef;
   const [showScrollDownButton, setShowScrollDownButton] = useState(false);
 
   const scrollToBottom = () => {
-    if (scrollRef && scrollRef.current) {
+    if (scrollRef && 'current' in scrollRef && scrollRef.current) {
       scrollRef.current.scrollTo(0, scrollRef.current.scrollHeight);
       setShowScrollDownButton(false);
     }
@@ -46,7 +49,7 @@ function OpenChannelMessageList(props: OpenChannelMessageListProps, ref: React.R
     setShowScrollDownButton,
     hasMore,
     onScroll,
-    scrollRef,
+    scrollRef: scrollRef as any,
   });
 
   const memoizedMessageList = useMemo(() => {
@@ -64,7 +67,7 @@ function OpenChannelMessageList(props: OpenChannelMessageListProps, ref: React.R
           ));
 
           const [chainTop, chainBottom] = isMessageGroupingEnabled
-            ? compareMessagesForGrouping(previousMessage, message, nextMessage)
+            ? compareMessagesForGrouping(previousMessage, message, nextMessage, stringSet)
             : [false, false];
           const isByMe = (message as UserMessage)?.sender?.userId === userId;
           const key = message?.messageId || (message as UserMessage)?.reqId;

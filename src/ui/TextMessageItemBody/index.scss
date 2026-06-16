@@ -13,6 +13,26 @@
     border-radius: 16px 16px 0px 0px;
   }
 
+  &.mouse-hover, &:hover {
+    &.incoming {
+      @include themed() { background-color: t(bg-2) }
+    }
+    &.outgoing {
+      @include themed() { background-color: t(primary-4) }
+    }
+  }
+  
+  &.disable-hover {
+    &.mouse-hover, &:hover {
+      &.incoming {
+        @include themed() { background-color: t(bg-1) }
+      }
+      &.outgoing {
+        @include themed() { background-color: t(primary-3) }
+      }
+    }
+  }
+
   .sendbird-text-message-item-body__text-bubble__message {
     display: inline;
     margin: 0px 2px;

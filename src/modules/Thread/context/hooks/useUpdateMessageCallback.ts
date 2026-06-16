@@ -1,43 +1,56 @@
 import { useCallback } from 'react';
+import { User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import { UserMessage, UserMessageUpdateParams } from '@sendbird/chat/message';
 
-import { CustomUseReducerDispatcher, Logger } from '../../../../lib/SendbirdState';
-import { ThreadContextActionTypes } from '../dux/actionTypes';
+import type { Logger } from '../../../../lib/Sendbird/types';
 
 import topics, { SBUGlobalPubSub } from '../../../../lib/pubSub/topics';
 import { PublishingModuleType } from '../../../internalInterfaces';
+import { SendableMessageType } from '../../../../utils';
 
 interface DynamicProps {
-  currentChannel: GroupChannel;
+  currentChannel: GroupChannel | null;
   isMentionEnabled?: boolean;
+  onMessageUpdated: (currentChannel: GroupChannel, message: SendableMessageType) => void;
 }
 interface StaticProps {
   logger: Logger;
   pubSub: SBUGlobalPubSub;
-  threadDispatcher: CustomUseReducerDispatcher;
 }
+
+type CallbackParams = {
+  messageId: number;
+  message: string;
+  mentionedUsers?: User[];
+  mentionedUserIds?: string[];
+  mentionTemplate?: string;
+};
 
 export default function useUpdateMessageCallback({
   currentChannel,
   isMentionEnabled,
+  onMessageUpdated,
 }: DynamicProps, {
   logger,
   pubSub,
-  threadDispatcher,
 }: StaticProps) {
   // TODO: add type
-  return useCallback((props) => {
+  return useCallback((props: CallbackParams) => {
     const {
       messageId,
       message,
       mentionedUsers,
+      mentionedUserIds,
       mentionTemplate,
     } = props;
+
     const createParamsDefault = () => {
       const params = {} as UserMessageUpdateParams;
       params.message = message;
-      if (isMentionEnabled && mentionedUsers?.length > 0) {
+      if (isMentionEnabled && mentionedUserIds) {
+        params.mentionedUserIds = mentionedUserIds;
+      } else if (isMentionEnabled && mentionedUsers) {
         params.mentionedUsers = mentionedUsers;
       }
       if (isMentionEnabled && mentionTemplate) {
@@ -51,16 +64,15 @@ export default function useUpdateMessageCallback({
     const params = createParamsDefault();
     logger.info('Thread | useUpdateMessageCallback: Message update start.', params);
 
-    currentChannel?.updateUserMessage?.(messageId, params)
+    if (currentChannel == null) {
+      logger.warning('Thread | useUpdateMessageCallback: currentChannel is null.');
+      return;
+    }
+
+    currentChannel.updateUserMessage?.(messageId, params)
       .then((message: UserMessage) => {
         logger.info('Thread | useUpdateMessageCallback: Message update succeeded.', message);
-        threadDispatcher({
-          type: ThreadContextActionTypes.ON_MESSAGE_UPDATED,
-          payload: {
-            channel: currentChannel,
-            message: message,
-          },
-        });
+        onMessageUpdated(currentChannel, message);
         pubSub.publish(
           topics.UPDATE_USER_MESSAGE,
           {
@@ -71,5 +83,9 @@ export default function useUpdateMessageCallback({
           },
         );
       });
-  }, [currentChannel, isMentionEnabled]);
+  }, [
+    currentChannel,
+    isMentionEnabled,
+    onMessageUpdated,
+  ]);
 }

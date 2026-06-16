@@ -12,8 +12,7 @@
  */
 import type { Emoji, EmojiCategory, EmojiContainer } from '@sendbird/chat';
 
-import type { SendbirdChatType } from './types';
-import { Logger } from './SendbirdState';
+import type { SendbirdChatType, Logger } from './Sendbird/types';
 import { match } from 'ts-pattern';
 import { Reaction } from '@sendbird/chat/message';
 
@@ -23,7 +22,7 @@ export interface EmojiManagerParams {
 }
 
 export class EmojiManager {
-  private _emojiContainer: EmojiContainer;
+  private _emojiContainer!: EmojiContainer;
 
   constructor(props: EmojiManagerParams) {
     const { sdk, logger } = props;
@@ -58,7 +57,7 @@ export class EmojiManager {
   }
 
   public getEmojiUrl(reactionKey: Reaction['key']) {
-    return this.AllEmojisAsArray.find((emoji) => emoji.key === reactionKey).url ?? '';
+    return this.AllEmojisAsArray.find((emoji) => emoji.key === reactionKey)?.url ?? '';
   }
 
   public get emojiContainer() {

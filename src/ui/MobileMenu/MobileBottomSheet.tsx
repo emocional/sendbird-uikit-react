@@ -1,6 +1,6 @@
 import type { Emoji } from '@sendbird/chat';
-import { FileMessage, Reaction, UserMessage } from '@sendbird/chat/message';
-import React, { ReactElement, useState } from 'react';
+import { Reaction, UserMessage } from '@sendbird/chat/message';
+import React, { useState } from 'react';
 
 import type { MobileBottomSheetProps } from './types';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
@@ -11,7 +11,6 @@ import {
   isPendingMessage,
   isSentMessage,
   isUserMessage,
-  copyToClipboard,
   isFileMessage,
   isVoiceMessage,
   isThreadMessage,
@@ -20,9 +19,19 @@ import BottomSheet from '../BottomSheet';
 import ImageRenderer from '../ImageRenderer';
 import ReactionButton from '../ReactionButton';
 import Icon, { IconTypes, IconColors } from '../Icon';
-import Label, { LabelTypography, LabelColors } from '../Label';
-import { useLocalization } from '../../lib/LocalizationContext';
-import useSendbirdStateContext from '../../hooks/useSendbirdStateContext';
+import { classnames } from '../../utils/utils';
+import { MessageMenuProvider, MobileMessageMenuContextProps } from '../MessageMenu/MessageMenuProvider';
+import {
+  CopyMenuItem,
+  EditMenuItem,
+  ResendMenuItem,
+  ReplyMenuItem,
+  ThreadMenuItem,
+  DeleteMenuItem,
+  DownloadMenuItem,
+  MarkAsUnreadMenuItem,
+} from '../MessageMenu/menuItems/BottomSheetMenuItems';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 const EMOJI_SIZE = 38;
 
@@ -37,7 +46,7 @@ const MobileBottomSheet: React.FunctionComponent<MobileBottomSheetProps> = (prop
     resendMessage,
     deleteMessage,
     toggleReaction,
-    isReactionEnabled,
+    isReactionEnabled = false,
     showEdit,
     showRemove,
     deleteMenuState,
@@ -45,13 +54,10 @@ const MobileBottomSheet: React.FunctionComponent<MobileBottomSheetProps> = (prop
     onReplyInThread,
     isOpenedFromThread = false,
     onDownloadClick,
+    renderMenuItems,
   } = props;
   const isByMe = message?.sender?.userId === userId;
-  const { stringSet } = useLocalization();
-  const globalStore = useSendbirdStateContext();
-  const {
-    isOnline,
-  } = globalStore.config;
+  const { state: { config: { isOnline, groupChannel: { enableMarkAsUnread } } } } = useSendbird();
   const showMenuItemCopy: boolean = isUserMessage(message as UserMessage);
   const showMenuItemEdit: boolean = (isUserMessage(message as UserMessage) && isSentMessage(message) && isByMe);
   const showMenuItemResend: boolean = (isOnline && isFailedMessage(message) && message?.isResendable && isByMe);
@@ -76,31 +82,48 @@ const MobileBottomSheet: React.FunctionComponent<MobileBottomSheetProps> = (prop
     && !isPendingMessage(message)
     && !isThreadMessage(message)
     && (channel?.isGroupChannel() && !(channel as GroupChannel)?.isBroadcast);
-  const disableReaction = message?.parentMessageId > 0;
 
-  const fileMessage = message as FileMessage;
+  const showMenuItemMarkAsUnread: boolean = !isFailedMessage(message)
+    && !isPendingMessage(message)
+    && channel?.isGroupChannel?.()
+    && replyType !== 'THREAD';
+
   const maxEmojisPerRow = Math.floor(window.innerWidth / EMOJI_SIZE) - 1;
   const [showEmojisOnly, setShowEmojisOnly] = useState<boolean>(false);
-  const emojis = getEmojiListAll(emojiContainer);
-  // calculate max emojis that can be shown in screen
-  const visibleEmojis = showEmojisOnly
-    ? emojis
-    : emojis?.slice(0, maxEmojisPerRow);
-  const canShowMoreEmojis = emojis.length > maxEmojisPerRow;
+  const emojis = emojiContainer && getEmojiListAll(emojiContainer);
+  const visibleEmojis = showEmojisOnly ? emojis : emojis?.slice(0, maxEmojisPerRow);
+  const canShowMoreEmojis = emojis && emojis.length > maxEmojisPerRow;
+
+  const contextValue: MobileMessageMenuContextProps = {
+    message,
+    hideMenu,
+    setQuoteMessage,
+    onReplyInThread,
+    onMoveToParentMessage: () => { },
+    showEdit,
+    showRemove,
+    deleteMessage,
+    resendMessage,
+    markAsUnread: props.markAsUnread,
+    isOnline,
+    disableDeleteMessage: disableDelete,
+    triggerRef: null,
+    containerRef: null,
+    onDownloadClick,
+  };
+
   return (
-    <BottomSheet onBackdropClick={hideMenu}>
-      <div className='sendbird-message__bottomsheet'>
-        {
-          showReaction && (
-            <div className='sendbird-message__bottomsheet-reactions'>
-              <ul
-                className="sendbird-message__bottomsheet-reaction-bar"
-              >
+    <MessageMenuProvider value={contextValue}>
+      <BottomSheet onBackdropClick={hideMenu}>
+        <div className="sendbird-message__bottomsheet">
+          {showReaction && (
+            <div className="sendbird-message__bottomsheet-reactions">
+              <ul className="sendbird-message__bottomsheet-reaction-bar">
                 <div
-                  className={`
-                    sendbird-message__bottomsheet-reaction-bar__row
-                    ${showEmojisOnly ? 'sendbird-message__bottomsheet-reaction-bar__all' : ''}
-                  `}
+                  className={classnames(
+                    'sendbird-message__bottomsheet-reaction-bar__row',
+                    showEmojisOnly && 'sendbird-message__bottomsheet-reaction-bar__all',
+                  )}
                 >
                   {visibleEmojis.map((emoji: Emoji): React.ReactElement => {
                     const isReacted: boolean = message?.reactions
@@ -115,15 +138,15 @@ const MobileBottomSheet: React.FunctionComponent<MobileBottomSheetProps> = (prop
                         selected={isReacted}
                         onClick={(): void => {
                           hideMenu();
-                          toggleReaction(message, emoji.key, isReacted);
+                          toggleReaction?.(message, emoji.key, isReacted);
                         }}
-                        dataSbId={`ui_mobile_emoji_reactions_menu_${emoji.key}`}
+                        testID={`ui_mobile_emoji_reactions_menu_${emoji.key}`}
                       >
                         <ImageRenderer
                           url={emoji?.url || ''}
                           width="28px"
                           height="28px"
-                          placeHolder={({ style }): ReactElement => (
+                          placeHolder={({ style }): React.ReactElement => (
                             <div style={style}>
                               <Icon
                                 type={IconTypes.QUESTION}
@@ -137,226 +160,64 @@ const MobileBottomSheet: React.FunctionComponent<MobileBottomSheetProps> = (prop
                       </ReactionButton>
                     );
                   })}
-                  {
-                    canShowMoreEmojis && !showEmojisOnly && (
-                      <ReactionButton
-                        key="emoji_more"
-                        width="38px"
-                        height="38px"
-                        onClick={(): void => {
-                          setShowEmojisOnly(true);
-                        }}
-                        dataSbId="ui_mobile_emoji_reactions_menu_emojiadd"
-                      >
-                        <ImageRenderer
-                          url={''}
-                          width="28px"
-                          height="28px"
-                          placeHolder={({ style }): React.ReactElement => (
-                            <div style={style}>
-                              <Icon
-                                type={IconTypes.EMOJI_MORE}
-                                fillColor={IconColors.ON_BACKGROUND_3}
-                                width="28px"
-                                height="28px"
-                              />
-                            </div>
-                          )}
-                        />
-                      </ReactionButton>
-                    )
-                  }
+                  {canShowMoreEmojis && !showEmojisOnly && (
+                    <ReactionButton
+                      key="emoji_more"
+                      width="38px"
+                      height="38px"
+                      onClick={(): void => setShowEmojisOnly(true)}
+                      testID="ui_mobile_emoji_reactions_menu_emojiadd"
+                    >
+                      <ImageRenderer
+                        url={''}
+                        width="28px"
+                        height="28px"
+                        placeHolder={({ style }): React.ReactElement => (
+                          <div style={style}>
+                            <Icon
+                              type={IconTypes.EMOJI_MORE}
+                              fillColor={IconColors.ON_BACKGROUND_3}
+                              width="28px"
+                              height="28px"
+                            />
+                          </div>
+                        )}
+                      />
+                    </ReactionButton>
+                  )}
                 </div>
               </ul>
             </div>
-          )
-        }
-        {
-          !showEmojisOnly && (
-            <div className='sendbird-message__bottomsheet--actions'>
-              {showMenuItemCopy && (
-                <div
-                  className='sendbird-message__bottomsheet--action'
-                  onClick={() => {
-                    hideMenu();
-                    copyToClipboard((message as UserMessage)?.message);
-                  }}
-                >
-                  <Icon
-                    type={IconTypes.COPY}
-                    fillColor={IconColors.PRIMARY}
-                    width="24px"
-                    height="24px"
-                  />
-                  <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
-                    {stringSet?.MESSAGE_MENU__COPY}
-                  </Label>
-                </div>
+          )}
+          {!showEmojisOnly && (
+            <div className="sendbird-message__bottomsheet--actions">
+              {renderMenuItems?.({
+                items: {
+                  CopyMenuItem,
+                  EditMenuItem,
+                  ResendMenuItem,
+                  ReplyMenuItem,
+                  ThreadMenuItem,
+                  DeleteMenuItem,
+                  MarkAsUnreadMenuItem,
+                },
+              }) ?? (
+                  <>
+                    {showMenuItemCopy && <CopyMenuItem />}
+                    {showMenuItemEdit && <EditMenuItem />}
+                    {enableMarkAsUnread && showMenuItemMarkAsUnread && <MarkAsUnreadMenuItem />}
+                    {showMenuItemResend && <ResendMenuItem />}
+                    {showMenuItemReply && <ReplyMenuItem />}
+                    {showMenuItemThread && <ThreadMenuItem />}
+                    {showMenuItemDeleteFinal && <DeleteMenuItem />}
+                    {showMenuItemDownload && <DownloadMenuItem />}
+                  </>
               )}
-              {
-                showMenuItemEdit && (
-                  <div
-                    className='sendbird-message__bottomsheet--action'
-                    onClick={() => {
-                      hideMenu();
-                      showEdit(true);
-                    }}
-                  >
-                    <Icon
-                      type={IconTypes.EDIT}
-                      fillColor={IconColors.PRIMARY}
-                      width="24px"
-                      height="24px"
-                    />
-                    <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
-                      {stringSet?.MESSAGE_MENU__EDIT}
-                    </Label>
-                  </div>
-                )
-              }
-              {
-                showMenuItemResend && (
-                  <div
-                    className='sendbird-message__bottomsheet--action'
-                    onClick={() => {
-                      hideMenu();
-                      resendMessage(message);
-                    }}
-                  >
-                    <Icon
-                      type={IconTypes.REFRESH}
-                      fillColor={IconColors.PRIMARY}
-                      width="24px"
-                      height="24px"
-                    />
-                    <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
-                      {stringSet?.MESSAGE_MENU__RESEND}
-                    </Label>
-                  </div>
-                )
-              }
-              {
-                showMenuItemReply && (
-                  <div
-                    className={`sendbird-message__bottomsheet--action
-                      ${disableReaction ? 'sendbird-message__bottomsheet--action-disabled' : ''}
-                    `}
-                    role="menuitem"
-                    aria-disabled={disableReaction ? true : false}
-                    onClick={() => {
-                      if (!disableReaction) {
-                        hideMenu();
-                        setQuoteMessage(message);
-                      }
-                    }}
-                  >
-                    <Icon
-                      type={IconTypes.REPLY}
-                      fillColor={disableReaction
-                        ? IconColors.ON_BACKGROUND_3
-                        : IconColors.PRIMARY
-                      }
-                      width="24px"
-                      height="24px"
-                    />
-                    <Label
-                      type={LabelTypography.SUBTITLE_1}
-                      color={disableReaction ? LabelColors.ONBACKGROUND_4 : LabelColors.ONBACKGROUND_1}
-                    >
-                      {stringSet?.MESSAGE_MENU__REPLY}
-                    </Label>
-                  </div>
-                )
-              }
-              {showMenuItemThread && (
-                <div
-                  className='sendbird-message__bottomsheet--action'
-                  onClick={() => {
-                    hideMenu();
-                    onReplyInThread?.({ message });
-                  }}
-                >
-                  <Icon
-                    type={IconTypes.THREAD}
-                    fillColor={IconColors.PRIMARY}
-                    width="24px"
-                    height="24px"
-                  />
-                  <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
-                    {stringSet.MESSAGE_MENU__THREAD}
-                  </Label>
-                </div>
-              )}
-              {
-                showMenuItemDeleteFinal && (
-                  <div
-                    className='sendbird-message__bottomsheet--action'
-                    onClick={() => {
-                      if (isFailedMessage(message)) {
-                        hideMenu();
-                        deleteMessage?.(message);
-                      } else if (!disableDelete) {
-                        hideMenu();
-                        showRemove?.(true);
-                      }
-                    }}
-                  >
-                    <Icon
-                      type={IconTypes.DELETE}
-                      fillColor={
-                        disableDelete
-                          ? IconColors.ON_BACKGROUND_4
-                          : IconColors.PRIMARY
-                      }
-                      width="24px"
-                      height="24px"
-                    />
-                    <Label
-                      type={LabelTypography.SUBTITLE_1}
-                      color={
-                        disableDelete
-                          ? LabelColors.ONBACKGROUND_4
-                          : LabelColors.ONBACKGROUND_1
-                      }
-                    >
-                      {stringSet?.MESSAGE_MENU__DELETE}
-                    </Label>
-                  </div>
-                )
-              }
-              {
-                showMenuItemDownload && (
-                  <div
-                    className='sendbird-message__bottomsheet--action'
-                    onClick={() => {
-                      hideMenu();
-                    }}
-                  >
-                    <a
-                      className="sendbird-message__bottomsheet--hyperlink"
-                      rel="noopener noreferrer"
-                      href={fileMessage?.url}
-                      target="_blank"
-                      onClick={onDownloadClick}
-                    >
-                      <Icon
-                        type={IconTypes.DOWNLOAD}
-                        fillColor={IconColors.PRIMARY}
-                        width="24px"
-                        height="24px"
-                      />
-                      <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
-                        {stringSet?.MESSAGE_MENU__SAVE}
-                      </Label>
-                    </a>
-                  </div>
-                )
-              }
             </div>
-          )
-        }
-      </div>
-    </BottomSheet>
+          )}
+        </div>
+      </BottomSheet>
+    </MessageMenuProvider>
   );
 };
 

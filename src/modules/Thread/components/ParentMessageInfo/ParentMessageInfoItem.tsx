@@ -26,9 +26,7 @@ import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
 import ImageRenderer from '../../../../ui/ImageRenderer';
 import Icon, { IconTypes, IconColors } from '../../../../ui/Icon';
 import TextButton from '../../../../ui/TextButton';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import EmojiReactions from '../../../../ui/EmojiReactions';
-import { useThreadContext } from '../../context/ThreadProvider';
 import VoiceMessageItemBody from '../../../../ui/VoiceMessageItemBody';
 import TextFragment from '../../../Message/components/TextFragment';
 import { tokenizeMessage } from '../../../Message/utils/tokens/tokenize';
@@ -37,8 +35,10 @@ import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { useThreadMessageKindKeySelector } from '../../../Channel/context/hooks/useThreadMessageKindKeySelector';
 import { useFileInfoListWithUploaded } from '../../../Channel/context/hooks/useFileInfoListWithUploaded';
 import { Colors } from '../../../../utils/color';
-import type { OnBeforeDownloadFileMessageType } from '../../../GroupChannel/context/GroupChannelProvider';
+import type { OnBeforeDownloadFileMessageType } from '../../../GroupChannel/context/types';
 import { openURL } from '../../../../utils/utils';
+import useThread from '../../context/useThread';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface ParentMessageInfoItemProps {
   className?: string;
@@ -53,23 +53,27 @@ export default function ParentMessageInfoItem({
   showFileViewer,
   onBeforeDownloadFileMessage = null,
 }: ParentMessageInfoItemProps): ReactElement {
-  const { stores, config, eventHandlers } = useSendbirdStateContext?.() || {};
+  const { state: { stores, config, eventHandlers } } = useSendbird();
   const { logger } = config;
   const onPressUserProfileHandler = eventHandlers?.reaction?.onPressUserProfile;
-  const {
-    replyType,
-    isMentionEnabled,
-    isReactionEnabled,
-  } = config;
   const currentUserId = stores?.userStore?.user?.userId;
   const { stringSet } = useLocalization();
   const {
-    currentChannel,
-    emojiContainer,
-    nicknamesMap,
-    toggleReaction,
-  } = useThreadContext();
+    state: {
+      currentChannel,
+      emojiContainer,
+      nicknamesMap,
+      filterEmojiCategoryIds,
+    },
+    actions: {
+      toggleReaction,
+    },
+  } = useThread();
   const { isMobile } = useMediaQueryContext();
+
+  const isReactionEnabled = config.groupChannel.enableReactions;
+  const isMentionEnabled = config.groupChannel.enableMention;
+
   const threadMessageKindKey = useThreadMessageKindKeySelector({
     threadMessageKind: ThreadMessageKind.PARENT,
     isMobile,
@@ -77,23 +81,26 @@ export default function ParentMessageInfoItem({
   // For MultipleFilesMessage only.
   const statefulFileInfoList = useFileInfoListWithUploaded(message);
   const isMentionedMessage = isMentionEnabled
+    && message?.isUserMessage()
     && message?.mentionedMessageTemplate?.length > 0
-    && message?.mentionedUsers?.length > 0;
+    && message?.mentionedUsers
+    && message.mentionedUsers.length > 0;
 
   // Emoji reactions
   const isReactionActivated = isReactionEnabled
-    && replyType === 'THREAD'
+    && config.groupChannel.replyType === 'thread'
     && message?.reactions?.length > 0;
-
   const tokens = useMemo(() => {
     if (isMentionedMessage) {
       return tokenizeMessage({
-        mentionedUsers: message?.mentionedUsers,
+        mentionedUsers: message?.mentionedUsers ?? undefined,
         messageText: message?.mentionedMessageTemplate,
+        includeMarkdown: config.groupChannel.enableMarkdownForUserMessage,
       });
     }
     return tokenizeMessage({
       messageText: (message as UserMessage)?.message,
+      includeMarkdown: config.groupChannel.enableMarkdownForUserMessage,
     });
   }, [message?.updatedAt, (message as UserMessage)?.message]);
 
@@ -131,7 +138,7 @@ export default function ParentMessageInfoItem({
           type={LabelTypography.BODY_1}
           color={LabelColors.ONBACKGROUND_1}
         >
-          <TextFragment tokens={tokens} />
+          <TextFragment tokens={tokens} isByMe={false} />
           {isEditedMessage(message) && (
             <Label
               className="sendbird-parent-message-info-item__text-message edited"
@@ -264,7 +271,7 @@ export default function ParentMessageInfoItem({
           className="sendbird-parent-message-info-item__thumbnail-message"
           onClick={() => {
             if (isSentMessage(message)) {
-              showFileViewer(true);
+              showFileViewer?.(true);
             }
           }}
         >
@@ -342,6 +349,7 @@ export default function ParentMessageInfoItem({
             memberNicknamesMap={nicknamesMap}
             toggleReaction={toggleReaction}
             onPressUserProfile={onPressUserProfileHandler}
+            filterEmojiCategoryIds={filterEmojiCategoryIds}
           />
         </div>
       )}

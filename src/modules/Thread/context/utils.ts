@@ -1,10 +1,10 @@
 import format from 'date-fns/format';
-import { GroupChannel } from '@sendbird/chat/groupChannel';
-import { BaseMessage } from '@sendbird/chat/message';
+import { GroupChannel, Member } from '@sendbird/chat/groupChannel';
 import { getOutgoingMessageState, OutgoingMessageStates } from '../../../utils/exports/getOutgoingMessageState';
 import { SendableMessageType } from '../../../utils';
+import { useLocalization } from '../../../lib/LocalizationContext';
 
-export const getNicknamesMapFromMembers = (members = []): Map<string, string> => {
+export const getNicknamesMapFromMembers = (members: Member[] = []): Map<string, string> => {
   const nicknamesMap = new Map();
   for (let memberIndex = 0; memberIndex < members.length; memberIndex += 1) {
     const { userId, nickname } = members[memberIndex];
@@ -13,7 +13,7 @@ export const getNicknamesMapFromMembers = (members = []): Map<string, string> =>
   return nicknamesMap;
 };
 
-export const getParentMessageFrom = (message: SendableMessageType | null): SendableMessageType | BaseMessage => {
+export const getParentMessageFrom = (message: SendableMessageType | null) => {
   if (!message) {
     return null;
   }
@@ -58,7 +58,16 @@ export function compareIds(a: number | string, b: number | string): boolean {
   return aString === bString;
 }
 
-export const getMessageCreatedAt = (message: SendableMessageType): string => format(message.createdAt, 'p');
+/**
+ * @deprecated This function is deprecated and will be removed in the next major update.
+ * Using this function may cause the violation of the rules of hooks.
+ * Please use the `getMessageCreatedAt` function from the `@sendbird/uikit-react/utils` module instead.
+ */
+export const getMessageCreatedAt = (message: SendableMessageType): string => {
+  const { stringSet } = useLocalization();
+  return format(message.createdAt, stringSet.DATE_FORMAT__MESSAGE_CREATED_AT);
+};
+
 export const isReadMessage = (channel: GroupChannel, message: SendableMessageType): boolean => (
   getOutgoingMessageState(channel, message) === OutgoingMessageStates.READ
 );
@@ -72,7 +81,7 @@ export const scrollIntoLast = (intialTry = 0): void => {
   try {
     const scrollDOM = document.querySelector('.sendbird-thread-ui--scroll');
     // eslint-disable-next-line no-multi-assign
-    scrollDOM.scrollTop = scrollDOM.scrollHeight;
+    if (scrollDOM) { scrollDOM.scrollTop = scrollDOM.scrollHeight; }
   } catch (error) {
     setTimeout(() => {
       scrollIntoLast(currentTry + 1);

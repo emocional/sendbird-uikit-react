@@ -4,11 +4,11 @@
  */
 
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
-import type { SendBirdStateConfig } from '../lib/types';
+import type { SendbirdStateConfig } from '../lib/Sendbird/types';
 
 export interface IsReactionEnabledProps {
-  channel: GroupChannel;
-  config: SendBirdStateConfig;
+  channel: GroupChannel | null;
+  config: SendbirdStateConfig;
   moduleLevel?: boolean;
 }
 
@@ -20,6 +20,6 @@ export function getIsReactionEnabled({
   if (!channel || channel.isBroadcast || channel.isEphemeral) {
     return false;
   }
-  if (channel.isSuper) return moduleLevel && config.groupChannel.enableReactionsSupergroup;
+  if (channel.isSuper) return moduleLevel ?? config.groupChannel.enableReactionsSupergroup;
   return moduleLevel ?? config.groupChannel.enableReactions;
 }

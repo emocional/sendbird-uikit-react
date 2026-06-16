@@ -1,12 +1,11 @@
 import React from 'react';
 
 import IconButton from '../../../../ui/IconButton';
-import Icon, { IconColors, IconTypes } from '../../../../ui/Icon';
-
+// @emo-integration
+import EmocionalAddChannelIcon from '../../../../emo/integration/add-group-channel';
 import CreateChannel from '../../../CreateChannel';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { CreateChannelProviderProps } from '../../../CreateChannel/context/CreateChannelProvider';
-import { UserListQuery } from '../../../../types';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 type Props = {
   createChannelVisible: boolean;
@@ -25,12 +24,17 @@ export const AddGroupChannelView = ({
   onChannelCreated,
   userQuery,
 }: Props) => {
-  const { config } = useSendbirdStateContext();
+  const { state: { config } } = useSendbird();
 
   return (
     <>
-      <IconButton height={'32px'} width={'32px'} disabled={!config.isOnline} onClick={() => onChangeCreateChannelVisible(true)}>
-        <Icon type={IconTypes.PLUS} fillColor={IconColors.EMOCIONAL} width={'24px'} height={'24px'} />
+      <IconButton
+        height={'32px'}
+        width={'32px'}
+        disabled={!config.isOnline}
+        onClick={() => onChangeCreateChannelVisible(true)}
+      >
+        <EmocionalAddChannelIcon />
       </IconButton>
       <CreateChannel
         onCancel={() => onChangeCreateChannelVisible(false)}

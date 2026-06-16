@@ -1,4 +1,4 @@
-import React, { useContext, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { FileMessage } from '@sendbird/chat/message';
 import format from 'date-fns/format';
 import './index.scss';
@@ -11,7 +11,7 @@ import Icon, { IconTypes, IconColors } from '../Icon';
 import IconButton from '../IconButton';
 import TextButton from '../TextButton';
 import UserProfile from '../UserProfile';
-import { UserProfileContext } from '../../lib/UserProfileContext';
+import { useUserProfileContext } from '../../lib/UserProfileContext';
 
 import { useLocalization } from '../../lib/LocalizationContext';
 import { checkFileType, truncate } from './utils';
@@ -57,7 +57,7 @@ export default function OpenChannelFileMessage({
   const contextMenuRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const avatarRef = useRef(null);
-  const { disableUserProfile, renderUserProfile } = useContext(UserProfileContext);
+  const { disableUserProfile, renderUserProfile } = useUserProfileContext();
 
   const { isMobile } = useMediaQueryContext();
   const openFileUrl = () => openURL(message.url);
@@ -154,7 +154,7 @@ export default function OpenChannelFileMessage({
                 >
                   {
                     message?.createdAt && (
-                      format(message.createdAt, 'p', {
+                      format(message.createdAt, stringSet.DATE_FORMAT__MESSAGE_CREATED_AT, {
                         locale: dateLocale,
                       })
                     )
@@ -183,6 +183,7 @@ export default function OpenChannelFileMessage({
               onClick={openFileUrl}
             >
               <Label
+                className="sendbird-openchannel-file-message__right__body__file-name__label"
                 type={LabelTypography.BODY_1}
                 color={LabelColors.ONBACKGROUND_1}
               >
@@ -264,7 +265,7 @@ export default function OpenChannelFileMessage({
                                 resendMessage(message);
                                 closeDropdown();
                               }}
-                              dataSbId="open_channel_file_message_context_menu_resend"
+                              testID="open_channel_file_message_context_menu_resend"
                             >
                               {stringSet.CONTEXT_MENU_DROPDOWN__RESEND}
                             </MenuItem>
@@ -278,7 +279,7 @@ export default function OpenChannelFileMessage({
                                 showRemove(true);
                                 closeDropdown();
                               }}
-                              dataSbId="open_channel_file_message_context_menu_delete"
+                              testID="open_channel_file_message_context_menu_delete"
                             >
                               {stringSet.CONTEXT_MENU_DROPDOWN__DELETE}
                             </MenuItem>

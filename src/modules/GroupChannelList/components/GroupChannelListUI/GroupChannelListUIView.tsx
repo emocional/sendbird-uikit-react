@@ -5,11 +5,11 @@ import type { GroupChannel } from '@sendbird/chat/groupChannel';
 
 import GroupChannelListHeader from '../GroupChannelListHeader';
 
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import EditUserProfile from '../../../EditUserProfile';
 import PlaceHolder, { PlaceHolderTypes } from '../../../../ui/PlaceHolder';
 import { useOnScrollPositionChangeDetector } from '../../../../hooks/useOnScrollReachedEndDetector';
 import { User } from '@sendbird/chat';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface Props {
   renderHeader?: (props: void) => React.ReactElement;
@@ -27,6 +27,9 @@ export interface Props {
   renderChannel: (props: { item: GroupChannel; index: number }) => React.ReactElement;
 
   renderAddChannel(): React.ReactElement;
+
+  // NOTE: scrollRef is used only for external access (export) and not for internal logic.
+  scrollRef?: React.RefObject<HTMLDivElement>;
 }
 
 export const GroupChannelListUIView = ({
@@ -45,9 +48,11 @@ export const GroupChannelListUIView = ({
   renderChannel,
 
   renderAddChannel,
+
+  scrollRef,
 }: Props) => {
   const [showProfileEdit, setShowProfileEdit] = useState(false);
-  const { stores } = useSendbirdStateContext();
+  const { state: { stores } } = useSendbird();
 
   const renderer = {
     addChannel: renderAddChannel,
@@ -102,6 +107,7 @@ export const GroupChannelListUIView = ({
         placeholderLoading={renderer.placeholder.loading()}
         placeholderEmpty={renderer.placeholder.empty()}
         placeholderError={renderer.placeholder.error()}
+        scrollRef={scrollRef}
       />
     </React.Fragment>
   );
@@ -118,19 +124,20 @@ const ChannelListComponent = <T, >(props: {
   data: T[];
   renderItem: (props: { item: T; index: number }) => React.ReactNode;
   onLoadMore?: () => void;
+  scrollRef: React.RefObject<HTMLDivElement>;
 
   placeholderLoading?: React.ReactNode;
   placeholderEmpty?: React.ReactNode;
   placeholderError?: React.ReactNode;
 }) => {
-  const { data, renderItem, onLoadMore, placeholderLoading, placeholderError, placeholderEmpty } = props;
+  const { data, renderItem, onLoadMore, placeholderLoading, placeholderError, placeholderEmpty, scrollRef } = props;
 
   const onScroll = useOnScrollPositionChangeDetector({
-    onReachedBottom: () => onLoadMore(),
+    onReachedBottom: () => onLoadMore?.(),
   });
 
   return (
-    <div className='sendbird-channel-list__body' onScroll={onScroll}>
+    <div className='sendbird-channel-list__body' onScroll={onScroll} ref={scrollRef}>
       {placeholderError}
       <div>{data.map((item, index) => renderItem({ item, index }))}</div>
       {placeholderLoading}

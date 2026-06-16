@@ -1,4 +1,4 @@
-import { UIKitOptions, CommonUIKitConfigProps } from '../types';
+import type { UIKitOptions, CommonUIKitConfigProps } from '../Sendbird/types';
 import { getCaseResolvedReplyType } from './resolvedReplyType';
 
 export function uikitConfigMapper({
@@ -15,17 +15,17 @@ export function uikitConfigMapper({
     isMessageReceiptStatusEnabledOnChannelList,
     showSearchIcon,
   } = legacyConfig;
+
   return {
     common: {
       enableUsingDefaultUserProfile: uikitOptions.common?.enableUsingDefaultUserProfile
-        ?? (typeof disableUserProfile === 'boolean'
-          ? !disableUserProfile
-          : undefined),
+        ?? (typeof disableUserProfile === 'boolean' ? !disableUserProfile : undefined),
     },
     groupChannel: {
       enableOgtag: uikitOptions.groupChannel?.enableOgtag,
       enableMention: uikitOptions.groupChannel?.enableMention ?? isMentionEnabled,
       enableReactions: uikitOptions.groupChannel?.enableReactions ?? isReactionEnabled,
+      enableReactionsSupergroup: uikitOptions.groupChannel?.enableReactionsSupergroup,
       enableTypingIndicator: uikitOptions.groupChannel?.enableTypingIndicator,
       enableVoiceMessage: uikitOptions.groupChannel?.enableVoiceMessage ?? isVoiceMessageEnabled,
       replyType: uikitOptions.groupChannel?.replyType
@@ -35,9 +35,14 @@ export function uikitConfigMapper({
         enableDocument: uikitOptions.groupChannel?.input?.enableDocument,
       },
       typingIndicatorTypes: uikitOptions.groupChannel?.typingIndicatorTypes,
-      enableFeedback: uikitOptions.groupChannel?.enableFeedback,
+      // Force-disable feedback regardless of provided options.
+      enableFeedback: false,
       enableSuggestedReplies: uikitOptions.groupChannel?.enableSuggestedReplies,
       showSuggestedRepliesFor: uikitOptions.groupChannel?.showSuggestedRepliesFor,
+      suggestedRepliesDirection: uikitOptions.groupChannel?.suggestedRepliesDirection,
+      enableMarkdownForUserMessage: uikitOptions.groupChannel?.enableMarkdownForUserMessage,
+      enableFormTypeMessage: uikitOptions.groupChannel?.enableFormTypeMessage,
+      enableMarkAsUnread: uikitOptions.groupChannel?.enableMarkAsUnread,
     },
     groupChannelList: {
       enableTypingIndicator: uikitOptions.groupChannelList?.enableTypingIndicator ?? isTypingIndicatorEnabledOnChannelList,

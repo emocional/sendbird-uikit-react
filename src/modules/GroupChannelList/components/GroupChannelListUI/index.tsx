@@ -2,14 +2,16 @@ import './index.scss';
 
 import React from 'react';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
-import { useGroupChannelListContext } from '../../context/GroupChannelListProvider';
 import { GroupChannelListUIView } from './GroupChannelListUIView';
 import GroupChannelPreviewAction from '../GroupChannelPreviewAction';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { GroupChannelListItem } from '../GroupChannelListItem';
 import AddGroupChannel from '../AddGroupChannel';
+// @emo-integration
+import EmocionalGroupChannelListAddons from '../../../../emo/integration/group-channel-list';
 import { GroupChannelListItemBasicProps } from '../GroupChannelListItem/GroupChannelListItemView';
-import { UserListQuery } from '../../../../types';
+import { noop } from '../../../../utils/utils';
+import { useGroupChannelList } from '../../context/useGroupChannelList';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 interface GroupChannelItemProps extends GroupChannelListItemBasicProps {}
 
@@ -27,19 +29,21 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
     props;
 
   const {
-    onChannelSelect,
-    onThemeChange,
-    allowProfileEdit,
-    typingChannelUrls,
-    groupChannels,
-    initialized,
-    selectedChannelUrl,
-    loadMore,
-    onUserProfileUpdated,
-  } = useGroupChannelListContext();
+    state: {
+      onChannelSelect,
+      onThemeChange,
+      allowProfileEdit,
+      typingChannelUrls,
+      groupChannels,
+      initialized,
+      selectedChannelUrl,
+      loadMore,
+      onUserProfileUpdated,
+      scrollRef,
+    },
+  } = useGroupChannelList();
 
-  const { stores, config } = useSendbirdStateContext();
-  const { logger, isOnline } = config;
+  const { state: { stores, config: { logger, isOnline } } } = useSendbird();
   const sdk = stores.sdkStore.sdk;
 
   const renderListItem = (renderProps: { item: GroupChannel; index: number }) => {
@@ -78,20 +82,25 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
   };
 
   return (
-    <GroupChannelListUIView
+    <>
+      {/* @emo-integration */}
+      <EmocionalGroupChannelListAddons />
+      <GroupChannelListUIView
       renderHeader={renderHeader}
       renderChannel={renderListItem}
       renderPlaceHolderError={renderPlaceHolderError}
       renderPlaceHolderLoading={renderPlaceHolderLoading}
       renderPlaceHolderEmptyList={renderPlaceHolderEmptyList}
-      onChangeTheme={onThemeChange}
+      onChangeTheme={onThemeChange ?? noop}
       allowProfileEdit={allowProfileEdit}
-      onUserProfileUpdated={onUserProfileUpdated}
+      onUserProfileUpdated={onUserProfileUpdated ?? noop}
       channels={groupChannels}
       onLoadMore={loadMore}
       initialized={initialized}
-      renderAddChannel={() => <AddGroupChannel userQuery={userQuery} />}
+      renderAddChannel={() => <AddGroupChannel />}
+      scrollRef={scrollRef}
     />
+    </>
   );
 };
 

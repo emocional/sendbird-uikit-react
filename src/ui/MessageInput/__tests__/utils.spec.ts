@@ -1,6 +1,5 @@
 import jsdom from 'jsdom';
-
-import { nodeListToArray } from '../utils';
+import { extractTextAndMentions, nodeListToArray, sanitizeString, stripZeroWidthSpace } from '../utils';
 
 describe('MessageInputUtils/nodeListToArray', () => {
   it('should convert node list to array', () => {
@@ -19,7 +18,141 @@ describe('MessageInputUtils/nodeListToArray', () => {
   });
 
   it('should return empty array if nodelist is undefined', () => {
-    const nodes = nodeListToArray(null);
+    const nodes = nodeListToArray(undefined);
     expect(nodes.length).toBe(0);
+  });
+});
+
+describe('Utils/sanitizeString', () => {
+  it('should encode special HTML characters', () => {
+    const input = '<div>Hello & "world"!</div>';
+    const expectedOutput = '&#60;div&#62;Hello & \"world\"!&#60;/div&#62;';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should encode non-English characters correctly', () => {
+    const input = '안녕하세요';
+    const expectedOutput = '안녕하세요';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should encode emojis as HTML entities', () => {
+    const input = '🙂';
+    const expectedOutput = '🙂';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should handle mixed content with HTML tags and non-English characters', () => {
+    const input = '<p>안녕 & Hello 🙂</p>';
+    const expectedOutput = '&#60;p&#62;안녕 & Hello 🙂&#60;/p&#62;';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should return an empty string if input is undefined', () => {
+    expect(sanitizeString(undefined)).toBe('');
+  });
+
+  it('should return an empty string if input is null', () => {
+    expect(sanitizeString(null as any)).toBe('');
+  });
+
+  it('should return an empty string if input is empty', () => {
+    expect(sanitizeString('')).toBe('');
+  });
+
+  it('should encode spaces as non-breaking spaces', () => {
+    const input = 'Hello world!'; // Note: The space here is a non-breaking space (U+00A0)
+    const expectedOutput = 'Hello world!';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should not double encode already encoded HTML entities', () => {
+    const input = '&#60;div&#62;Hello&#60;/div&#62;';
+    const expectedOutput = '&#60;div&#62;Hello&#60;/div&#62;';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should handle long strings without performance issues', () => {
+    const input = '<div>'.repeat(1000);
+    const expectedOutput = '&#60;div&#62;'.repeat(1000);
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should handle mixed types of spaces', () => {
+    const input = 'Hello\u0020world\u00A0!';
+    const expectedOutput = 'Hello world !';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+
+  it('should handle special Unicode control characters', () => {
+    const input = 'Hello\u200BWorld'; // Zero-width space (U+200B)
+    const expectedOutput = 'Hello\u200BWorld';
+    expect(sanitizeString(input)).toBe(expectedOutput);
+  });
+});
+
+describe('Utils/stripZeroWidthSpace', () => {
+  it('should remove zero-width spaces', () => {
+    const input = 'Hello\u200BWorld\u200B';
+    expect(stripZeroWidthSpace(input)).toBe('HelloWorld');
+  });
+
+  it('should return an empty string if input is undefined', () => {
+    expect(stripZeroWidthSpace(undefined)).toBe('');
+  });
+});
+
+describe('Utils/extractTextAndMentions', () => {
+  it('should remove zero-width spaces from extracted text', () => {
+    const dom = new jsdom.JSDOM('<div id="root">Hello\u200BWorld\u200B</div>');
+    const root = dom.window.document.getElementById('root');
+    if (!root) throw new Error('root element not found');
+
+    const result = extractTextAndMentions(root.childNodes);
+
+    expect(result).toEqual({
+      isMentionedMessage: false,
+      mentionTemplate: 'HelloWorld',
+      messageText: 'HelloWorld',
+      mentionedUserIds: [],
+    });
+  });
+
+  it('should collect userid from mention spans into mentionedUserIds', () => {
+    const dom = new jsdom.JSDOM(
+      '<div id="root">Hi <span data-userid="user-1">@Alice</span> and <span data-userid="user-2">@Bob</span></div>',
+    );
+    const root = dom.window.document.getElementById('root');
+    if (!root) throw new Error('root element not found');
+
+    const result = extractTextAndMentions(root.childNodes);
+
+    expect(result.isMentionedMessage).toBe(true);
+    expect(result.mentionedUserIds).toEqual(['user-1', 'user-2']);
+  });
+
+  it('should not include userid for spans without data-userid', () => {
+    const dom = new jsdom.JSDOM('<div id="root">Hi <span>not a mention</span></div>');
+    const root = dom.window.document.getElementById('root');
+    if (!root) throw new Error('root element not found');
+
+    const result = extractTextAndMentions(root.childNodes);
+
+    expect(result.isMentionedMessage).toBe(false);
+    expect(result.mentionedUserIds).toEqual([]);
+  });
+
+  it('should leave HTML-tag-like text in messageText/mentionTemplate raw (sanitize happens at the caller)', () => {
+    // contentEditable can hold typed angle-bracket text as a plain text node.
+    const dom = new jsdom.JSDOM('<div id="root">Hi &lt;b&gt;bold&lt;/b&gt;</div>');
+    const root = dom.window.document.getElementById('root');
+    if (!root) throw new Error('root element not found');
+
+    const result = extractTextAndMentions(root.childNodes);
+
+    expect(result.messageText).toBe('Hi <b>bold</b>');
+    expect(result.mentionTemplate).toBe('Hi <b>bold</b>');
+    expect(result.isMentionedMessage).toBe(false);
+    expect(result.mentionedUserIds).toEqual([]);
   });
 });

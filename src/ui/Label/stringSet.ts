@@ -12,7 +12,10 @@ const stringSet = {
   en: {
     // Group Channel - Conversation
     MESSAGE_STATUS__YESTERDAY: 'Yesterday',
-    CHANNEL__MESSAGE_LIST__NOTIFICATION__NEW_MESSAGE: 'new message(s) since',
+    CHANNEL__MESSAGE_LIST__NOTIFICATION__NEW_MESSAGE: 'new message',
+    CHANNEL__MESSAGE_LIST__NOTIFICATION__NEW_MESSAGE_S: 'new messages',
+    CHANNEL__MESSAGE_LIST__NOTIFICATION__UNREAD_MESSAGE: 'unread message',
+    CHANNEL__MESSAGE_LIST__NOTIFICATION__UNREAD_MESSAGE_S: 'unread messages',
     /** @deprecated Please use `DATE_FORMAT__MESSAGE_LIST__NOTIFICATION__UNREAD_SINCE` instead * */
     CHANNEL__MESSAGE_LIST__NOTIFICATION__ON: 'on',
     // Channel List
@@ -91,7 +94,7 @@ const stringSet = {
     TYPING_INDICATOR__AND: 'and',
     TYPING_INDICATOR__ARE_TYPING: 'are typing...',
     TYPING_INDICATOR__MULTIPLE_TYPING: 'Several people are typing...',
-    CHANNEL_FROZEN: 'Channel frozen',
+    CHANNEL_FROZEN: 'Channel is frozen',
     PLACE_HOLDER__NO_CHANNEL: 'No channels',
     PLACE_HOLDER__WRONG: 'Something went wrong',
     PLACE_HOLDER__RETRY_TO_CONNECT: 'Retry',
@@ -102,6 +105,7 @@ const stringSet = {
     UNKNOWN__UNKNOWN_MESSAGE_TYPE: '(Unknown message type)',
     UNKNOWN__CANNOT_READ_MESSAGE: 'Cannot read this message.',
     UNKNOWN__TEMPLATE_ERROR: '(Template error)',
+    FORM_VERSION_ERROR: 'Form type messages are not available in this version.',
     UNKNOWN__CANNOT_READ_TEMPLATE: 'Cannot read this template.',
     MESSAGE_EDITED: '(edited)',
     // Channel - Modal
@@ -139,9 +143,15 @@ const stringSet = {
     // Message Input
     MESSAGE_INPUT__PLACE_HOLDER: 'Enter message',
     MESSAGE_INPUT__PLACE_HOLDER__DISABLED: 'Chat is unavailable in this channel',
-    MESSAGE_INPUT__PLACE_HOLDER__MUTED: "Chat is unavailable because you're muted",
-    MESSAGE_INPUT__PLACE_HOLDER__MUTED_SHORT: "You're muted",
+    MESSAGE_INPUT__PLACE_HOLDER__SUGGESTED_REPLIES: 'Please choose one from above',
+    MESSAGE_INPUT__PLACE_HOLDER__MESSAGE_FORM: 'Please fill out the message form.',
+    MESSAGE_INPUT__PLACE_HOLDER__FROZEN: 'Chat is unavailable in this channel',
+    MESSAGE_INPUT__PLACE_HOLDER__MUTED: 'Chat is unavailable because you\'re muted',
+    MESSAGE_INPUT__PLACE_HOLDER__MUTED_SHORT: 'You\'re muted',
     MESSAGE_INPUT__QUOTE_REPLY__PLACE_HOLDER: 'Reply to message',
+    MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED: 'Text disabled while file attached',
+    MESSAGE_INPUT__PENDING_FILE__TYPE_UNKNOWN: 'FILE',
+    MESSAGE_INPUT__PENDING_FILE__REMOVE: 'Remove file',
     // Common UI
     BUTTON__SUBMIT: 'Submit',
     BUTTON__CANCEL: 'Cancel',
@@ -164,6 +174,7 @@ const stringSet = {
     MESSAGE_MENU__RESEND: 'Resend',
     MESSAGE_MENU__DELETE: 'Delete',
     MESSAGE_MENU__SAVE: 'Save',
+    MESSAGE_MENU__MARK_AS_UNREAD: 'Mark as unread',
     //  * FIXME: get back legacy, remove after refactoring open channel messages *
     CONTEXT_MENU_DROPDOWN__COPY: 'Copy',
     CONTEXT_MENU_DROPDOWN__EDIT: 'Edit',
@@ -195,7 +206,7 @@ const stringSet = {
     THREAD__INPUT__REPLY_IN_THREAD: 'Reply in thread',
     // Feature - Mention
     MENTION_NAME__NO_NAME: '(No name)',
-    MENTION_COUNT__OVER_LIMIT: 'You can mention up to %d times at a time.',
+    MENTION_COUNT__OVER_LIMIT: 'You can have up to %d mentions per message.',
     UI__FILE_VIEWER__UNSUPPORT: 'Unsupported message',
     // Feature - Voice Message
     VOICE_RECORDING_PERMISSION_DENIED: `You cannot record the voice since
@@ -213,9 +224,15 @@ const stringSet = {
     DATE_FORMAT__MESSAGE_LIST__NOTIFICATION__UNREAD_SINCE: "p 'on' MMM dd",
     DATE_FORMAT__MESSAGE_LIST__DATE_SEPARATOR: 'MMMM dd, yyyy',
     DATE_FORMAT__THREAD_LIST__DATE_SEPARATOR: 'MMM dd, yyyy',
+    DATE_FORMAT__MESSAGE_CREATED_AT: 'p',
+    DATE_FORMAT__UNREAD_SINCE: 'p MMM dd',
+    DATE_FORMAT__LAST_MESSAGE_CREATED_AT__TODAY: 'p',
+    DATE_FORMAT__LAST_MESSAGE_CREATED_AT__THIS_YEAR: 'MMM d',
+    DATE_FORMAT__LAST_MESSAGE_CREATED_AT__PREVIOUS_YEAR: 'yyyy/M/d',
     // File upload
     FILE_UPLOAD_NOTIFICATION__COUNT_LIMIT: 'Up to %d files can be attached.',
     FILE_UPLOAD_NOTIFICATION__SIZE_LIMIT: 'The maximum size per file is %d MB.',
+    FILE_UPLOAD_NOTIFICATION__UNSUPPORTED_FILE_TYPE: 'The attachment failed because the file is in an unsupported format.',
     // Feedback button text
     FEEDBACK_LIKE: 'Like',
     FEEDBACK_DISLIKE: 'Dislike',
@@ -230,6 +247,10 @@ const stringSet = {
     FEEDBACK_FAILED_SUBMIT: 'Couldn’t submit. Try again.',
     FEEDBACK_FAILED_SAVE: 'Couldn’t save. Try again.',
     FEEDBACK_FAILED_DELETE: 'Couldn’t delete. Try again.',
+    // Form submit failed error messages
+    FORM_ITEM_REQUIRED: 'This field is required',
+    FORM_ITEM_INVALID: 'Please check the value',
+    FORM_ITEM_OPTIONAL_EMPTY: 'No Response',
   },
   es: {
     // Group Channel - Conversación

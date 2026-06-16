@@ -4,6 +4,10 @@
   display: inline;
 }
 
+.sendbird-message-content__sendbird-ui-container-type__default__header-container .sendbird-context-menu {
+  display: flex;
+}
+
 .sendbird__offline {
   .sendbird-dropdown__menu .sendbird-dropdown__menu-item {
     cursor: not-allowed;
@@ -17,7 +21,6 @@
   z-index: 99999;
   position: absolute;
   top: 100%;
-  left: 0;
   min-width: 140px;
   margin: 0px;
   padding: 8px 0px;
@@ -54,7 +57,6 @@
   top: 100%;
   left: 0;
   min-width: 44px;
-  max-width: 352px;
   max-height: 208px;
   overflow-y: scroll;
   margin: 0px;
@@ -71,6 +73,10 @@
     .sendbird-reaction-button, .sendbird-reaction-button--selected {
       margin: 4px;
     }
+  }
+
+  .sendbird-dropdown__reaction-bar__emptyLabel {
+    width: fit-content;
   }
 }
 

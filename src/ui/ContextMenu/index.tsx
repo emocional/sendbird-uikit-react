@@ -6,63 +6,66 @@ import { MuteMenuItem } from './items/MuteMenuItem';
 import { OperatorMenuItem } from './items/OperatorMenuItem';
 import _EmojiListItems from './EmojiListItems';
 
-import { getClassName } from '../../utils';
-import Label, { LabelTypography, LabelColors } from '../Label';
+import { MenuItem as MenuItem_MessageMenu } from '../MessageMenu';
+import { classnames } from '../../utils/utils';
 
-const ENTER_KEY = 13;
+// # useElementObserve
+export const MENU_OBSERVING_CLASS_NAME = 'sendbird-observing-message-menu';
+export const getObservingId = (txt: string | number) => `m_${txt}`;
 
 export const MenuItems = _MenuItems;
 export const EmojiListItems = _EmojiListItems;
 
+/**
+ * @deprecated
+ * Use the `MessageItemProps` from '@sendbird/uikit-react/ui/MessageMenu' instead
+ */
 export interface MenuItemProps {
   className?: string | Array<string>;
   children: ReactElement | ReactElement[] | ReactNode;
   onClick?: (e: MouseEvent<HTMLLIElement>) => void;
   disable?: boolean;
+  /**
+   * @deprecated Please use the testID instead
+   */
   dataSbId?: string;
+  testID?: string;
 }
+/**
+ * @deprecated
+ * Use the `MenuItem` from '@sendbird/uikit-react/ui/MessageMenu' instead
+ */
 export const MenuItem = ({
   className = '',
   children,
   onClick,
   disable = false,
   dataSbId = '',
-}: MenuItemProps): ReactElement => {
-  const handleClickEvent = (e) => {
-    if (!disable && onClick) {
-      onClick?.(e);
-    }
-  };
+  testID,
+}: MenuItemProps) => {
   return (
-    <li
-      className={getClassName([className, 'sendbird-dropdown__menu-item', disable ? 'disable' : ''])}
-      role="menuitem"
-      aria-disabled={disable ? true : false}
-      onClick={handleClickEvent}
-      onKeyPress={(e) => { if (e.keyCode === ENTER_KEY) handleClickEvent(e); }}
-      tabIndex={0}
-      data-sb-id={dataSbId}
+    <MenuItem_MessageMenu
+      className={classnames(
+        ...(Array.isArray(className) ? className : [className]),
+        'sendbird-dropdown__menu-item',
+        disable ? 'disable' : '',
+      )}
+      disabled={disable}
+      testID={testID ?? dataSbId}
+      onClick={onClick}
     >
-      <Label
-        className="sendbird-dropdown__menu-item__text"
-        type={LabelTypography.SUBTITLE_2}
-        color={disable ? LabelColors.ONBACKGROUND_4 : LabelColors.ONBACKGROUND_1}
-      >
-        {children}
-      </Label>
-    </li>
+      {children}
+    </MenuItem_MessageMenu>
   );
 };
 
+export const MENU_ROOT_ID = 'sendbird-dropdown-portal';
 export const MenuRoot = (): ReactElement => (
-  <div
-    id="sendbird-dropdown-portal"
-    className="sendbird-dropdown-portal"
-  />
+  <div id={MENU_ROOT_ID} className={MENU_ROOT_ID} />
 );
 
-// For the test environment
-export const EmojiReactionListRoot = (): ReactElement => <div id="sendbird-emoji-list-portal" />;
+export const EMOJI_MENU_ROOT_ID = 'sendbird-emoji-list-portal';
+export const EmojiReactionListRoot = (): ReactElement => <div id={EMOJI_MENU_ROOT_ID} />;
 
 type MenuDisplayingFunc = () => void;
 export interface ContextMenuProps {
@@ -81,7 +84,6 @@ export default function ContextMenu({
   return (
     <div
       className="sendbird-context-menu"
-      style={{ display: 'inline' }}
       onClick={onClick}
     >
       {menuTrigger?.(() => setShowMenu(!showMenu))}

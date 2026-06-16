@@ -1,21 +1,16 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, ChangeEventHandler } from 'react';
 import './index.scss';
 
 import MessageSearch, { MessageSearchUIProps } from './components/MessageSearchUI';
 import { LocalizationContext } from '../../lib/LocalizationContext';
-import Icon, { IconTypes, IconColors } from '../../ui/Icon';
-import IconButton from '../../ui/IconButton';
-import Label, { LabelTypography, LabelColors } from '../../ui/Label';
+import Icon, { IconTypes, IconColors, IconProps } from '../../ui/Icon';
 import Loader from '../../ui/Loader';
 import { MessageSearchProvider, MessageSearchProviderProps } from './context/MessageSearchProvider';
+import Header from '../../ui/Header';
 
-export interface MessageSearchPannelProps extends
-  MessageSearchUIProps, MessageSearchProviderProps {
-  onResultClick?: (message) => void;
+export interface MessageSearchPannelProps extends MessageSearchUIProps, MessageSearchProviderProps {
   onCloseClick?: () => void;
 }
-
-const COMPONENT_CLASS_NAME = 'sendbird-message-search-pannel';
 
 function MessageSearchPannel(props: MessageSearchPannelProps): JSX.Element {
   const {
@@ -47,7 +42,7 @@ function MessageSearchPannel(props: MessageSearchPannelProps): JSX.Element {
     }, 500);
   }, [inputString]);
 
-  const handleOnChangeInputString = (e) => {
+  const handleOnChangeInputString: ChangeEventHandler<HTMLInputElement> = (e) => {
     setInputString(e.target.value);
   };
 
@@ -55,82 +50,74 @@ function MessageSearchPannel(props: MessageSearchPannelProps): JSX.Element {
     setLoading(false);
   };
 
-  const handleOnClickResetStringButton = (e) => {
+  const handleOnClickResetStringButton: IconProps['onClick'] = (e) => {
     e.stopPropagation();
     setInputString('');
     setSearchString('');
   };
 
   return (
-    <div className={COMPONENT_CLASS_NAME}>
-      <div className={`${COMPONENT_CLASS_NAME}__header`}>
-        <Label
-          className={`${COMPONENT_CLASS_NAME}__header__title`}
-          type={LabelTypography.H_2}
-          color={LabelColors.ONBACKGROUND_1}
-        >
-          {stringSet.SEARCH_IN_CHANNEL}
-        </Label>
-        <IconButton
-          className={`${COMPONENT_CLASS_NAME}__header__close-button`}
-          width="32px"
-          height="32px"
-          onClick={onCloseClick}
-        >
-          <Icon
+    <div className="sendbird-message-search-pannel">
+      <Header
+        className="sendbird-message-search-pannel__header"
+        renderMiddle={() => (
+          <Header.Title title={stringSet.SEARCH_IN_CHANNEL} />
+        )}
+        renderRight={() => (
+          <Header.IconButton
+            className="sendbird-message-search-pannel__header__close-button"
+            onClick={onCloseClick}
             type={IconTypes.CLOSE}
-            fillColor={IconColors.ON_BACKGROUND_1}
-            width="22px"
-            height="22px"
+            color={IconColors.ON_BACKGROUND_1}
           />
-        </IconButton>
-      </div>
-      <div className={`${COMPONENT_CLASS_NAME}__input`}>
-        <div className={`${COMPONENT_CLASS_NAME}__input__container`}>
-            <Icon
-              className={`${COMPONENT_CLASS_NAME}__input__container__search-icon`}
-              type={IconTypes.SEARCH}
-              fillColor={IconColors.ON_BACKGROUND_3}
-              width="24px"
-              height="24px"
-            />
-            <input
-              className={`${COMPONENT_CLASS_NAME}__input__container__input-area`}
-              placeholder={stringSet.SEARCH}
-              value={inputString}
-              onChange={handleOnChangeInputString}
-            />
-            {
-              inputString && loading && (
-                <Loader
-                  className={`${COMPONENT_CLASS_NAME}__input__container__spinner`}
-                  width="20px"
-                  height="20px"
-                >
-                  <Icon
-                    type={IconTypes.SPINNER}
-                    fillColor={IconColors.PRIMARY}
-                    width="20px"
-                    height="20px"
-                  />
-                </Loader>
-              )
-            }
-            {
-              !loading && inputString && (
+        )}
+      />
+      <div className="sendbird-message-search-pannel__input">
+        <div className="sendbird-message-search-pannel__input__container">
+          <Icon
+            className="sendbird-message-search-pannel__input__container__search-icon"
+            type={IconTypes.SEARCH}
+            fillColor={IconColors.ON_BACKGROUND_3}
+            width="24px"
+            height="24px"
+          />
+          <input
+            className="sendbird-message-search-pannel__input__container__input-area"
+            placeholder={stringSet.SEARCH}
+            value={inputString}
+            onChange={handleOnChangeInputString}
+          />
+          {
+            inputString && loading && (
+              <Loader
+                className="sendbird-message-search-pannel__input__container__spinner"
+                width="20px"
+                height="20px"
+              >
                 <Icon
-                  className={`${COMPONENT_CLASS_NAME}__input__container__reset-input-button`}
-                  type={IconTypes.REMOVE}
-                  fillColor={IconColors.ON_BACKGROUND_3}
+                  type={IconTypes.SPINNER}
+                  fillColor={IconColors.PRIMARY}
                   width="20px"
                   height="20px"
-                  onClick={handleOnClickResetStringButton}
                 />
-              )
-            }
+              </Loader>
+            )
+          }
+          {
+            !loading && inputString && (
+              <Icon
+                className="sendbird-message-search-pannel__input__container__reset-input-button"
+                type={IconTypes.REMOVE}
+                fillColor={IconColors.ON_BACKGROUND_3}
+                width="20px"
+                height="20px"
+                onClick={handleOnClickResetStringButton}
+              />
+            )
+          }
         </div>
       </div>
-      <div className={`${COMPONENT_CLASS_NAME}__message-search`}>
+      <div className="sendbird-message-search-pannel__message-search">
         <MessageSearchProvider
           channelUrl={channelUrl}
           searchString={searchString}

@@ -10,48 +10,59 @@ import renderMentionLabelToString from '../MentionUserLabel/renderToString';
 import Icon, { IconColors, IconTypes } from '../Icon';
 import Label, { LabelColors, LabelTypography } from '../Label';
 import { useLocalization } from '../../lib/LocalizationContext';
-import useSendbirdStateContext from '../../hooks/useSendbirdStateContext';
 
-import { extractTextAndMentions, isChannelTypeSupportsMultipleFilesMessage, nodeListToArray, sanitizeString } from './utils';
-import { arrayEqual, getClassName, getMimeTypesUIKitAccepts } from '../../utils';
-import usePaste from './hooks/usePaste';
+import {
+  extractTextAndMentions,
+  isChannelTypeSupportsMultipleFilesMessage,
+  nodeListToArray,
+  sanitizeString,
+  stripZeroWidthSpace,
+} from './utils';
+import { arrayEqual, getMimeTypesUIKitAccepts } from '../../utils';
+import { usePaste } from './hooks/usePaste';
+import type { PendingFile } from './hooks/usePendingFiles';
+import PendingFilesPreview from './composer/PendingFilesPreview';
 import { tokenizeMessage } from '../../modules/Message/utils/tokens/tokenize';
 import { USER_MENTION_PREFIX } from '../../modules/Message/consts';
 import { TOKEN_TYPES } from '../../modules/Message/utils/tokens/types';
 import { checkIfFileUploadEnabled } from './messageInputUtils';
-import { isMobileIOS } from '../../utils/utils';
+import { classnames } from '../../utils/utils';
+import { isMobileIOS } from '../../utils/browser';
 
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import { User } from '@sendbird/chat';
 import { OpenChannel } from '@sendbird/chat/openChannel';
 import { UserMessage } from '@sendbird/chat/message';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 const TEXT_FIELD_ID = 'sendbird-message-input-text-field';
-const LINE_HEIGHT = 76;
-const DEFAULT_CHAT_VIEW_HEIGHT = 600;
 const noop = () => {
   return null;
 };
 
-const displayCaret = (element: HTMLInputElement, position: number) => {
-  const range = document.createRange();
-  const sel = window.getSelection();
-  range.setStart(element.childNodes[0], position);
-  range.collapse(true);
-  sel.removeAllRanges();
-  sel.addRange(range);
-  element.focus();
-};
-
-const resetInput = (ref: MutableRefObject<HTMLElement>) => {
-  try {
+const resetInput = (ref: MutableRefObject<HTMLInputElement | null> | null) => {
+  if (ref && ref.current) {
     ref.current.innerHTML = '';
-  } catch {
-    //
   }
 };
 
-const initialTargetStringInfo = {
+const getTextContentWithoutZeroWidthSpace = (node?: { textContent?: string | null } | null) => {
+  return stripZeroWidthSpace(node?.textContent ?? '');
+};
+
+const hasTextContentWithoutZeroWidthSpace = (node?: { textContent?: string | null } | null) => {
+  return getTextContentWithoutZeroWidthSpace(node).trim().length > 0;
+};
+
+interface TargetStringInfo {
+  targetString: string;
+  startNodeIndex: number | null;
+  startOffsetIndex: number | null;
+  endNodeIndex: number | null;
+  endOffsetIndex: number | null;
+}
+
+const initialTargetStringInfo: TargetStringInfo = {
   targetString: '',
   startNodeIndex: null,
   startOffsetIndex: null,
@@ -73,11 +84,38 @@ type MessageInputProps = {
   disabled?: boolean;
   placeholder?: string;
   maxLength?: number;
+  /**
+   * @deprecated Pass `onAddFiles` + `onSubmit` for the composer flow. When
+   * `onAddFiles` is undefined, files from the picker are routed here for
+   * immediate send (legacy behavior).
+   */
   onFileUpload?: (file: File[]) => void;
   onSendMessage?: (params: { message: string; mentionTemplate: string }) => void;
-  onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string }) => void;
+  /**
+   * Composer mode: files staged for send. When defined and non-empty, the
+   * preview strip renders above the textarea and the send button activates
+   * regardless of text input state.
+   */
+  pendingFiles?: PendingFile[];
+  /**
+   * Composer mode: routes files from the picker, drag-drop, and clipboard
+   * paste to the staging hook. When defined, takes precedence over
+   * `onFileUpload`.
+   */
+  onAddFiles?: (files: File[]) => void;
+  /**
+   * Composer mode: removes a staged file by id from the preview strip.
+   */
+  onRemoveFile?: (id: string) => void;
+  /**
+   * Composer mode: unified send action. When defined, takes precedence over
+   * `onSendMessage` for the click and Enter-key paths.
+   */
+  onSubmit?: (params: { message: string; mentionTemplate: string; files: PendingFile[] }) => void;
+  onUpdateMessage?: (params: { messageId: number; message: string; mentionTemplate: string; mentionedUserIds?: string[] }) => void;
   onCancelEdit?: () => void;
   onStartTyping?: () => void;
+  onStopTyping?: () => void;
   channelUrl?: string;
   mentionSelectedUser?: null | User;
   onUserMentioned?: (user: User) => void;
@@ -111,6 +149,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     onUpdateMessage = noop,
     onCancelEdit = noop,
     onStartTyping = noop,
+    onStopTyping = noop,
     channelUrl = '',
     mentionSelectedUser = null,
     onUserMentioned = noop,
@@ -124,119 +163,141 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     renderSendMessageIcon = noop,
     setMentionedUsers = noop,
     acceptableMimeTypes,
+    pendingFiles,
+    onAddFiles,
+    onRemoveFile,
+    onSubmit,
   } = props;
+  const isComposerMode = typeof onAddFiles === 'function';
+  const hasPendingFiles = (pendingFiles?.length ?? 0) > 0;
 
-  const internalRef = (externalRef && 'current' in externalRef) ? externalRef : null;
+  const internalRef = (externalRef && 'current' in externalRef) ? externalRef : useRef(null);
+  const ghostInputRef = useRef<HTMLInputElement>(null);
+  const wasTypingRef = useRef(false);
 
   const textFieldId = messageFieldId || TEXT_FIELD_ID;
   const { stringSet } = useLocalization();
-  const { config } = useSendbirdStateContext();
+  const { state: { config, eventHandlers } } = useSendbird();
 
   const isFileUploadEnabled = checkIfFileUploadEnabled({
     channel,
     config,
   });
 
-  const fileInputRef = useRef(null);
+  // Gate paste/DnD/picker on the same enableDocument flag that hides the
+  // attach icon — otherwise feature-flag-disabled environments leak files in.
+  // Also gate on !isEdit: today no edit-mode caller passes composer props, but
+  // if one did, staged files would have nowhere to go (Send is replaced by
+  // Cancel/Save). Belt-and-suspenders.
+  const fileProducerEnabled = isComposerMode && isFileUploadEnabled && !disabled && !isEdit;
+  const guardedAddFiles = useCallback((incoming: File[]) => {
+    if (!fileProducerEnabled || !onAddFiles) return;
+    if (incoming.length === 0) return;
+    onAddFiles(incoming);
+  }, [fileProducerEnabled, onAddFiles]);
+
+  const fileInputRef = useRef<HTMLInputElement>();
   const [isInput, setIsInput] = useState(false);
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
   const [targetStringInfo, setTargetStringInfo] = useState({ ...initialTargetStringInfo });
-  const setHeight = useCallback(
-    () => {
-      const elem = internalRef?.current;
-      if (!elem) return;
-
-      try {
-        const estimatedChatViewHeight = window.document.body.offsetHeight || DEFAULT_CHAT_VIEW_HEIGHT;
-        const MAX_HEIGHT = estimatedChatViewHeight * 0.6;
-        if (elem.scrollHeight >= LINE_HEIGHT) {
-          if (MAX_HEIGHT < elem.scrollHeight) {
-            elem.style.height = 'auto';
-            elem.style.height = `${MAX_HEIGHT}px`;
-          } else {
-            elem.style.height = 'auto';
-            elem.style.height = `${elem.scrollHeight}px`;
-          }
-        } else {
-          elem.style.height = '';
-        }
-      } catch (error) {
-        // error
-      }
-    },
-    [],
-  );
 
   // #Edit mode
-  // for easilly initialize input value from outside, but
+  // for easily initialize input value from outside, but
   // useEffect(_, [channelUrl]) erase it
   const initialValue = props?.value;
   useEffect(() => {
     const textField = internalRef?.current;
-    try {
-      textField.innerHTML = initialValue;
-      displayCaret(textField, initialValue?.length);
-    } catch {
-      //
-    }
     setMentionedUserIds([]);
-    setIsInput(textField?.textContent?.trim().length > 0);
-    setHeight();
+    setIsInput(hasTextContentWithoutZeroWidthSpace(textField));
   }, [initialValue]);
+
+  const stashedHtmlRef = useRef<string>('');
+  const prevHasPendingFilesRef = useRef<boolean>(false);
 
   // #Mention | Clear input value when channel changes
   useEffect(() => {
     if (!isEdit) {
       setIsInput(false);
       resetInput(internalRef);
+      wasTypingRef.current = false;
+      stashedHtmlRef.current = '';
     }
   }, [channelUrl]);
+
+  useEffect(() => {
+    const textField = internalRef?.current;
+    if (!textField) {
+      prevHasPendingFilesRef.current = hasPendingFiles;
+      return;
+    }
+    if (hasPendingFiles && !prevHasPendingFilesRef.current) {
+      if (hasTextContentWithoutZeroWidthSpace(textField)) {
+        stashedHtmlRef.current = textField.innerHTML;
+        resetInput(internalRef);
+        setIsInput(false);
+      }
+      textField.focus();
+    } else if (!hasPendingFiles && prevHasPendingFilesRef.current) {
+      if (stashedHtmlRef.current) {
+        textField.innerHTML = stashedHtmlRef.current;
+        stashedHtmlRef.current = '';
+        setIsInput(true);
+      }
+    }
+    prevHasPendingFilesRef.current = hasPendingFiles;
+  }, [hasPendingFiles]);
 
   // #Mention & #Edit | Fill message input values
   useEffect(() => {
     if (isEdit && message?.messageId) {
       // const textField = document.getElementById(textFieldId);
       const textField = internalRef?.current;
-      if (isMentionEnabled && message?.mentionedUsers?.length > 0 && message?.mentionedMessageTemplate?.length > 0) {
+      if (isMentionEnabled
+        && message?.mentionedUsers
+        && message.mentionedUsers.length > 0
+        && message?.mentionedMessageTemplate
+        && message.mentionedMessageTemplate.length > 0) {
         /* mention enabled */
         const { mentionedUsers = [] } = message;
         const tokens = tokenizeMessage({
           messageText: message?.mentionedMessageTemplate,
           mentionedUsers,
+          includeMarkdown: channel.isGroupChannel() && config.groupChannel.enableMarkdownForUserMessage,
         });
-        textField.innerHTML = tokens
-          .map((token) => {
-            if (token.type === TOKEN_TYPES.mention) {
-              const mentionedUser = mentionedUsers.find((user) => user.userId === token.userId);
-              const nickname = `${USER_MENTION_PREFIX}${
-                mentionedUser?.nickname || token.value || stringSet.MENTION_NAME__NO_NAME
-              }`;
-              return renderMentionLabelToString({
-                userId: token.userId,
-                nickname,
-              });
-            }
-            return sanitizeString(token.value);
-          })
-          .join(' ');
+        if (textField) {
+          textField.innerHTML = tokens
+            .map((token) => {
+              if (token.type === TOKEN_TYPES.mention) {
+                const mentionedUser = mentionedUsers.find((user) => user.userId === token.userId);
+                const nickname = `${USER_MENTION_PREFIX}${mentionedUser?.nickname || token.value || stringSet.MENTION_NAME__NO_NAME}`;
+                return renderMentionLabelToString({
+                  userId: token.userId,
+                  nickname,
+                });
+              }
+              return sanitizeString(token.value);
+            })
+            .join('');
+        }
       } else {
         /* mention disabled */
         try {
-          textField.innerHTML = sanitizeString(message?.message);
+          if (textField) {
+            textField.innerHTML = sanitizeString(message?.message) ?? '';
+          }
         } catch {
           //
         }
         setMentionedUserIds([]);
       }
-      setIsInput(textField?.textContent?.trim().length > 0);
-      setHeight();
+      setIsInput(hasTextContentWithoutZeroWidthSpace(textField));
     }
   }, [isEdit, message]);
 
   // #Mention | Detect MentionedLabel modified
   const useMentionedLabelDetection = useCallback(() => {
     const textField = internalRef?.current;
-    if (isMentionEnabled) {
+    if (isMentionEnabled && textField) {
       const newMentionedUserIds = Array.from(textField.getElementsByClassName('sendbird-mention-user-label')).map(
         // @ts-ignore
         (node) => node?.dataset?.userid,
@@ -246,22 +307,24 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         setMentionedUserIds(newMentionedUserIds);
       }
     }
-    setIsInput(textField.textContent?.trim().length > 0);
+    setIsInput(hasTextContentWithoutZeroWidthSpace(textField));
   }, [targetStringInfo, isMentionEnabled]);
 
   // #Mention | Replace selected user nickname to the MentionedUserLabel
   useEffect(() => {
     if (isMentionEnabled && mentionSelectedUser) {
       const { targetString, startNodeIndex, startOffsetIndex, endNodeIndex, endOffsetIndex } = targetStringInfo;
-      if (targetString && startNodeIndex !== null && startOffsetIndex !== null) {
+      const textField = internalRef?.current;
+      if (targetString && startNodeIndex !== null && startOffsetIndex !== null && endOffsetIndex !== null && endNodeIndex !== null && textField) {
         // const textField = document.getElementById(textFieldId);
-        const textField = internalRef?.current;
         const childNodes = nodeListToArray(textField?.childNodes);
-        const frontTextNode = document?.createTextNode(
-          childNodes[startNodeIndex]?.textContent.slice(0, startOffsetIndex),
+        const startNodeTextContent: string = childNodes[startNodeIndex]?.textContent ?? '';
+        const frontTextNode = document.createTextNode(
+          startNodeTextContent.slice(0, startOffsetIndex),
         );
-        const backTextNode = document?.createTextNode(
-          `\u00A0${childNodes[endNodeIndex]?.textContent.slice(endOffsetIndex)}`,
+        const endNodeTextContent: string = childNodes[endNodeIndex]?.textContent ?? '';
+        const backTextNode = endOffsetIndex && document.createTextNode(
+          `\u00A0${endNodeTextContent.slice(endOffsetIndex)}`,
         );
         const mentionLabel = renderMentionLabelToString({
           userId: mentionSelectedUser?.userId,
@@ -276,25 +339,28 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
           backTextNode,
           ...childNodes.slice(endNodeIndex + 1),
         ];
-        textField.innerHTML = '';
-        newNodes.forEach((newNode) => {
-          textField.appendChild(newNode);
-        });
+        if (textField) {
+          textField.innerHTML = '';
+          newNodes.forEach((newNode) => {
+            if (newNode) {
+              textField.appendChild(newNode);
+            }
+          });
+        }
         onUserMentioned(mentionSelectedUser);
         if (window.getSelection || document.getSelection) {
           // set caret postion
           const selection = window.getSelection() || document.getSelection();
-          selection.removeAllRanges();
+          selection?.removeAllRanges();
           const range = new Range();
           range.selectNodeContents(textField);
           range.setStart(textField.childNodes[startNodeIndex + 2], 1);
           range.setEnd(textField.childNodes[startNodeIndex + 2], 1);
           range.collapse(false);
-          selection.addRange(range);
+          selection?.addRange(range);
           textField.focus();
         }
         setTargetStringInfo({ ...initialTargetStringInfo });
-        setHeight();
         useMentionedLabelDetection();
       }
     }
@@ -304,25 +370,29 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
   const useMentionInputDetection = useCallback(() => {
     const selection = window?.getSelection?.() || document?.getSelection?.();
     const textField = internalRef?.current;
-    if (selection.anchorNode === textField) {
+    if (selection?.anchorNode === textField) {
       onMentionStringChange('');
     }
     if (
       isMentionEnabled
+      && textField
       && selection
       && selection.anchorNode === selection.focusNode
       && selection.anchorOffset === selection.focusOffset
     ) {
       let textStack = '';
-      let startNodeIndex = null;
-      let startOffsetIndex = null;
+      let startNodeIndex: number | null = null;
+      let startOffsetIndex: number | null = null;
       for (let index = 0; index < textField.childNodes.length; index += 1) {
         const currentNode = textField.childNodes[index];
         if (currentNode.nodeType === NodeTypes.TextNode) {
           /* text node */
-          const textContent = currentNode === selection.anchorNode
-            ? currentNode?.textContent.slice(0, selection.anchorOffset) || ''
-            : currentNode?.textContent || '';
+          const textContent: string = ((): string => {
+            if (currentNode === selection.anchorNode) {
+              return currentNode?.textContent ? currentNode?.textContent.slice(0, selection.anchorOffset) : '';
+            }
+            return currentNode?.textContent ?? '';
+          })();
           if (textStack.length > 0) {
             textStack += textContent;
           } else {
@@ -351,7 +421,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
            * targetString could be ''
            * startNodeIndex and startOffsetIndex could be null
            */
-          const targetString = textStack ? textStack.slice(startOffsetIndex) : ''; // include template character
+          const targetString = textStack && startOffsetIndex !== null ? textStack.slice(startOffsetIndex) : ''; // include template character
           setTargetStringInfo({
             targetString,
             startNodeIndex,
@@ -367,27 +437,62 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
   }, [isMentionEnabled]);
 
   const sendMessage = () => {
-    const textField = internalRef?.current;
-    if (!isEdit && textField?.textContent) {
-      const { messageText, mentionTemplate } = extractTextAndMentions(textField.childNodes);
-      const params = { message: messageText, mentionTemplate };
-      onSendMessage(params);
-      resetInput(internalRef);
-      // important: keeps the keyboard open -> must add test on refactor
-      textField.focus();
-      setIsInput(false);
-      setHeight();
+    try {
+      const textField = internalRef?.current;
+      if (!isEdit && textField) {
+        const { messageText, mentionTemplate, isMentionedMessage } = extractTextAndMentions(textField.childNodes);
+        const trimmedText = messageText.trim();
+        // Composer mode: empty text is OK if files are staged.
+        if (trimmedText.length === 0 && !hasPendingFiles) return;
+        const params = {
+          message: messageText,
+          mentionTemplate: isMentionedMessage ? sanitizeString(mentionTemplate) : '',
+        };
+        if (isComposerMode && onSubmit) {
+          onSubmit({ ...params, files: pendingFiles ?? [] });
+        } else {
+          onSendMessage(params);
+        }
+        resetInput(internalRef);
+        wasTypingRef.current = false;
+        /**
+         * Note: contentEditable does not work as expected in mobile WebKit (Safari).
+         * @see https://github.com/sendbird/sendbird-uikit-react/pull/1108
+         */
+        if (isMobileIOS(navigator.userAgent)) {
+          if (ghostInputRef.current) ghostInputRef.current.focus();
+          requestAnimationFrame(() => textField.focus());
+        } else {
+          // important: keeps the keyboard open -> must add test on refactor
+          textField.focus();
+        }
+
+        setIsInput(false);
+      }
+    } catch (error) {
+      eventHandlers?.message?.onSendMessageFailed?.(message, error);
     }
   };
-  const isEditDisabled = !internalRef?.current?.textContent?.trim();
+  const isEditDisabled = !hasTextContentWithoutZeroWidthSpace(internalRef?.current);
   const editMessage = () => {
-    const textField = internalRef?.current;
-    const messageId = message?.messageId;
-    if (isEdit && messageId) {
-      const { messageText, mentionTemplate } = extractTextAndMentions(textField.childNodes);
-      const params = { messageId, message: messageText, mentionTemplate };
-      onUpdateMessage(params);
-      resetInput(internalRef);
+    try {
+      const textField = internalRef?.current;
+      const messageId = message?.messageId;
+      if (isEdit && messageId && textField) {
+        const { messageText, mentionTemplate, isMentionedMessage, mentionedUserIds } = extractTextAndMentions(textField.childNodes);
+        if (messageText.trim().length === 0) return;
+        const params = {
+          messageId,
+          message: messageText,
+          mentionTemplate: sanitizeString(isMentionedMessage ? mentionTemplate : messageText),
+          mentionedUserIds: isMentionEnabled ? mentionedUserIds : [],
+        };
+        onUpdateMessage(params);
+        resetInput(internalRef);
+        wasTypingRef.current = false;
+      }
+    } catch (error) {
+      eventHandlers?.message?.onUpdateMessageFailed?.(message, error);
     }
   };
   const onPaste = usePaste({
@@ -395,25 +500,94 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
     setMentionedUsers,
     channel,
     setIsInput,
-    setHeight,
+    onAddFiles: fileProducerEnabled && !isMobile ? guardedAddFiles : undefined,
   });
+
+  const uploadFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { files } = event.currentTarget;
+    try {
+      if (files) {
+        const fileArray = Array.from(files);
+        if (fileProducerEnabled) {
+          guardedAddFiles(fileArray);
+        } else if (!isComposerMode) {
+          onFileUpload(fileArray);
+        }
+      }
+    } catch (error) {
+      eventHandlers?.message?.onFileUploadFailed?.(error);
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const adjustScrollToCaret = () => {
+    const inputRef = internalRef;
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    // Get the last range (caret or selected text position) from the selection
+    const range = selection.getRangeAt(selection.rangeCount - 1);
+    const rect = range.getBoundingClientRect();
+    const container = inputRef.current?.getBoundingClientRect();
+    if (!container || !inputRef.current) return;
+
+    // If the caret (or selection) is below the visible container area, scroll down
+    if (rect.bottom > container.bottom) {
+      const scrollAmount = Math.min(
+        rect.bottom - container.bottom, // Calculate how much we need to scroll
+        inputRef.current.scrollHeight - inputRef.current.clientHeight, // Prevent over-scrolling
+      );
+      inputRef.current.scrollTop += scrollAmount; // Adjust the scroll position downward
+    }
+    // If the caret (or selection) is above the visible container area, scroll up
+    else if (rect.top < container.top) {
+      const scrollAmount = Math.min(
+        container.top - rect.top, // Calculate how much we need to scroll
+        inputRef.current.scrollTop, // Prevent scrolling beyond the top of the container
+      );
+      inputRef.current.scrollTop -= scrollAmount; // Adjust the scroll position upward
+    }
+  };
 
   return (
     <form
-      className={getClassName([
-        className,
-        isEdit ? 'sendbird-message-input__edit' : '',
-        disabled ? 'sendbird-message-input-form__disabled' : '',
-      ])}
+      className={classnames(
+        ...(Array.isArray(className) ? className : [className]),
+        isEdit && 'sendbird-message-input__edit',
+        disabled && 'sendbird-message-input-form__disabled',
+        isComposerMode && 'sendbird-message-input--composer',
+      )}
     >
-      <div className={getClassName(['sendbird-message-input', disabled ? 'sendbird-message-input__disabled' : ''])}>
+      <div
+        className={classnames(
+          'sendbird-message-input',
+          disabled && 'sendbird-message-input__disabled',
+          hasPendingFiles && 'sendbird-message-input--has-pending',
+        )}
+        data-testid="sendbird-message-input"
+      >
+        {isMobileIOS(navigator.userAgent) && (
+          <input
+            id={'ghost-input-reset-ime-cjk'}
+            ref={ghostInputRef}
+            style={{ opacity: 0, padding: 0, margin: 0, height: 0, border: 'none', position: 'absolute', top: -9999 }}
+            defaultValue={'_'}
+          />
+        )}
         <div
           id={`${textFieldId}${isEdit ? message?.messageId : ''}`}
-          className={`sendbird-message-input--textarea ${textFieldId}`}
-          contentEditable={!disabled}
+          className={classnames(
+            'sendbird-message-input--textarea',
+            textFieldId,
+            hasPendingFiles && 'sendbird-message-input--textarea-locked',
+          )}
+          contentEditable={!disabled && !hasPendingFiles}
+          tabIndex={hasPendingFiles ? 0 : undefined}
           role="textbox"
           aria-label="Text Input"
-          ref={externalRef}
+          aria-disabled={disabled || hasPendingFiles}
+          ref={internalRef}
           // @ts-ignore
           disabled={disabled}
           maxLength={maxLength}
@@ -426,7 +600,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
                 !e.shiftKey
                 && e.key === MessageInputKeys.Enter
                 && !isMobile
-                && internalRef?.current?.textContent?.trim().length > 0
+                && (hasTextContentWithoutZeroWidthSpace(internalRef?.current) || hasPendingFiles)
                 && e?.nativeEvent?.isComposing !== true
                 /**
                  * NOTE: What isComposing does?
@@ -435,25 +609,16 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
                  * Prevents executing the code while the user is still composing characters.
                  */
               ) {
-                /**
-                 * NOTE: contentEditable does not work as expected in mobile WebKit(Safari).
-                 * Events and properties related to composing, necessary for combining characters like Hangul, also seem to be not handled properly.
-                 * When calling e.preventDefault(), it appears that string composition-related behaviors, in addition to the default actions, are also prevented. (maybe)
-                 *
-                 * Due to this issue, even though reset the input with innerHTML, incomplete text compositions from the previous input are displayed in the next input.
-                 * */
-                if (!isMobileIOS(navigator.userAgent)) {
-                  e.preventDefault();
-                }
+                e.preventDefault();
                 sendMessage();
               }
               if (
                 e.key === MessageInputKeys.Backspace
                 && internalRef?.current?.childNodes?.length === 2
-                && !internalRef?.current?.childNodes?.[0]?.textContent
-                && internalRef?.current.childNodes?.[1]?.nodeType === NodeTypes.ElementNode
+                && !internalRef.current.childNodes[0].textContent
+                && internalRef.current.childNodes[1].nodeType === NodeTypes.ElementNode
               ) {
-                internalRef?.current.removeChild(internalRef?.current.childNodes[1]);
+                internalRef.current.removeChild(internalRef.current.childNodes[1]);
               }
             }
           }}
@@ -469,26 +634,47 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
             useMentionInputDetection();
           }}
           onInput={() => {
-            setHeight();
-            onStartTyping();
-            setIsInput(internalRef?.current?.textContent?.trim().length > 0);
+            const hasContent = hasTextContentWithoutZeroWidthSpace(internalRef?.current);
+            if (hasContent) {
+              onStartTyping();
+              wasTypingRef.current = true;
+            } else if (wasTypingRef.current) {
+              onStopTyping();
+              wasTypingRef.current = false;
+            }
+            setIsInput(hasContent);
             useMentionedLabelDetection();
           }}
-          onPaste={onPaste}
+          onPaste={(e) => {
+            onPaste(e);
+            setTimeout(adjustScrollToCaret);
+          }}
         />
+        {!isEdit && isComposerMode && hasPendingFiles && pendingFiles && onRemoveFile && (
+          <PendingFilesPreview pendingFiles={pendingFiles} onRemove={onRemoveFile} />
+        )}
         {/* placeholder */}
-        {(internalRef?.current?.textContent?.length ?? 0) === 0 && (
+        {getTextContentWithoutZeroWidthSpace(internalRef?.current).length === 0 && (
           <Label
             className="sendbird-message-input--placeholder"
             type={LabelTypography.BODY_1}
             color={disabled ? LabelColors.ONBACKGROUND_4 : LabelColors.ONBACKGROUND_3}
           >
-            {placeholder || stringSet.MESSAGE_INPUT__PLACE_HOLDER}
+            {hasPendingFiles
+              ? stringSet.MESSAGE_INPUT__PLACE_HOLDER__FILE_ATTACHED
+              : (placeholder || stringSet.MESSAGE_INPUT__PLACE_HOLDER)}
           </Label>
         )}
         {/* send icon */}
-        {!isEdit && isInput && (
-          <IconButton className="sendbird-message-input--send" height="32px" width="32px" onClick={() => sendMessage()}>
+        {!isEdit && (isInput || hasPendingFiles) && (
+          <IconButton
+            className="sendbird-message-input--send"
+            height="32px"
+            width="32px"
+            disabled={disabled}
+            onClick={() => sendMessage()}
+            testID="sendbird-message-input-send-button"
+          >
             {renderSendMessageIcon?.() || (
               <Icon
                 type={IconTypes.SEND}
@@ -502,12 +688,13 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
         {/* file upload icon */}
         {!isEdit
           && !isInput
+          && !hasPendingFiles
           && (renderFileUploadIcon?.()
             // UIKit Dashboard configuration should have lower priority than
             // renderFileUploadIcon which is set in code level
             || (isFileUploadEnabled && (
               <IconButton
-                className={`sendbird-message-input--attach ${isVoiceMessageEnabled ? 'is-voice-message-enabled' : ''}`}
+                className={classnames('sendbird-message-input--attach', isVoiceMessageEnabled && 'is-voice-message-enabled')}
                 height="32px"
                 width="32px"
                 onClick={() => {
@@ -526,18 +713,14 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
                   type="file"
                   ref={fileInputRef}
                   // It will affect to <Channel /> and <Thread />
-                  onChange={(event) => {
-                    const { files } = event.currentTarget;
-                    onFileUpload(files && files.length === 1 ? [files[0]] : Array.from(files));
-                    event.target.value = '';
-                  }}
+                  onChange={(event) => uploadFile(event)}
                   accept={getMimeTypesUIKitAccepts(acceptableMimeTypes)}
                   multiple={isSelectingMultipleFilesEnabled && isChannelTypeSupportsMultipleFilesMessage(channel)}
                 />
               </IconButton>
             )))}
         {/* voice message input trigger */}
-        {isVoiceMessageEnabled && !isEdit && !isInput && (
+        {isVoiceMessageEnabled && !isEdit && !isInput && !hasPendingFiles && (
           <IconButton
             className="sendbird-message-input--voice-message"
             width="32px"
@@ -557,7 +740,7 @@ const MessageInput = React.forwardRef<HTMLInputElement, MessageInputProps>((prop
       </div>
       {/* Edit */}
       {isEdit && (
-        <div className="sendbird-message-input--edit-action">
+        <div className="sendbird-message-input--edit-action" data-testid="sendbird-message-input--edit-action">
           <Button
             className="sendbird-message-input--edit-action__cancel"
             type={ButtonTypes.SECONDARY}

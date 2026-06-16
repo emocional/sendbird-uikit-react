@@ -1,18 +1,20 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import type { User } from '@sendbird/chat';
 import type { GroupChannelCreateParams } from '@sendbird/chat/groupChannel';
 
 import './invite-users.scss';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
-import { useCreateChannelContext } from '../../context/CreateChannelProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import Modal from '../../../../ui/Modal';
+import Label, { LabelColors, LabelTypography } from '../../../../ui/Label';
+import { ButtonTypes } from '../../../../ui/Button';
 import UserListItem from '../../../../ui/UserListItem';
 
-import { filterUser, setChannelType, createDefaultUserListQuery } from './utils';
+import { createDefaultUserListQuery, filterUser, setChannelType } from './utils';
 import { noop } from '../../../../utils/utils';
 import { UserListQuery } from '../../../../types';
+import useCreateChannel from '../../context/useCreateChannel';
 
 export interface InviteUsersProps {
   onCancel?: () => void;
@@ -22,35 +24,40 @@ export interface InviteUsersProps {
 
 const BUFFER = 50;
 
-const InviteUsers: React.FC<InviteUsersProps> = ({ onCancel, userListQuery, showCreateChannel }: InviteUsersProps) => {
-  const { onCreateChannelClick, onBeforeCreateChannel, onChannelCreated, createChannel, onCreateChannel, overrideInviteUser, type } =
-    useCreateChannelContext();
+const InviteUsers: React.FC<InviteUsersProps> = ({
+  onCancel,
+  userListQuery,
+}: InviteUsersProps) => {
+  const {
+    state: {
+      onCreateChannelClick,
+      onBeforeCreateChannel,
+      onChannelCreated,
+      onCreateChannel,
+      overrideInviteUser,
+      type,
+    },
+    actions: {
+      createChannel,
+    },
+  } = useCreateChannel();
 
-  const globalStore = useSendbirdStateContext();
-  const userId = globalStore?.config?.userId;
-  const sdk = globalStore?.stores?.sdkStore?.sdk;
-  const createChatAuto = globalStore.config.enableAutoChat;
-  const searcherFilter = globalStore.config.searcherFilter;
+  const { state: { config: { userId }, stores: { sdkStore: { sdk } } } } = useSendbird();
   const idsToFilter = [userId];
   const [users, setUsers] = useState<User[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<Record<string, boolean>>({});
   const { stringSet } = useContext(LocalizationContext);
   const [usersDataSource, setUsersDataSource] = useState<UserListQuery | null>(null);
   const titleText = stringSet.MODAL__CREATE_CHANNEL__TITLE;
   const { isMobile } = useMediaQueryContext();
   const [scrollableAreaHeight, setScrollableAreaHeight] = useState<number>(window.innerHeight);
 
-  const userQueryCreator = userListQuery ? userListQuery() : createDefaultUserListQuery({ sdk });
-
   useEffect(() => {
-    const applicationUserListQuery = userQueryCreator;
+    const applicationUserListQuery = userListQuery ? userListQuery() : createDefaultUserListQuery({ sdk });
     setUsersDataSource(applicationUserListQuery);
-    // @ts-ignore
-    if (!applicationUserListQuery?.isLoading && !!applicationUserListQuery?.hasNext) {
-      applicationUserListQuery.next().then((users_) => {
-        if ('filterFn' in applicationUserListQuery && applicationUserListQuery.filterFn !== undefined) {
-          users_ = users_.filter(applicationUserListQuery.filterFn);
-        }
-        setUsers(users_);
+    if (!applicationUserListQuery?.isLoading) {
+      applicationUserListQuery.next().then((it) => {
+        setUsers(it);
       });
     }
   }, [userQueryCreator]);

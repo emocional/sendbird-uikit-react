@@ -1,19 +1,21 @@
-name: PR comment bot
+name: PR Comment Bot
 on:
   issue_comment:
     types: [created]
+
 jobs:
   pr-comment:
+    if : ${{ github.event.issue.pull_request}}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      # see list of commands: https://github.com/sendbird/release-automation-action#commands
+      - uses: actions/checkout@v6
       - uses: sendbird/release-automation-action@latest
         with:
-          gh_token: ${{ secrets.GITHUB_TOKEN }}
-          circleci_token: ${{ secrets.CIRCLECI_API_TOKEN }}
+          gh_token: ${{ secrets.SDK_GH_BOT1_TOKEN }}
           product: 'uikit'
           platform: 'js'
           framework: 'react'
           product_jira_project_key: 'UIKIT'
           product_jira_version_prefix: 'js_uikit'
+          ci: 'github'
+      

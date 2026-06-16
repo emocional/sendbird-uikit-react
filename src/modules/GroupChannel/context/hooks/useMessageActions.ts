@@ -1,6 +1,6 @@
+import { match } from 'ts-pattern';
 import { useCallback } from 'react';
 import { useGroupChannelMessages } from '@sendbird/uikit-tools';
-import { MessageMetaArray } from '@sendbird/chat/message';
 import type {
   BaseMessageCreateParams,
   FileMessage,
@@ -11,6 +11,7 @@ import type {
   UserMessageCreateParams,
   UserMessageUpdateParams,
 } from '@sendbird/chat/message';
+import { MessageMetaArray } from '@sendbird/chat/message';
 
 import {
   META_ARRAY_MESSAGE_TYPE_KEY,
@@ -19,9 +20,11 @@ import {
   VOICE_MESSAGE_FILE_NAME,
   VOICE_MESSAGE_MIME_TYPE,
 } from '../../../../utils/consts';
-import type { SendableMessageType } from '../../../../utils';
-import type { ReplyType } from '../../../../types';
-import type { GroupChannelProviderProps } from '../GroupChannelProvider';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import type { GroupChannelState, OnBeforeHandler } from '../types';
+import type { CoreMessageType } from '../../../../utils';
+import { PublishingModuleType, PUBSUB_TOPICS } from '../../../../lib/pubSub/topics';
+import { GroupChannel } from '@sendbird/chat/groupChannel';
 
 type MessageListDataSource = ReturnType<typeof useGroupChannelMessages>;
 type MessageActions = {
@@ -30,15 +33,21 @@ type MessageActions = {
   sendVoiceMessage: (params: FileMessageCreateParams, duration: number) => Promise<FileMessage>;
   sendMultipleFilesMessage: (params: MultipleFilesMessageCreateParams) => Promise<MultipleFilesMessage>;
   updateUserMessage: (messageId: number, params: UserMessageUpdateParams) => Promise<UserMessage>;
-};
+} & Partial<MessageListDataSource>;
 
-interface Params extends GroupChannelProviderProps, MessageListDataSource {
+interface Params extends GroupChannelState {
   scrollToBottom(animated?: boolean): Promise<void>;
-  quoteMessage?: SendableMessageType;
-  replyType: ReplyType;
+  currentChannel: GroupChannel;
 }
 
 const pass = <T>(value: T) => value;
+type MessageParamsByType = {
+  user: UserMessageCreateParams;
+  file: FileMessageCreateParams;
+  multipleFiles: MultipleFilesMessageCreateParams;
+  voice: FileMessageCreateParams;
+  update: UserMessageUpdateParams;
+};
 
 /**
  * @description This hook controls common processes related to message sending, updating.
@@ -55,19 +64,31 @@ export function useMessageActions(params: Params): MessageActions {
     sendMultipleFilesMessage,
     sendUserMessage,
     updateUserMessage,
+    updateFileMessage,
+    resendMessage,
+    deleteMessage,
+    resetNewMessages,
 
     scrollToBottom,
     quoteMessage,
     replyType,
+    currentChannel,
   } = params;
-
+  const {
+    state: {
+      eventHandlers,
+      config: {
+        pubSub,
+      },
+    },
+  } = useSendbird();
   const buildInternalMessageParams = useCallback(
     <T extends BaseMessageCreateParams>(basicParams: T): T => {
       const messageParams = { ...basicParams } as T;
 
       if (params.quoteMessage && replyType !== 'NONE') {
         messageParams.isReplyToChannel = true;
-        messageParams.parentMessageId = quoteMessage.messageId;
+        messageParams.parentMessageId = quoteMessage?.messageId;
       }
 
       return messageParams;
@@ -75,33 +96,100 @@ export function useMessageActions(params: Params): MessageActions {
     [replyType, quoteMessage],
   );
 
+  // This is a hack for the hotfix of following issue
+  // https://sendbird.atlassian.net/browse/SBISSUE-17029
+  const asyncScrollToBottom = useCallback(
+    () => {
+      setTimeout(scrollToBottom, 0);
+    },
+    [scrollToBottom],
+  );
+
+  const processParams = useCallback(async <T extends keyof MessageParamsByType>(
+    handler: OnBeforeHandler<MessageParamsByType[T]>,
+    params: ReturnType<typeof buildInternalMessageParams>,
+    type: keyof MessageParamsByType,
+  ): Promise<MessageParamsByType[T]> => {
+    try {
+      const result = await handler(params as MessageParamsByType[T]);
+      return (result === undefined ? params : result) as MessageParamsByType[T];
+    } catch (error) {
+      if (typeof eventHandlers?.message === 'object') {
+        match(type)
+          .with('file', 'voice', () => {
+            if ((params as any).file) {
+              eventHandlers.message.onFileUploadFailed?.(error);
+            }
+            eventHandlers.message.onSendMessageFailed?.(params as CoreMessageType, error);
+          })
+          .with('multipleFiles', () => {
+            if ((params as MultipleFilesMessageCreateParams).fileInfoList) {
+              eventHandlers.message.onFileUploadFailed?.(error);
+            }
+            eventHandlers.message.onSendMessageFailed?.(params as CoreMessageType, error);
+          })
+          .with('user', () => {
+            eventHandlers.message.onSendMessageFailed?.(
+              params as CoreMessageType,
+              error,
+            );
+          })
+          .with('update', () => {
+            eventHandlers.message.onUpdateMessageFailed?.(
+              params as CoreMessageType,
+              error,
+            );
+          })
+          .exhaustive();
+      }
+      throw error;
+    }
+  }, [eventHandlers]);
+
   return {
     sendUserMessage: useCallback(
       async (params) => {
         const internalParams = buildInternalMessageParams<UserMessageCreateParams>(params);
-        const processedParams = await onBeforeSendUserMessage(internalParams);
-
-        return sendUserMessage(processedParams, () => scrollToBottom());
+        const processedParams = await processParams(onBeforeSendUserMessage, internalParams, 'user') as UserMessageCreateParams;
+        const message = await sendUserMessage(processedParams, asyncScrollToBottom);
+        pubSub.publish(PUBSUB_TOPICS.SEND_USER_MESSAGE, {
+          channel: currentChannel,
+          message,
+          publishingModules: [PublishingModuleType.CHANNEL],
+        });
+        return message;
       },
-      [buildInternalMessageParams, sendUserMessage, scrollToBottom],
+      [buildInternalMessageParams, sendUserMessage, scrollToBottom, processParams, currentChannel?.url],
     ),
     sendFileMessage: useCallback(
       async (params) => {
         const internalParams = buildInternalMessageParams<FileMessageCreateParams>(params);
-        const processedParams = await onBeforeSendFileMessage(internalParams);
+        const processedParams = await processParams(onBeforeSendFileMessage, internalParams, 'file') as FileMessageCreateParams;
+        const message = await sendFileMessage(processedParams, asyncScrollToBottom);
 
-        return sendFileMessage(processedParams, () => scrollToBottom());
+        pubSub.publish(PUBSUB_TOPICS.SEND_FILE_MESSAGE, {
+          channel: currentChannel,
+          message,
+          publishingModules: [PublishingModuleType.CHANNEL],
+        });
+
+        return message;
       },
-      [buildInternalMessageParams, sendFileMessage, scrollToBottom],
+      [buildInternalMessageParams, sendFileMessage, scrollToBottom, processParams, currentChannel?.url],
     ),
     sendMultipleFilesMessage: useCallback(
       async (params) => {
         const internalParams = buildInternalMessageParams<MultipleFilesMessageCreateParams>(params);
-        const processedParams = await onBeforeSendMultipleFilesMessage(internalParams);
-
-        return sendMultipleFilesMessage(processedParams, () => scrollToBottom());
+        const processedParams = await processParams(onBeforeSendMultipleFilesMessage, internalParams, 'multipleFiles') as MultipleFilesMessageCreateParams;
+        const message = await sendMultipleFilesMessage(processedParams, asyncScrollToBottom);
+        pubSub.publish(PUBSUB_TOPICS.SEND_FILE_MESSAGE, {
+          channel: currentChannel,
+          message,
+          publishingModules: [PublishingModuleType.CHANNEL],
+        });
+        return message;
       },
-      [buildInternalMessageParams, sendMultipleFilesMessage, scrollToBottom],
+      [buildInternalMessageParams, sendMultipleFilesMessage, scrollToBottom, processParams, currentChannel?.url],
     ),
     sendVoiceMessage: useCallback(
       async (params: FileMessageCreateParams, duration: number) => {
@@ -120,20 +208,31 @@ export function useMessageActions(params: Params): MessageActions {
             }),
           ],
         });
-        const processedParams = await onBeforeSendVoiceMessage(internalParams);
-
-        return sendFileMessage(processedParams, () => scrollToBottom());
+        const processedParams = await processParams(onBeforeSendVoiceMessage, internalParams, 'voice');
+        return sendFileMessage(processedParams, asyncScrollToBottom);
       },
-      [buildInternalMessageParams, sendFileMessage, scrollToBottom],
+      [buildInternalMessageParams, sendFileMessage, scrollToBottom, processParams, currentChannel?.url],
     ),
     updateUserMessage: useCallback(
       async (messageId: number, params: UserMessageUpdateParams) => {
         const internalParams = buildInternalMessageParams<UserMessageUpdateParams>(params);
-        const processedParams = await onBeforeUpdateUserMessage(internalParams);
+        const processedParams = await processParams(onBeforeUpdateUserMessage, internalParams, 'update');
+        return updateUserMessage(messageId, processedParams)
+          .then((message) => {
+            pubSub.publish(PUBSUB_TOPICS.UPDATE_USER_MESSAGE, {
+              channel: currentChannel,
+              message,
+              publishingModules: [PublishingModuleType.CHANNEL],
+            });
 
-        return updateUserMessage(messageId, processedParams);
+            return message;
+          });
       },
-      [buildInternalMessageParams, updateUserMessage],
+      [buildInternalMessageParams, updateUserMessage, processParams, currentChannel?.url],
     ),
+    updateFileMessage,
+    resendMessage,
+    deleteMessage,
+    resetNewMessages,
   };
 }

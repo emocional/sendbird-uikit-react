@@ -1,7 +1,902 @@
 # Changelog - v3
 
-## [v3.14.1] (Apr 12, 2024)
+## [v3.18.0] (MAY 27 2026)
+### Features
+- Redesigned the message composer's file attachment flow
 
+  Files can now be attached by drag-and-drop or clipboard paste, and are staged inside the composer so they can be reviewed before sending. The file picker, drag-and-drop, and paste all enforce the same type, size, and count constraints. Available in `GroupChannel` and `Thread`, with single-file support in `OpenChannel`.
+
+### Fixes
+- Fixed a bug where clicking a search result did not scroll to or highlight the target message
+- Fixed a bug where message scroll pagination did not recover after a network disconnection or a search query change
+- Fixed a bug where the `Thread` view was reset when another user was banned from or left the channel
+- Fixed a bug where the typing indicator was not cleared correctly when the input became empty or the channel changed
+- Fixed a bug where the voice message player did not reset its playback position when the channel changed
+- Fixed a bug where HTML in the message input was not sanitized when editing a message
+- Fixed an inaccurate warning message shown when the mention count limit is exceeded
+
+## [v3.17.12] (MAR 26 2026)
+### Fixes
+- Fixed a bug where invisible zero-width spaces inserted during paste in `MessageInput` could be included in sent or updated messages
+
+## [v3.17.11] (MAR 12 2026)
+### Fixes
+- Fix a security vulnerability by upgrading dompurify to v3.3.2 (CVE range: >=3.1.3, <=3.3.1)
+
+## [v3.17.10] (FEB 11 2026)
+### Fixes
+- Fixed an unintended build issue caused by deprecating `MessageFeedBack` and `MessageForm`
+
+## [v3.17.9] (FEB 06 2026)
+### Fixes
+- Fixed a bug where the open channel delete modal did not close after successful deletion
+- Fixed a bug where the open channel list was not updated after a channel was deleted
+- Fixed close button visibility in ChannelSettings header on dark mode
+- Fixed search and info button visibility in GroupChannel header on dark mode
+- Fixed bugs where styles were broken in some components
+- Fixed a bug where video thumbnails were rendered differently in Open Channels and Group Channels
+- Fixed a bug where the message list did not scroll to the `startingPoint` set on the `GroupChannel`
+- Fixed a bug where the input field disappeared when a new message arrived while composing a quote message
+- Fixed a bug MenuItem is over-place when app area is narrow
+- Fixed a bug where the `markAsUnread` menu was not displayed correctly when replyType was set to thread 
+
+## [v3.17.8] (JAN 20 2026)
+### Fixes
+- Fixed a bug where sometimes does not scroll to bottom when new message comes in
+- Fixed a bug where scrolling to the bottom was not triggered when the bubble-type typing indicator reappeared
+
+## [v3.17.7] (JAN 02 2026)
+### Features
+- Add a `renderTypingIndicatorBubble` to customize typingIndicator
+
+  Enables customization of bubble-type typing indicators in addition to the existing customization of text-type typing indicators(`renderTypingIndicator`).
+  - How to use?
+  ```tsx
+    <GroupChannel
+      channelUrl="ChannelURL"
+      renderTypingIndicatorBubble={(props) => {
+        ...
+        return <CustomComponent typingMembers={props.typingMembers} />
+      }}
+    />
+  ```
+
+## [v3.17.6] (DEC 10 2025)
+### Fixes
+- Fix a bug where `autoscrollMessageOverflowToTop` set on `SendbirdProvider` was not being passed down to child components
+
+## [v3.17.5] (DEC 03 2025)
+### Features
+- Added `autoscrollMessageOverflowToTop` global option
+
+  When enabled, if a newly received message is taller than the viewport, the scroll position no longer auto-jumps to the bottom. Instead, the view scrolls to the top of the new message to keep its start in focus.
+  - How to use?
+  ```tsx
+    <App
+      appId={appId}
+      userId={userId}
+      autoscrollMessageOverflowToTop={true}
+    />
+  ```
+### Fixes
+- Fixed a bug where scrollToMessage
+
+## [v3.17.4] (NOV 26 2025)
+### Fixes
+- Fixed a Bug where SDK initialization could fail or remain uninitialized in React 17
+- Fixed a bug where `mentionedMessageTemplate` is being set even when the message is not a mentioned message
+- Fixed a bug where URL links inside Markdown-type messages do not open in a new tab
+
+## [v3.17.3] (OCT 2 2025)
+### Fixes
+- Fixed a bug where failed message can't be resend
+- Fixed a bug where Reaction is not updated in Thread
+- Fixed RTL syntax
+
+## [v3.17.2] (Aug 13 2025)
+### Fixes
+- Fixed a bug that did not display `the read/delivered` status icon in the `publicGroupChannel`
+
+## [v3.17.1] (Aug 6 2025)
+### Fixes
+- Fixed a bug in the Custom emoji category rendering
+
+## [v3.17.0] (July 31 2025)
+### Features
+- Added `mark as unread` functionality for messages in Group Channel
+  - Added `enableMarkAsUnread` global option
+    - How to use?
+    ```tsx
+    <App
+      appId={appId}
+      userId={userId}
+      uikitOptions={{
+        groupChannel: {
+          // Below turns on the mark as unread feature. Default value is false.
+          enableMarkAsUnread: true,
+        }
+      }}
+    />
+    ```
+
+### Fixes
+- Fixed a bug Where Multiple Chat Windows cause unexpected behavior
+
+### Chore
+- Updated `@sendbird/chat` version to `^4.18.0`
+- Updated `@sendbird/uikit-tools` dependency version to `^0.0.10`
+- Updated `@sendbird/react-uikit-message-template-view` dependency version to `^0.0.10`
+
+## [v3.16.12] (July 22 2025)
+### Fixes:
+- Fixed a bug that caused a runtime exception when leaving or deleting a channel
+
+## [v3.16.11] (July 10 2025)
+### Fixes:
+- Fixed an issue where the layout would break when selecting a member from the invite list
+- Fixed a bug where `0` was displayed when a reply was added and then deleted
+
+## [v3.16.10] (Jun 12 2025)
+### Chore
+- Fixed `localCacheEnabled` option applied
+
+## [v3.16.9] (Jun 10 2025)
+### Chore
+- Updated `@sendbird/chat` dependency version to `^4.19.1`
+- Updated `@sendbird/uikit-tools` dependency version to `^0.0.8`
+- Updated `@sendbird/react-uikit-message-template-view` dependency version to `^0.0.8`
+
+## [v3.16.8] (Jun 9 2025)
+### Fixes:
+- Fixed a bug that `disableMarkAsDelivered` not working properly in `GroupChannel` component
+- Improved internal state management for stabilization
+
+## [v3.16.7] (May 27 2025)
+### Fixes:
+- Fixed a minor message style
+
+## [v3.16.6] (May 13 2025)
+### Fixes:
+- Fixed a bug that the scroll does not remain bottom when quoted message renders
+
+## [v3.16.5] (Apr 30 2025)
+### Fixes:
+- Fixed a bug that `GroupChannelProvider` with `startingPoint` throws an error
+- Improved custom hook actions through memoization
+
+## [v3.16.4] (Apr 15 2025)
+### Features:
+- Added support for multi-line ellipsis in quoted messages
+### Fixes:
+- Fixed an issue where the previous thread message wouldn't load when scrolling to the top
+- Fixed an issue where `scrollToBottom()` did not work when sending a message on mobile
+
+## [v3.16.3] (Apr 3 2025)
+### Fixes:
+- Fixed an issue where the connection is still alive after `SendbirdProvider` have been unmounted
+- Fixed an undefined error of `emojiCategory`
+
+## [v3.16.2] (Mar 28 2025)
+### Features:
+- Added `tel` and `mailto` protocol support for the markup link
+
+## [v3.16.1] (Mar 5 2025)
+### Fixes:
+- Fixed an unexpected error in `MessageList`
+
+## [v3.16.0] (Feb 28 2025)
+### Fixes:
+- Added the missing import paths for the following interfaces
+  - `GroupChannelState`
+  - `GroupChannelProviderProps`
+  - `ChannelSettingsState`
+  - `ChannelSettingsContextProps`
+- Fixed an issue where some of the context properties are not defined in a certain case 
+
+### Chore
+- Updated `dompurify` dependency version to `v3.2.4`
+
+## [v3.15.15] (Feb 14 2025)
+### Fixes:
+- Added the missing import paths for the following deprecated interfaces
+  - `useSendbirdStateContext`
+  - `withSendbird`
+- Fixed an issue where `VoiceMessageInput` failed to record the audio at first
+
+### Chore
+- Updated `@sendbird/chat` version to `v4.16.4`
+
+## [v3.15.14] (Feb 7 2025)
+
+### Features:
+- Added custom hooks for each module replacing the previous context hook. The custom hook allows access to the provider's data, which are divided into `state` and `actions` properties.
+  * Added `useGroupChannelList`, replacing `useGroupChannelListContext`
+  * Added `useCreateChannel`, replacing `useCreateChannelContext`
+  * Added `useChannelSettings`, replacing `useChannelSettingsContext`
+  * Added `useGroupChannel`, replacing `useGroupChannelContext`
+  * Added `useMessageSearch`, replacing `useMessageSearchContext`
+  * Added `useThread`, replacing `useThreadContext`
+    - How to Use?
+    ```tsx
+    import { useGroupChannel } from '@sendbird/uikit-react/GroupChannel/context';
+
+    // Implement your code inside the react function component.
+    const Component = () => {
+    // const { currentChannel, scrollToBottom } = useGroupChannelContext();
+    const {
+      state : {
+        currentChannel,
+      },
+      actions : {
+        scrollToBottom
+      },
+    } = useGroupChannel();
+
+    const onScrollDownButtonClick = () => {
+      scrollToBottom();
+    };
+
+    // ...
+    }
+    ```
+    
+### Fixes:
+- Fixed an issue where the pasting the formatted text to `MessageInput` did not shows properly. 
+- Fixed a bug with forwardRef Rules of Hooks violation.
+
+## [v3.15.13] (Jan 31 2025)
+
+### Features:
+- Added React 19 compatibility
+- Added `messageSearchQuery.keyword` when searching in MessageSearch module
+  - `searchString` now takes higher priority, while `messageSearchQuery.keyword` is assigned secondary priority.
+
+### Fixes:
+- Fixed the width of the messages in open channel
+
+## [v3.15.12] (Jan 9 2025)
+
+### Features:
+- Provided `useConnectionState` that you can get the connection state of SDK.
+
+### Fixes:
+- Improved the stability with the latest Chat SDK version.
+
+## [v3.15.11] (Dec 19 2024)
+
+### Fixes:
+- Fixed an issue where the bubble type typing indicator appeared but was not visible because the scroll did not move to the bottom.
+
+## [v3.15.10] (Dec 12 2024)
+
+### Features:
+- Added `scrollRef` in GroupChannelList context
+
+### Fixes:
+- Fixed broken UI
+  * MessageInput height becomes short when it's disabled.
+  * Empty UserListItem menu appears on the ChannelSettings member list of normal channel member who is not an operator of the channel.
+- Displayed members' name instead of default AI chatbot channel name, like the `Group Channel` does.
+- Fixed an issue where editing a text parent message in a channel did not update the corresponding parent message in the Thread area in real-time.
+- Fixed a GroupChannel UI error when the `Open in Channel` action is triggered in a different channel.
+  * The `Open in Channel` implementation invokes both `setCurrentChannel` and `setStartingPoint`.
+    The `setCurrentChannel` function triggers asynchronous side effects that update `channel`, `messagesDataSource`, and `startingPoint`.
+    If `setStartingPoint` is invoked before these updates are completed, it can result in the channel not being updated correctly or the starting point being improperly set.
+
+## [v3.15.9] (Nov 21 2024)
+
+### Fixes:
+* Fixed error handling in message handlers:
+  * Allow void return type in `onBefore-` handlers
+  * Add proper error handling via `eventHandlers.message` for:
+    * onSendMessageFailed
+    * onUpdateMessageFailed
+    * onFileUploadFailed
+  * Users no longer need to return an empty object from `onBefore-` due to type constraints
+* Fixed a bug where profile bottom position was not updating correctly for messages with feedback and replies:
+  * Profile bottom position now updates properly when messages contain feedback and reply components
+  * Ensures consistent profile positioning across all message types and states
+
+## [v3.15.8] (Nov 7th, 2024)
+
+### Fixes:
+- Fixed an issue where the `dir` attribute was not being properly applied to message containers:
+  * Removed `useMessageLayoutDirection` hook in favor of a more React-friendly solution
+  * Updated `MessageList` component to directly handle text direction through the `dir` attribute
+- Fixed an issue in TypingIndicatorBubble component where null was returned before hook execution
+- Fixed SDK initialization parameter override issue:
+  * Modified Object.assign order to allow proper parameter override
+  * Added test case to verify `localCacheEnabled` override functionality
+  * Ensures `sdkInitParams.localCacheEnabled` properly overrides default settings; `localCacheEnabled: true`
+
+## [v3.15.7] (Oct 24th, 2024)
+
+### Features:
+- **Added support for new file types and extensions.**
+  - **Added mime types:** `'application/zip', 'application/x-rar-compressed', 'application/x-7z-compressed', 'application/x-tar', 'application/gzip', 'application/x-bzip', 'application/x-bzip2', 'application/x-xz', 'application/x-iso9660-image'`
+  - **Added extensions:**
+    - **Image:** `'.apng', '.avif', '.gif', '.jpg', '.jpeg', '.jfif', '.pjpeg', '.pjp', '.png', '.svg', '.webp', '.bmp', '.ico', '.cur', '.tif', '.tiff'`
+    - **Video:** `'.mp4', '.webm', '.ogv', '.3gp', '.3g2', '.avi', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.mkv'`
+    - **Audio:** `'.aac', '.midi', '.mp3', '.oga', '.opus', '.wav', '.weba', '.3gp', '.3g2'`
+    - **Document:** `'.txt', '.log', '.csv', '.rtf', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'`
+    - **Archive:** `'.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz', '.iso'`
+- **Enhanced MessageBody rendering support:**
+  - Added support for `.bmp` files as `ThumbnailMessage`
+  - Added support for `.heic` files as `FileMessage` for cross-browser consistency
+
+### Fixes:
+- Fixed an issue where the `OpenChannel` message list scroll would not move upon initialization **on mobile browsers**.
+- Fixed an issue where the `MessageInput` failed to auto-scroll when pasting text.
+- Fixed an issue where ASCII characters appeared in the `MessageInput` when pasting non-English text.
+
+## [v3.15.6] (Oct 11th, 2024)
+
+### Features:
+- Exported `useLocalization` Hook:
+  - Provided access to stringSet and dateLocale.
+  - Note: Required SendbirdProvider to wrap your component for proper usage.
+  - Import Path: `"@sendbird/uikit-react/hooks/useLocalization"`
+- Exported `ThreadReplySelectType`:
+  - Import Paths:
+    - `"@sendbird/uikit-react/Channel/context"`
+    - `"@sendbird/uikit-react/GroupChannel/context"`
+
+### Fixes
+- Modified the `MessageInput` to scroll to the caret position when pasting text.
+- The maximum height of the `MessageInput` has been extended to `'92px'`
+- Fixed an `error message` on `MenuItemAction` when the children prop is `undefined`
+
+## [v3.15.5] (Oct 4th, 2024)
+
+### Updates
+- Usage of template message feature:
+  1. Template data in message
+    - removed: A message with valid `extendedMessagePayload.template` value will be displayed with `TemplateMessageItemBody`.
+    - added: A message with valid `extendedMessagePayload.message_template` value will be displayed with `TemplateMessageItemBody`.
+  2. Container type data in message
+    - removed: Added 'wide' width support for `MessageContent` when value exists in `message.extendedMessagePayload['ui']['container_type']`
+    - added: Added support for template message rendering options (boolean type): `profile`, `time`, and `nickname` in `extendedMessagePayload['message_template']['container_options']`
+
+## [v3.15.4] (Sep 26th, 2024)
+
+### Features
+- Added stringSet for date format and applied them
+  | Key | Value |
+  | --- | ----- |
+  | DATE_FORMAT__MESSAGE_CREATED_AT | `'p'` |
+  | DATE_FORMAT__UNREAD_SINCE | `'p MMM dd'` |
+  | DATE_FORMAT__LAST_MESSAGE_CREATED_AT__TODAY | `'p'` |
+  | DATE_FORMAT__LAST_MESSAGE_CREATED_AT__THIS_YEAR | `'MMM d'` |
+  | DATE_FORMAT__LAST_MESSAGE_CREATED_AT__PREVIOUS_YEAR | `'yyyy/M/d'` |
+
+## [v3.15.3] (Sep 12th, 2024)
+
+### Fixes
+- Fixed incorrect styling for `Checkbox`.
+- Fixed the issue where the channel list appears empty when the UIKit is rendered for the first time.
+
+## [v3.15.2] (Sep 6th, 2024)
+
+### Features
+- Introduced new `message` event handlers for `onSendMessageFailed`, `onUpdateMessageFailed`, and `onFileUploadFailed` in the `eventHandlers` prop of the message input component. These handlers allow developers to respond to message send, update, and file upload failures.
+  * How to use?
+  ```tsx
+  <Sendbird
+    eventHandlers={{
+      message: {
+        onSendMessageFailed: (message, error) => {
+          // You can use the message parameter to create specific conditions
+          if (message.isUserMessage()) {
+            alert(`Message failed to send: ${error?.message}`);
+          }
+        },
+        onUpdateMessageFailed: (message, error) => {
+          console.log(`Failed to update message: ${message.messageId}, Error: ${error}`);
+        },
+        onFileUploadFailed: (error) => {
+          console.error('File upload failed', error);
+        },
+      },
+    }}
+  ```
+
+### Fixes
+- Fixed an issue where the channel UI's scroll did not work after sending a new message. This issue was specific to the NextJS environment.
+
+## [v3.15.1] (Aug 29, 2024)
+
+### Fixes
+- Fixed unread count badge position on the ChannelPreview item component.
+
+## [v3.15.0] (Aug 29, 2024)
+
+### Features
+- UIKit now supports form messages! Messages with `messageForm` will be displayed as form messages.
+  - Added `enableFormTypeMessage` global option
+    - How to use?
+    ```tsx
+    <App
+      appId={appId}
+      userId={userId}
+      uikitOptions={{
+        groupChannel: {
+          // Below turns on the form message feature. Default value is false.
+          enableFormTypeMessage: true,
+        }
+      }}
+    />
+    ```
+  - `MessageInput` is now being disabled if a channel has a form message that is not submitted and its `extendedMessagePayload['disable_chat_input']` value is true
+  - Added `FormMessageItemBody`, and `FormInput`
+- Added support for EmojiCategory. You can now filter emojis for different messages when adding Reactions to a message.
+- Added `filterEmojiCategoryIds` to `GroupChannelProvider` and `ThreadProvider`.
+  - How to Use
+  ```tsx
+  const filterEmojiCategoryIds = (message: SendableMessage) => {
+      if (message.customType === 'emoji_category_2') return [2];
+
+      return [1];
+  }
+
+  <GroupChannel 
+    filterEmojiCategoryIds={filterEmojiCategoryIds}
+  />
+  ```
+  - Note: You need to set your custom EmojiCategory using [Sendbird Platform API](https://sendbird.com/docs/chat/platform-api/v3/message/reactions-and-emojis/reactions-and-emojis-overview) in advance. 
+- Added sub-rendering props to the `ThreadListItem` and `ThreadListItemContent` components.
+  - Added props list: `renderSenderProfile`, `renderMessageBody`, `renderMessageHeader`, `renderEmojiReactions`, and `renderMobileMenuOnLongPress`.
+  - How to use:
+  ```tsx
+  const CustomThread = () => (
+    <ThreadProvider>
+      <ThreadUI
+        renderMessage={(props) => (
+          <ThreadListItem
+            {...props}
+            renderSenderProfile={() => <></>}
+          />
+        )}
+      />
+    </ThreadProvider>
+  );
+  ```
+
+- Exported subcomponents of `MessageContent`:
+  ```tsx
+  import { MessageBody, MessageHeader, MessageProfile } from '@sendbird/uikit-react/ui/MessageContent';
+  ```
+
+### Fixes
+- Fixed broken CSS in Thread:
+  - Style was not applied to `ParentMessageInfo` until the first message was received on the thread list.
+  - Scroll functionality was not working on the thread list.
+- Fixed an issue where HTML entities like `&sect` or `&lt` were automatically converted to symbols when pasted into a contentEditable element, ensuring they are now preserved as plain text.
+- Fixed an issue where the style was breaking in messages due to emoji reactions.
+- Fixed a bug where y-scroll was not working in `EditUserProfileUIView` when the app was displayed in horizontal view on mobile devices.
+- Fixed a bug where an offline banned user was not leaving the channel upon reconnecting in mobile view.
+- Fixed thumbnail image overflow in OG messages in open channels.
+- Fixed broken file viewer title in mobile view.
+- Fixed a bug where markdown messages were incorrectly displayed in channel previews.
+- Renamed the prop `onUserProfileMessage` to `onStartDirectMessage`.
+  - Deprecated the `onUserProfileMessage` prop in `SendbirdProvider` and `UserProfileProvider`.
+  - Deprecated the `onUserProfileMessage` interface in `SendbirdStateContext` and `UserProfileContext`.
+  - Use `onStartDirectMessage` instead.
+
+## [v3.14.14] (Aug 1, 2024)
+
+### Features
+- Added `forceLeftToRightMessageLayout` to enable LTR message layout display in RTL mode. This helps users who set `htmlTextDirection='rtl'` to keep the message layout in LTR format (outgoing messages on the right, incoming messages on the left).
+  ```tsx
+  import SendbirdProvider from ‘@sendbird/uikit-react/SendbirdProvider’;
+  import ar from 'date-fns/locale/ar';
+
+  const YourComponent() => {
+    return (
+      <SendbirdProvider
+        htmlTextDirection="rtl" // for RTL display
+        forceLeftToRightMessageLayout={true} // to enforce the message layout to Left-to-Right direction even though htmlTextDirection is set to ‘rtl’
+        dateLocale={ar} // locale setting would be necessary too
+        {…other props}
+      >
+        {...other components}
+      </SendbirdProvider>
+    )
+  }
+  ```
+- Banned members no longer affect the ChannelSettings/Profile.
+
+### Fixes
+- Fixed an issue where the `GroupChannelCollection` was not recreated when `channelListQueryParams` changed. The channel list now refreshes when the values of `channelListQueryParams` are updated.
+- Fixed a bug where replied child message width did not fit the content.
+- Corrected the direction of some icons in RTL mode. Specifically, the leave channel icon and the broadcast channel icon.
+- Fixed an issue where the feedback modal was not displayed on feedback button click in mobile view. No change in desktop view behavior.
+- Fixed an issue where banned members affected the ChannelSettings/Profile. Banned members now do not affect these settings.
+
+### Chores
+- Omitted `renderUserListItem` of `ChannelSettingsUIProps` from the `ChannelSettingsProps`.
+
+## [v3.14.13] (July 18, 2024)
+
+### Features
+- **Address RTL UI Feedback**
+  - Fixed an issue where the `htmlTextDirection` prop didn't work when using `SendbirdProvider`, but only worked in the App module.
+  - Updated the paper plane icon to point left instead of right in RTL mode.
+
+- **Message Menu Customization in Threads**
+  - Added `renderMessageMenu` and `renderEmojiMenu` props to the `<ParentMessageInfo />`, `<ThreadListItem />`, and `<ThreadListItemContent />` components.
+  - **Example usage:**
+    ```tsx
+    <Thread
+      renderMessage={(props) => (
+        <ThreadListItem {...props} renderMessageMenu={(props) => (
+          <MessageMenu {...props} renderMenuItems={({ items }) => (
+            <>
+              <items.CopyMenuItem />
+              <items.DeleteMenuItem />
+            </>
+          )} />
+        )} />
+      )}
+    />
+    ```
+
+### Fixes
+- **Deprecation Marks on Channel & ChannelList Modules**
+  - Marked `Channel`, `ChannelProvider`, `ChannelList`, and `ChannelListProvider` as deprecated.
+  - For migration guidance, please refer to the [Group Channel Migration Guide](https://sendbird.com/docs/chat/uikit/v3/react/introduction/group-channel-migration-guide#1-group-channel-migration-guide).
+
+### Chore
+- **Improve Stability of `useMenuItems`**
+  - Improved the stability of the `useMenuItems` hook.
+  - Exported `ChannelListQueryParamsType`.
+  - Moved the `renderUserListItem` prop to the Provider from the UI component.
+  - Exported the `ChannelSettingsMenuItem` component.
+- Added `interop: "compat"` setting for the CommonJS output in Rollup Config to enhance the compatibility between ESM and CJS.
+
+## [v3.14.12] (July 3, 2024)
+
+### Features
+- **RTL Support**
+  - Added `htmlTextDirection` prop to `SendbirdProvider` to support Right-To-Left (RTL) text direction for Middle East customers. [Read more](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/dir).
+  ```tsx
+  import ar from 'date-fns/locale/ar';
+  <SendbirdProvider
+    ...
+    htmlTextDirection={'rtl' | 'ltr'}
+    // Setting a proper value to dateLocale would be necessary
+    dateLocale={ar}
+  >
+  </SendbirdProvider>
+  ```
+
+- **DX Improvements: ChannelSetting SettingMenu**
+  - Added new components and hooks to make the menu items in the `ChannelSettingsUI` more modular and customizable.
+  - New Files:
+    - `useMenuItems.tsx`: Custom hook for menu items based on user roles.
+    - `MenuItem.tsx`: Reusable and customizable menu item component.
+    - `MenuListByRole.tsx`: Renders a list of menu items based on user roles.
+  - **Example usage:**
+    To customize the moderation panel with selected menu items:
+    ```tsx
+    import React from 'react';
+    import ChannelSettingsUI from '@sendbird-uikit/ChannelSettings/components/ChannelSettingsUI';
+    import useMenuItems from '@sendbird-uikit/ChannelSettings/hooks/useMenuList';
+
+    const CustomChannelSettings = () => {
+      const menuItems = useMenuItems();
+
+      const renderCustomModerationPanel = () => {
+        // Create a new object by selecting only the desired menu items.
+        const customMenuItems = {
+          operator: {
+            operators: menuItems.operator.operators, // Keep the operators menu
+            allUsers: menuItems.operator.allUsers, // Keep the all users menu
+            // Add or remove other menu items as needed.
+          },
+          nonOperator: {
+            allUsers: menuItems.nonOperator.allUsers, // Keep the all users menu
+            // Add or remove other menu items as needed.
+          },
+        };
+
+        return <MenuListByRole menuItems={customMenuItems} />;
+      };
+
+      return (
+        <ChannelSettingsUI renderModerationPanel={renderCustomModerationPanel} />
+      );
+    };
+
+    export default CustomChannelSettings;
+    ```
+
+- DX Improvements: ChannelSetting UserListItem
+  - `UserListItemMenu` has been newly created
+  - Provided it as a module which also contains `UserListItemMenuProvider` and `useUserListItemMenuContext`
+    ```tsx
+    import { UserListItemMenu, UserListItemMenuProvider, useUserListItemMenuContext } from '@sendbird/uikit-react/ui/UserListItemMenu';
+    ```
+  - Added new `renderUserListItem` props to the list components of `ChannelSettings`:
+    * `OperatorList`, `MemberList`, `MutedMemberList`, `BannedUserList`
+  - Exported the following modules:
+    * `OperatorList`, `MemberList`, `MutedMemberList`, `BannedUserList`
+    ```tsx
+    import { OperatorList, MemberList, MutedMemberList, BannedUserList } from '@sendbird/uikit-react/ChannelSettings/components/ChannelSettingsUI';
+    ```
+  - Merged `ui/UserListItem` and `ChannelSettings/components/UserListItem`:
+    * Use `ui/UserListItem` from now on
+    * Added `size` prop to `UserListItem`, which now accepts two values: 'normal' and 'small' ('small' replaces the previous `ChannelSettings/components/UserListItem`)
+      * `normal`: Used primarily in Modals
+      * `small`: Used primarily in Lists
+  - **Example usage:**
+    ```tsx
+    <ChannelSettings
+      renderUserListItem={(props) => (
+        <UserListItem {...props}
+          renderListItemMenu={(props) => (
+            <UserListItemMenu
+              {...props}
+              onToggleOperatorState={({ user, newState, error }) => {/** Handle operator state change */}}
+              onToggleMuteState={({ user, newState, error }) => {/** Handle mute state change */}}
+              onToggleBanState={({ user, newState, error }) => {/** Handle ban state change */}}
+              renderTrigger={({ ref }) => (<div ref={ref}>{/** Render your custom trigger icon here */}</div>)}
+              renderMenuItems={({ items }) => (
+                <>
+                  <items.OperatorToggleMenuItem />
+                  <items.MuteToggleMenuItem />
+                  <items.BanToggleMenuItem />
+                </>
+              )}
+            />
+          )}
+        />
+      )}
+    />
+    ```
+
+### Fixes
+- Fixed image file viewer header style 
+- Disabled `isSuperGroupReactionsEnabled` setter
+- Use `APP_LAYOUT_ROOT` to get the area info of the UIKit
+  ```tsx
+  export const APP_LAYOUT_ROOT = 'sendbird-app__layout';
+  ```
+  * To ensure the menu positions are calculated correctly, wrap the entire area using `SendbirdProvider` with a tag that has the specified ID.
+
+### Chore
+- Updated `@sendbird/chat` version to 4.13.0
+  - Improved channel/message refreshing performance utilizing LocalCaching.
+
+## [v3.14.11] (June 20, 2024)
+### Features
+- Markdown Support for Text Messages
+  - Added `enableMarkdownForUserMessage` to `UIKitOptions`. When enabled, markdown syntaxes for bold and link are now applied to user messages.
+
+- Descriptive Color Names Support
+  - Users can now customize the color set using more descriptive color names instead of numerical codes.
+  - Added a color map parsing utility function, `mapColorKeys`, to support both new and existing color names.
+  - Detailed color name mappings:
+     1. Primary, Secondary, Error, information
+    ```
+    Primary-500 -> Primary-extra dark
+    Primary-400 -> Primary-dark
+    Primary-300 -> Primary-main
+    Primary-200 -> Primary-light
+    Primary-100 -> Primary-extra light
+
+    Secondary-500 -> Secondary-extra dark
+    Secondary-400 -> Secondary-dark
+    Secondary-300 -> Secondary-main
+    Secondary-200 -> Secondary-light
+    Secondary-100 -> Secondary-extra light
+    ```
+    2. Background 100~700: No changes
+    3. Overlay
+    ```
+    Overlay-01 -> Overlay-dark
+    Overlay-02 -> Overlay-light
+    ```
+    4. OnLight & OnDark
+    ```
+    // On Light
+    On Light-01 -> Onlight-text-high-emphasis
+    On Light-02 -> Onlight-text-mid-emphasis
+    On Light-03 -> Onlight-text-low-emphasis
+    On Light-04 -> Onlight-text-disabled
+    // On Dark
+    On Dark -01 -> Ondark-text-high-emphasis
+    On Dark -02 -> Ondark-text-mid-emphasis
+    On Dark -03 -> Ondark-text-low-emphasis
+    On Dark -04 -> Ondark-text-disabled
+    ```
+
+- Message Menu Component Refactor
+  - Created `MessageMenuProvider`, `useMessageMenuContext`, and `MessageMenu` component.
+  - Replaced `MessageItemMenu` with `MessageMenu` in **GroupChannel**. Future PR will apply it to Thread.
+  - Migrated `MobileContextMenu` and `MobileBottomSheet` using `MessageMenuProvider`.
+  - Exported the `MobileMenu`
+    ```tsx
+    import { MobileMenu, MobileContextMenu, MobileBottomSheet } from '@sendbird/uikit-react/ui/MobileMenu';
+    ```
+  - How to use?
+
+    Desktop menu
+    ```tsx
+    import GroupChannel from '@sendbird/uikit-react/GroupChannel';
+    import MessageContent from '@sendbird/uikit-react/ui/MessageContent';
+    import { MessageMenu } from '@sendbird/uikit-react/ui/MessageMenu';
+
+    const GroupChannelPage = () => (
+      <GroupChannel
+        renderMessageContent={(props) => (
+          <MessageContent
+            {...props}
+            renderMessageMenu={(props) => (
+              <MessageMenu
+                {...props}
+                renderMenuItems={(props) => {
+                  const {
+                    CopyMenuItem,
+                    ReplyMenuItem,
+                    // ...
+                    DeleteMenuItem,
+                  } = props.items;
+                  // organize the menu items using the items
+                  return (
+                    <>
+                      <CopyMenuItem />
+                      <DeleteMenuItem />
+                    </>
+                  );
+                }}
+              />
+            )}
+          />
+        )}
+      />
+    );
+    ```
+    Mobile menu
+    ```tsx
+    import GroupChannel from '@sendbird/uikit-react/GroupChannel';
+    import MessageContent from '@sendbird/uikit-react/ui/MessageContent';
+    import { MobileMenu } from '@sendbird/uikit-react/ui/MessageMenu';
+
+    const GroupChannelPage = () => (
+      <GroupChannel
+        renderMessageContent={(props) => (
+          <MessageContent
+            {...props}
+            renderMobileMenuOnLongPress={(props) => (
+              <MobileMenu
+                {...props}
+                renderMenuItems={(props) => {
+                  const {
+                    CopyMenuItem,
+                    ReplyMenuItem,
+                    // ...
+                    DeleteMenuItem,
+                  } = props.items;
+                  // organize the menu items using the items
+                  return (
+                    <>
+                      <CopyMenuItem />
+                      <DeleteMenuItem />
+                    </>
+                  );
+                }}
+              />
+            )}
+          />
+        )}
+      />
+    );
+    ```
+
+### Fixes
+- Fixed an issue where the `newMessages` array was not being reset even after the message list scroll reached the bottom, causing the message notification bar to not disappear properly. Manually called `resetNewMessages()` under certain conditions.
+- Updated the logic to align with other platforms for consistency. Relocated the logic to the same section where other `disabled` conditions are checked.
+
+## [v3.14.10] (June 13, 2024)
+### Fixes
+- Replaced onlight-05 with onlight-03 since onlight-05 doesn't exist in the product design guide.
+- Added the `onClose` event to the modals inside of the `FileViewer` components.
+
+## [v3.14.9] (June 7, 2024)
+### Fixes
+- Resolved an issue where M4A format audio files were not playing in Safari. M4A files are now parsed as `audio/x-m4a` to ensure proper playback.
+- Prevented the newly created channels from being filtered out from the ChannelList.
+
+### Features
+- Added a modal to the `FileViewer` components for utilizing the `onMounted` event handler.
+
+## [v3.14.8] (May 30, 2024)
+### Fixes
+- Resolved the issue of storybook user leaving the channel
+- Added a workaround to reset IME in mobile webkit for better input handling
+  - This fix involves creating a ghost input to manage focus transitions, preventing the virtual keyboard from closing and ensuring the proper composition of characters like Hangul
+  - The ghost input is used to reset the IME context, and focus is moved back to the original input using `requestAnimationFrame` to avoid delays
+- Retry connection when failed with a token expired error
+- Ensure scroll to the bottom of the list when mounted before painting
+- Minor bug fixes and adjustments for `SuggestedReplyItem` component:
+  - Fixed a bug where horizontal suggested reply items contents are not wrapping to multiple lines
+  - Adjusted bubble size
+  - Added missing margin
+
+### Features
+- Added support for rendering `.mov` file type only in Safari browser
+
+## [v3.14.7] (May 23, 2024)
+### Fixes
+* Fixed issue where files that failed to compress were not being sent
+* Cleaned up the props of the `ChannelSettings` component to ensure all missed props are applied
+* Exported the `ChannelSettingsHeader` component as default
+  ```
+  import ChannelSettingsHeader from '@sendbird/uikit-react/ChannelSettings/components/ChannelSettingsHeader'
+  ```
+* Fixed the issue where the mention feature did not work properly in the input component
+* Fixed the issue where unnecessary spaces were added between mention texts when editing an already mentioned message
+* Improved the scroll position flickering issue when loading previous messages
+* Implemented an attempt to load based on screen size threshold
+* Added `data-testid` to the UI components for making it easily to select them in the QE test
+
+### Features
+* Added `MESSAGE_INPUT__PLACE_HOLDER__FROZEN` to StringSet: `'Chat is unavailable in this channel'`
+
+## [v3.14.6] (May 10, 2024)
+### Fixes
+* Fixed a bug where import statements are not located at the top of the extracted index.css file
+
+## [v3.14.5] (May 04, 2024)
+### Fixes
+* Fixed a bug where channel scroll to bottom is not called internally when last message is updated with suggested replies
+
+## [v3.14.4] (May 02, 2024)
+### Features
+* Added `suggestedRepliesDirection` global option which serves as vertical/horizontal scroll option for `SuggestedReplies`
+  * How to use?
+  ```tsx
+  <App
+    appId={appId}
+    userId={userId}
+    uikitOptions={{
+      groupChannel: {
+        // Below turns on the `SuggestedReplies` feature (see v3.8.0 release changelog). Default value is false.
+        enableSuggestedReplies: true,
+        // Below changes scroll direction from horizontal to vertical.
+        suggestedRepliesDirection: 'vertical'
+      }
+    }}
+  />
+  ```
+* Added a new ui component `Header` (`import Header from '@sendbird/uikit-react/ui/Header'`) which replaced all existing header components
+### Fixes
+* Fixed a bug where suggested replies are incorrectly displayed when `showSuggestedRepliesFor` is set to 'last_message_only'
+
+## [v3.14.3] (Apr 19, 2024)
+### Features
+* Add outputFormat to the image compression options
+  ```tsx
+  <SendbirdProvider
+    ...
+    imageCompression={{
+      outputFormat: 'preserve' | 'png' | 'jpeg',
+    }}
+  >
+  </SendbirdProvider>
+  ```
+### Fixes
+* Set the message list padding with `12px` in the mobile mode
+
+## [v3.14.2] (Apr 18, 2024)
+### Fixes
+* Fixed a bug where right padding is added to messages sent by me in mobile devices
+* Removed image section in the OGMessageItemBody if there is no og image
+* Fixed that safely opens URL to prevent XSS
+* Fixed that copying URI-list issue in the iOS device/Safari
+* Fixed that channel badge count is not updated on iOS Webview
+
+## [v3.14.1] (Apr 12, 2024)
 ### Fixes
 * Fixed a bug where injecting an optional property with null value not rendering the expected default component
 * Updated the type of `renderMessage` in the `OpenChannel` module
@@ -234,7 +1129,6 @@ A message with valid `extendedMessagePayload.template` value will be displayed w
   ```
 
 - Added detailed comments for customizing-related props in the `GroupChannel` module
-
 
 ## [v3.12.0] (Feb 16, 2024)
 
@@ -565,7 +1459,6 @@ Feedback message feature can be turned on through `enableFeedback` option. When 
 
 ### Improvement:
 * Channels list no longer displays unread message count badge for focused channel
-
 
 ## [v3.8.2] (Nov 10 2023)
 
@@ -1100,7 +1993,6 @@ import { ThreadProvider } from '@sendbird/uikit-react/Thread/context';
   This resolves the issue where spreading the message object in the reducer loses some methods like `isUserMessage` and `isFileMessage`
 * fix util functions logic of verifying message type. We updated logic in util functions to verify the message type. (#700)
 
-
 ### Chore:
 * Update Trunk-Based Development to Scaled Trunk-Based Development (#696)
   It describes the flow with short-lived feature branches, code review, and build automation before integrating into main.
@@ -1132,7 +2024,6 @@ const memoizedSdkInitParams = useRef({
 * Fix an issue where the server returns 32 messages even when requesting 31 messages in the Channel. Now, hasMorePrev will not be set to false when the result size is larger than the query. (#688)
 * Verify the fetched message list size with the requested size of the MessageListParams. Added a test case for verifying the fetched message list size. (#686)
 * Address the incorrect cjs path in package.json. The common js module path in the pacakge.json has been fixed. (#685)
-
 
 ## [v3.6.3] (July 6 2023)
 ### Feat:
@@ -1581,7 +2472,6 @@ Fixes:
   * Condition where some menus get clipped in left side:
     * Usually user profile in channel moderation
   * Context menu of last item in channel gets clipped in the bottom
-
 
 ## [v3.4.2] (Mar 17 2023)
 

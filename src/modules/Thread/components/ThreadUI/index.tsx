@@ -1,11 +1,9 @@
-import React, { useRef, useState } from 'react';
+import React, { ReactNode, useRef, useState } from 'react';
 
 import './index.scss';
 
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { getChannelTitle } from '../../../GroupChannel/components/GroupChannelHeader/utils';
-import { useThreadContext } from '../../context/ThreadProvider';
 import { ParentMessageStateTypes, ThreadListStateTypes } from '../../types';
 import ParentMessageInfo from '../ParentMessageInfo';
 import ThreadHeader from '../ThreadHeader';
@@ -17,11 +15,14 @@ import useMemorizedThreadList from './useMemorizedThreadList';
 import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
 import { isAboutSame } from '../../context/utils';
 import { MessageProvider } from '../../../Message/context/MessageProvider';
-import { SendableMessageType } from '../../../../utils';
+import { SendableMessageType, getHTMLTextDirection } from '../../../../utils';
+import { classnames } from '../../../../utils/utils';
+import useThread from '../../context/useThread';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface ThreadUIProps {
   renderHeader?: () => React.ReactElement;
-  renderParentMessageInfo?: () => React.ReactElement;
+  renderParentMessageInfo?: () => ReactNode;
   renderMessage?: (props: {
     message: SendableMessageType,
     chainTop: boolean,
@@ -39,7 +40,7 @@ export interface ThreadUIProps {
 
 const ThreadUI: React.FC<ThreadUIProps> = ({
   renderHeader,
-  renderParentMessageInfo,
+  renderParentMessageInfo = () => <ParentMessageInfo className="sendbird-thread-ui__parent-message-info" />,
   renderMessage,
   renderMessageInput,
   renderCustomSeparator,
@@ -49,26 +50,28 @@ const ThreadUI: React.FC<ThreadUIProps> = ({
   renderVoiceMessageIcon,
   renderSendMessageIcon,
 }: ThreadUIProps): React.ReactElement => {
-  const {
-    stores,
-  } = useSendbirdStateContext();
+  const { state: { stores, config } } = useSendbird();
   const currentUserId = stores?.sdkStore?.sdk?.currentUser?.userId;
   const {
     stringSet,
   } = useLocalization();
   const {
-    currentChannel,
-    allThreadMessages,
-    parentMessage,
-    parentMessageState,
-    threadListState,
-    hasMorePrev,
-    hasMoreNext,
-    fetchPrevThreads,
-    fetchNextThreads,
-    onHeaderActionClick,
-    onMoveToParentMessage,
-  } = useThreadContext();
+    state: {
+      currentChannel,
+      allThreadMessages,
+      parentMessage,
+      parentMessageState,
+      threadListState,
+      hasMorePrev,
+      hasMoreNext,
+      onHeaderActionClick,
+      onMoveToParentMessage,
+    },
+    actions: {
+      fetchPrevThreads,
+      fetchNextThreads,
+    },
+  } = useThread();
   const replyCount = allThreadMessages.length;
   const isByMe = currentUserId === parentMessage?.sender?.userId;
 
@@ -78,7 +81,7 @@ const ThreadUI: React.FC<ThreadUIProps> = ({
     parentMessage,
     parentMessageState,
     renderParentMessageInfo,
-    renderParentMessageInfoPlaceholder, // nil, loading, invalid
+    renderParentMessageInfoPlaceholder,
   });
   const MemorizedThreadList = useMemorizedThreadList({
     threadListState,
@@ -116,7 +119,9 @@ const ThreadUI: React.FC<ThreadUIProps> = ({
         if (messages) {
           try {
             element.scrollTop = scrollTop_;
-            scrollRef.current.scrollTop = scrollTop_;
+            if (scrollRef.current) {
+              scrollRef.current.scrollTop = scrollTop_;
+            }
           } catch (error) {
             //
           }
@@ -137,7 +142,7 @@ const ThreadUI: React.FC<ThreadUIProps> = ({
         MemorizedHeader || (
           <ThreadHeader
             className="sendbird-thread-ui__header"
-            channelName={getChannelTitle(currentChannel, currentUserId, stringSet)}
+            channelName={getChannelTitle(currentChannel, currentUserId ?? '', stringSet)}
             onActionIconClick={onHeaderActionClick}
             onChannelNameClick={() => {
               onMoveToParentMessage?.({ message: parentMessage, channel: currentChannel });
@@ -146,18 +151,13 @@ const ThreadUI: React.FC<ThreadUIProps> = ({
         )
       }
       <div
-        className="sendbird-thread-ui--scroll"
+        className={classnames('sendbird-thread-ui--scroll', 'sendbird-conversation__messages')}
         ref={scrollRef}
         onScroll={onScroll}
+        dir={getHTMLTextDirection(config?.htmlTextDirection, config?.forceLeftToRightMessageLayout)}
       >
         <MessageProvider message={parentMessage} isByMe={isByMe}>
-          {
-            MemorizedParentMessageInfo || (
-              <ParentMessageInfo
-                className="sendbird-thread-ui__parent-message-info"
-              />
-            )
-          }
+          {MemorizedParentMessageInfo}
         </MessageProvider>
         {
           replyCount > 0 && (

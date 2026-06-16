@@ -5,25 +5,27 @@ import React, { useState } from 'react';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { FileMessage } from '@sendbird/chat/message';
 
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import useLongPress from '../../../../hooks/useLongPress';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { useMediaQueryContext } from '../../../../lib/MediaQueryContext';
 import { noop } from '../../../../utils/utils';
 import { CoreMessageType, isVoiceMessage } from '../../../../utils';
-import { getChannelUnreadMessageCount, getLastMessage, getLastMessageCreatedAt, getTotalMembers } from './utils';
+import { getChannelUnreadMessageCount, getLastMessageText, getLastMessageCreatedAt, getTotalMembers } from './utils';
 
 import { TypingIndicatorText } from '../../../GroupChannel/components/TypingIndicator';
 import { GroupChannelPreviewActionProps } from '../GroupChannelPreviewAction';
 
 import Badge from '../../../../ui/Badge';
-import ChannelAvatar from '../../../../ui/ChannelAvatar';
+// @emo-integration
+import ConnectionStatusChannelAvatar from '../../../../emo/features/connection-status/ConnectionStatusChannelAvatar';
 import Icon, { IconColors, IconTypes } from '../../../../ui/Icon';
 import Label, { LabelColors, LabelTypography } from '../../../../ui/Label';
 import MentionUserLabel from '../../../../ui/MentionUserLabel';
 import MessageStatus from '../../../../ui/MessageStatus';
 import Modal from '../../../../ui/Modal';
 import TextButton from '../../../../ui/TextButton';
+import { getChannelPreviewMessage } from '../../../Message/utils/tokens/tokenize';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface GroupChannelListItemBasicProps {
   tabIndex: number;
@@ -37,7 +39,7 @@ export interface GroupChannelListItemBasicProps {
 
 export interface GroupChannelListItemViewProps extends GroupChannelListItemBasicProps {
   channelName: string;
-  userTeam?: string;
+  channelTag?: string | null;
   isMessageStatusEnabled?: boolean;
 }
 
@@ -47,15 +49,21 @@ export const GroupChannelListItemView = ({
   userTeam,
   isSelected,
   channelName,
+  channelTag,
   isMessageStatusEnabled = true,
   onClick = noop,
   onLeaveChannel = () => Promise.resolve(),
   renderChannelAction,
 }: GroupChannelListItemViewProps) => {
-  const { config } = useSendbirdStateContext();
-  const { theme, isMentionEnabled, userId } = config;
+  const { state: { config } } = useSendbird();
+  const { theme, userId } = config;
   const { dateLocale, stringSet } = useLocalization();
   const { isMobile } = useMediaQueryContext();
+  const isMentionEnabled = config.groupChannel.enableMention;
+  const lastMessage = getLastMessageText(channel, stringSet);
+  const previewLastMessage = config.groupChannel.enableMarkdownForUserMessage
+    ? getChannelPreviewMessage(lastMessage)
+    : lastMessage;
 
   const [showMobileLeave, setShowMobileLeave] = useState(false);
   const onLongPress = useLongPress(
@@ -81,7 +89,7 @@ export const GroupChannelListItemView = ({
         {...(isMobile ? { ...onLongPress } : { onClick })}
       >
         <div className="sendbird-channel-preview__avatar">
-          <ChannelAvatar width={32} height={32} channel={channel} userId={userId} theme={theme} />
+          <ConnectionStatusChannelAvatar channel={channel} userId={userId} theme={theme} />
         </div>
         <div className="sendbird-channel-preview__content">
           <div className="sendbird-channel-preview__content__upper">
@@ -91,11 +99,37 @@ export const GroupChannelListItemView = ({
                   <Icon type={IconTypes.BROADCAST} fillColor={IconColors.SECONDARY} height="16px" width="16px" />
                 </div>
               )}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <Label
+                className="sendbird-channel-preview__content__upper__header__channel-name"
+                testID="sendbird-channel-preview__content__upper__header__channel-name"
+                type={LabelTypography.SUBTITLE_2}
+                color={LabelColors.ONBACKGROUND_1}
+              >
+                {channelName}
+              </Label>
+              {channelTag && (
                 <Label
-                  className="sendbird-channel-preview__content__upper__header__channel-name"
-                  type={LabelTypography.SUBTITLE_2}
+                  className={[
+                    'emo-channel-preview__tag',
+                    isSelected ? 'emo-channel-preview__tag--selected' : '',
+                  ].join(' ')}
+                  type={LabelTypography.CAPTION_2}
                   color={LabelColors.ONBACKGROUND_1}
+                >
+                  {channelTag}
+                </Label>
+              )}
+              <Label
+                className="sendbird-channel-preview__content__upper__header__total-members"
+                type={LabelTypography.CAPTION_2}
+                color={LabelColors.ONBACKGROUND_2}
+              >
+                {getTotalMembers(channel)}
+              </Label>
+              {(channel.isFrozen) && (
+                <div
+                  title="Frozen"
+                  className="sendbird-channel-preview__content__upper__header__frozen-icon"
                 >
                   {channelName}
                 </Label>
@@ -149,6 +183,46 @@ export const GroupChannelListItemView = ({
                 )}
               </>
             )}
+          </div>
+          <div className="sendbird-channel-preview__content__lower">
+            <Label
+              className="sendbird-channel-preview__content__lower__last-message"
+              type={LabelTypography.BODY_2}
+              color={LabelColors.ONBACKGROUND_3}
+            >
+              {isTyping && (
+                <TypingIndicatorText members={channel.getTypingUsers()} />
+              )}
+              {!isTyping
+                && !isVoiceMessage(channel.lastMessage as FileMessage | null)
+                && previewLastMessage}
+              {!isTyping
+                && isVoiceMessage(channel.lastMessage as FileMessage | null)
+                && stringSet.VOICE_MESSAGE}
+            </Label>
+            {
+              /**
+               * Do not show unread count for focused channel. This is because of the limitation where
+               * isScrollBottom and hasNext states needs to be added globally but they are from channel context
+               * so channel list cannot see them with the current architecture.
+               * However, when enableMarkAsUnread is true, we show unread count even for selected channels.
+               */
+              (!isSelected || config.groupChannel.enableMarkAsUnread) && !channel.isEphemeral && (
+                <div className="sendbird-channel-preview__content__lower__unread-message-count">
+                  {isMentionEnabled && channel.unreadMentionCount > 0 ? (
+                    <MentionUserLabel
+                      className="sendbird-channel-preview__content__lower__unread-message-count__mention"
+                      color="purple"
+                    >
+                      {'@'}
+                    </MentionUserLabel>
+                  ) : null}
+                  {getChannelUnreadMessageCount(channel) ? ( // return number
+                    <Badge count={getChannelUnreadMessageCount(channel)} />
+                  ) : null}
+                </div>
+              )
+            }
           </div>
         </div>
         {!isMobile && <div className="sendbird-channel-preview__action">{renderChannelAction({ channel })}</div>}

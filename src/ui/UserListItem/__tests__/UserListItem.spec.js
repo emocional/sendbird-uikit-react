@@ -1,7 +1,15 @@
 import React from 'react';
-import { render } from '@testing-library/react';
+import { render, renderHook } from '@testing-library/react';
 
 import UserListItem from "../index";
+import { SendbirdContext } from '../../../lib/Sendbird/context/SendbirdContext';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
+
+jest.mock('../../../lib/Sendbird/context/hooks/useSendbird', () => ({
+  __esModule: true,
+  default: jest.fn(),
+  useSendbird: jest.fn(),
+}));
 
 const getUserList = () => [
   {
@@ -22,6 +30,18 @@ const getUserList = () => [
 ];
 
 describe('ui/UserListItem', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    const stateContextValue = {
+      state: {
+        config: {},
+        stores: {},
+      },
+    };
+    useSendbird.mockReturnValue(stateContextValue);
+    renderHook(() => useSendbird());
+  });
+
   it.skip('should render text prop', function () {
     const [user1] = getUserList();
     render(<UserListItem user={user1} />);
@@ -34,12 +54,14 @@ describe('ui/UserListItem', () => {
   it('should do a snapshot test of the UserListItem DOM', function () {
     const [user1] = getUserList();
     const { asFragment } = render(
-      <UserListItem
-        user={user1}
-        checkBox
-        checked={true}
-        onChange={() => { }}
-      />
+      <SendbirdContext.Provider value={{ config: { userId: '' } }}>
+        <UserListItem
+          user={user1}
+          checkBox
+          checked={true}
+          onChange={() => { }}
+        />
+      </SendbirdContext.Provider>
     );
     expect(asFragment()).toMatchSnapshot();
   });

@@ -2,6 +2,8 @@ name: 'PR title'
 
 on:
   pull_request:
+    branches:
+      - main
     types:
       - opened
       - edited
@@ -10,8 +12,8 @@ on:
 permissions: write-all
 
 jobs:
-   main:
-    name: "PR title"
+  main:
+    name: 'PR title'
     runs-on: ubuntu-latest
     permissions: write-all
     steps:

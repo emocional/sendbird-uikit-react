@@ -1,11 +1,11 @@
 import type { OpenChannel } from '@sendbird/chat/openChannel';
+import type { Logger } from '../../../../lib/Sendbird/types';
 import { useCallback } from 'react';
 import * as messageActionTypes from '../dux/actionTypes';
 import { SendableMessageType } from '../../../../utils';
-import { Logger } from '../../../../lib/SendbirdState';
 
 interface DynamicParams {
-  currentOpenChannel: OpenChannel;
+  currentOpenChannel: OpenChannel | null;
 }
 
 type MessagesDispatcherType = { type: string; payload: any };
@@ -33,7 +33,7 @@ function useResendMessageCallback(
         // userMessage
         if (failedMessage.isUserMessage()) {
           currentOpenChannel
-            .resendMessage(failedMessage)
+            ?.resendMessage(failedMessage)
             .onPending((message) => {
               messagesDispatcher({
                 type: messageActionTypes.RESENDING_MESSAGE_START,
@@ -68,7 +68,7 @@ function useResendMessageCallback(
         // fileMessage
         if (failedMessage.isFileMessage()) {
           currentOpenChannel
-            .resendMessage(failedMessage)
+            ?.resendMessage(failedMessage)
             .onPending((message) => {
               messagesDispatcher({
                 type: messageActionTypes.RESENDING_MESSAGE_START,

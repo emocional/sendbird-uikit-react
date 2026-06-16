@@ -19,23 +19,24 @@ export function ThreadReplies(
     threadInfo,
     onClick,
   }: ThreadRepliesProps,
-  ref?: RefObject<HTMLDivElement>,
+  ref: RefObject<HTMLDivElement>,
 ): React.ReactElement {
   const {
     mostRepliedUsers = [],
     replyCount,
   } = threadInfo;
+
   const { stringSet } = useLocalization();
   return (
     <div
       className={`sendbird-ui-thread-replies ${className}`}
       role="button"
       onClick={(e) => {
-        onClick(e);
+        onClick?.(e);
         e?.stopPropagation();
       }}
       onKeyDown={(e) => {
-        onClick(e);
+        onClick?.(e);
         e?.stopPropagation();
       }}
       ref={ref}
@@ -74,7 +75,8 @@ export function ThreadReplies(
           </div>
         )}
       </div>
-      <Label
+      {replyCount > 0 && (
+        <Label
         className="sendbird-ui-thread-replies__reply-counts"
         type={LabelTypography.CAPTION_2}
         color={LabelColors.PRIMARY}
@@ -85,6 +87,7 @@ export function ThreadReplies(
             : `${replyCount > 99 ? stringSet.CHANNEL__THREAD_OVER_MAX : replyCount} ${stringSet.CHANNEL__THREAD_REPLIES}`
         }
       </Label>
+      )}
       <Icon
         className="sendbird-ui-thread-replies__icon"
         type={IconTypes.CHEVRON_RIGHT}

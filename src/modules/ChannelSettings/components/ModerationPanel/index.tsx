@@ -22,7 +22,7 @@ import MemberList from './MemberList';
 import BannedUserList from './BannedUserList';
 import MutedMemberList from './MutedMemberList';
 
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
+import useChannelSettings from '../../context/useChannelSettings';
 
 const kFormatter = (num: number): string | number => {
   return Math.abs(num) > 999
@@ -30,17 +30,22 @@ const kFormatter = (num: number): string | number => {
     : num;
 };
 
+/**
+ * @deprecated
+ * `ModerationPanel` is deprecated.
+ * Use `@sendbird/ChannelSettings/components/ChannelSettingMenuList` instead.
+ */
 export default function ModerationPanel(): ReactElement {
   const [frozen, setFrozen] = useState(false);
 
   const { stringSet } = useContext(LocalizationContext);
-  const { channel } = useChannelSettingsContext();
+  const { state: { channel } } = useChannelSettings();
 
   // work around for
   // https://sendbird.slack.com/archives/G01290GCDCN/p1595922832000900
   // SDK bug - after frozen/unfrozen myRole becomes "none"
   useEffect(() => {
-    setFrozen(channel?.isFrozen);
+    setFrozen(channel?.isFrozen ?? false);
   }, [channel]);
 
   return (
@@ -85,7 +90,7 @@ export default function ModerationPanel(): ReactElement {
             >
               {stringSet.CHANNEL_SETTING__MEMBERS__TITLE}
             </Label>
-            <Badge count={kFormatter(channel?.memberCount)} />
+            <Badge count={channel?.memberCount ? kFormatter(channel.memberCount) : ''}/>
           </>
         )}
         renderContent={() => <MemberList />}

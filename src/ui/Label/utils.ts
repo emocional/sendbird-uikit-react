@@ -34,31 +34,18 @@ export function changeTypographyToClassName(type?: ObjectValues<typeof Typograph
 
 export function changeColorToClassName(color?: ObjectValues<typeof Colors>) {
   switch (color) {
-    case Colors.EMOCIONAL_BORDER:
-      return 'sendbird-label--color-emocional_border';
-    case Colors.ONBACKGROUND_1:
-      return 'sendbird-label--color-onbackground-1';
-    case Colors.ONBACKGROUND_2:
-      return 'sendbird-label--color-onbackground-2';
-    case Colors.ONBACKGROUND_3:
-      return 'sendbird-label--color-onbackground-3';
-    case Colors.ONBACKGROUND_4:
-      return 'sendbird-label--color-onbackground-4';
-    case Colors.ONCONTENT_1:
-      return 'sendbird-label--color-oncontent-1';
-    case Colors.ONCONTENT_2:
-      return 'sendbird-label--color-oncontent-2';
-    case Colors.ONCONTENT_INVERSE_1:
-      return 'sendbird-label--color-oncontent-inverse-1';
-    case Colors.ONCONTENT_INVERSE_5:
-      return 'sendbird-label--color-oncontent-inverse-5';
-    case Colors.PRIMARY:
-      return 'sendbird-label--color-primary'; // should be Primary-3 fix me
-    case Colors.ERROR:
-      return 'sendbird-label--color-error';
-    case Colors.SECONDARY_3:
-      return 'sendbird-label--color-secondary-3';
-    default:
-      return '';
+    case Colors.ONBACKGROUND_1: return 'sendbird-label--color-onbackground-1';
+    case Colors.ONBACKGROUND_2: return 'sendbird-label--color-onbackground-2';
+    case Colors.ONBACKGROUND_3: return 'sendbird-label--color-onbackground-3';
+    case Colors.ONBACKGROUND_4: return 'sendbird-label--color-onbackground-4';
+    case Colors.ONCONTENT_1: return 'sendbird-label--color-oncontent-1';
+    case Colors.ONCONTENT_2: return 'sendbird-label--color-oncontent-2';
+    case Colors.ONCONTENT_3: return 'sendbird-label--color-oncontent-3';
+    case Colors.ONCONTENT_INVERSE_1: return 'sendbird-label--color-oncontent-inverse-1';
+    case Colors.ONCONTENT_INVERSE_3: return 'sendbird-label--color-oncontent-inverse-3';
+    case Colors.PRIMARY: return 'sendbird-label--color-primary'; // should be Primary-3 fix me
+    case Colors.ERROR: return 'sendbird-label--color-error';
+    case Colors.SECONDARY_3: return 'sendbird-label--color-secondary-3';
+    default: return '';
   }
 }

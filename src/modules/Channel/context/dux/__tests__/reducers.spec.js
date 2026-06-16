@@ -7,6 +7,12 @@ import * as actionTypes from '../actionTypes';
 import reducers from '../reducers';
 import initialState from '../initialState';
 import { uuidv4 } from '../../../../../utils/uuid';
+import { useLocalization } from '../../../../../lib/LocalizationContext';
+
+jest.mock('../../../../../lib/LocalizationContext', () => ({
+  ...jest.requireActual('../../../../../lib/LocalizationContext'),
+  useLocalization: jest.fn(),
+}));
 
 const getLastMessageOf = (messageList) => messageList[messageList.length - 1];
 
@@ -15,8 +21,19 @@ describe('Messages-Reducers', () => {
     ...initialState,
     currentGroupChannel: { url: generateMockChannel().currentGroupChannel.url },
   };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useLocalization.mockReturnValue({
+      stringSet: {
+        DATE_FORMAT__UNREAD_SINCE: 'p MMM dd',
+      },
+    });
+  });
+
   it('should setloading true FETCH_INITIAL_MESSAGES_START', () => {
-    const nextState = reducers(initialState, {
+    const { stringSet } = useLocalization();
+    const nextState = reducers({ ...initialState, stringSet }, {
       type: actionTypes.FETCH_INITIAL_MESSAGES_START,
     });
     expect(nextState.loading).toEqual(true);
@@ -28,8 +45,9 @@ describe('Messages-Reducers', () => {
   });
 
   it('should initialize messages FETCH_INITIAL_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(stateWithCurrentChannel, {
+    const nextState = reducers({ ...stateWithCurrentChannel, stringSet }, {
       type: actionTypes.FETCH_INITIAL_MESSAGES_SUCCESS,
       payload: {
         currentGroupChannel: mockData.currentGroupChannel,
@@ -46,8 +64,9 @@ describe('Messages-Reducers', () => {
   });
 
   it('should append previous messages FETCH_PREV_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.FETCH_PREV_MESSAGES_SUCCESS,
       payload: {
         currentGroupChannel: mockData.currentGroupChannel,
@@ -64,8 +83,9 @@ describe('Messages-Reducers', () => {
   });
 
   it('should append next messages FETCH_NEXT_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.FETCH_NEXT_MESSAGES_SUCCESS,
       payload: {
         currentGroupChannel: mockData.currentGroupChannel,
@@ -82,10 +102,12 @@ describe('Messages-Reducers', () => {
   });
 
   it('should get prev message list considering messageListParams FETCH_PREV_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     const MESSAGE_LIST_SIZE = 20;
     const mockData = generateMockChannel();
-    const nextState = reducers({
+    const nextState = reducers({ ...mockData, stringSet }, {
       ...mockData,
+      stringSet,
       hasMorePrev: true,
       hasMoreNext: true,
       messageListParams: {
@@ -105,11 +127,13 @@ describe('Messages-Reducers', () => {
   });
 
   it('should verify there is no more messages FETCH_PREV_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     // request size > response size
     const MESSAGE_LIST_SIZE = 20;
     const mockData = generateMockChannel();
     const nextState = reducers({
       ...mockData,
+      stringSet,
       hasMorePrev: true,
       hasMoreNext: true,
       messageListParams: {
@@ -128,11 +152,13 @@ describe('Messages-Reducers', () => {
   });
 
   it('should not set `hasMorePrev: false` when additional messages are fetched in FETCH_PREV_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     // request size < response size
     const MESSAGE_LIST_SIZE = 20;
     const mockData = generateMockChannel();
     const nextState = reducers({
       ...mockData,
+      stringSet,
       hasMorePrev: true,
       hasMoreNext: true,
       messageListParams: {
@@ -151,10 +177,12 @@ describe('Messages-Reducers', () => {
   });
 
   it('should get next message list considering messageListParams FETCH_NEXT_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     const MESSAGE_LIST_SIZE = 20;
     const mockData = generateMockChannel();
-    const nextState = reducers({
+    const nextState = reducers({ ...mockData, stringSet }, {
       ...mockData,
+      stringSet,
       hasMorePrev: true,
       hasMoreNext: true,
       messageListParams: {
@@ -174,11 +202,13 @@ describe('Messages-Reducers', () => {
   });
 
   it('should verify there is no more messages FETCH_NEXT_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     // request size > response size
     const MESSAGE_LIST_SIZE = 20;
     const mockData = generateMockChannel();
     const nextState = reducers({
       ...mockData,
+      stringSet,
       hasMorePrev: true,
       hasMoreNext: true,
       messageListParams: {
@@ -197,11 +227,13 @@ describe('Messages-Reducers', () => {
   });
 
   it('should validate unexpected additional messages are fetched FETCH_NEXT_MESSAGES_SUCCESS', () => {
+    const { stringSet } = useLocalization();
     // request size < response size
     const MESSAGE_LIST_SIZE = 20;
     const mockData = generateMockChannel();
     const nextState = reducers({
       ...mockData,
+      stringSet,
       hasMorePrev: true,
       hasMoreNext: true,
       messageListParams: {
@@ -220,8 +252,9 @@ describe('Messages-Reducers', () => {
   });
 
   it('should set pending message on SEND_MESSAGE_START', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.SEND_MESSAGE_START,
       payload: mockMessage1,
     });
@@ -237,8 +270,10 @@ describe('Messages-Reducers', () => {
     const succededMessage = generateMockMessage(succeededMessageId);
     succededMessage.sendingStatus = 'succeeded';
 
+    const { stringSet } = useLocalization();
     const currentState = {
       ...mockData,
+      stringSet,
       localMessages: [
         {
           ...succededMessage,
@@ -259,8 +294,9 @@ describe('Messages-Reducers', () => {
   });
 
   it('should append message to end of list ON_MESSAGE_RECEIVED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.ON_MESSAGE_RECEIVED,
       payload: { message: mockMessage1, channel: { url: mockMessage1.channelUrl } },
     });
@@ -269,8 +305,9 @@ describe('Messages-Reducers', () => {
   });
 
   it('should not add message when get overlap message ON_MESSAGE_RECEIVED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.ON_MESSAGE_RECEIVED,
       payload: { message: mockData.allMessages[0], channel: { url: mockMessage1.channelUrl } },
     });
@@ -278,6 +315,7 @@ describe('Messages-Reducers', () => {
   });
 
   it('should update message if present on list ON_MESSAGE_UPDATED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const currentState = { ...mockData };
     currentState.allMessages[2].status = 'failed';
@@ -287,7 +325,7 @@ describe('Messages-Reducers', () => {
       status: 'updated',
     };
 
-    const nextState = reducers(currentState, {
+    const nextState = reducers({ ...currentState, stringSet }, {
       type: actionTypes.ON_MESSAGE_UPDATED,
       payload: {
         channel: currentState.currentGroupChannel,
@@ -299,6 +337,7 @@ describe('Messages-Reducers', () => {
   });
 
   it('should not update message if the message is not on the list ON_MESSAGE_UPDATED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const currentState = { ...mockData };
     const updatedMessage = {
@@ -306,7 +345,7 @@ describe('Messages-Reducers', () => {
       status: 'updated',
     };
 
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.ON_MESSAGE_UPDATED,
       payload: {
         channel: currentState.currentGroupChannel,
@@ -318,6 +357,7 @@ describe('Messages-Reducers', () => {
   });
 
   it('should update threadInfo of message on ON_MESSAGE_THREAD_INFO_UPDATED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const currentState = { ...mockData };
     const updateEvent = {
@@ -327,7 +367,7 @@ describe('Messages-Reducers', () => {
     };
     expect(currentState.allMessages.find(m => m.messageId === updateEvent.targetMessageId).threadInfo).toBeUndefined();
 
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.ON_MESSAGE_THREAD_INFO_UPDATED,
       payload: {
         channel: currentState.currentGroupChannel,
@@ -361,6 +401,7 @@ describe('Messages-Reducers', () => {
   });
 
   it('should not update threadInfo of message if channel does not match on ON_MESSAGE_THREAD_INFO_UPDATED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const currentState = { ...mockData };
     const updateEvent = {
@@ -370,7 +411,7 @@ describe('Messages-Reducers', () => {
     };
     expect(currentState.allMessages.find(m => m.messageId === updateEvent.targetMessageId).threadInfo).toBeUndefined();
 
-    const nextState = reducers(currentState, {
+    const nextState = reducers({ ...currentState, stringSet }, {
       type: actionTypes.ON_MESSAGE_THREAD_INFO_UPDATED,
       payload: {
         channel: { url: updateEvent.channelUrl },
@@ -383,6 +424,7 @@ describe('Messages-Reducers', () => {
   });
 
   it('should not update threadInfo of message if there is no matching message on ON_MESSAGE_THREAD_INFO_UPDATED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const currentState = { ...mockData };
     const updateEvent = {
@@ -392,7 +434,7 @@ describe('Messages-Reducers', () => {
     };
     expect(currentState.allMessages.find(m => m.messageId === updateEvent.targetMessageId)).toBeUndefined();
 
-    const nextState = reducers(currentState, {
+    const nextState = reducers({ ...currentState, stringSet }, {
       type: actionTypes.ON_MESSAGE_THREAD_INFO_UPDATED,
       payload: {
         channel: currentState.currentGroupChannel,
@@ -404,10 +446,11 @@ describe('Messages-Reducers', () => {
   });
 
   it('should delete message on ON_MESSAGE_DELETED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const deletedMessage = mockData.allMessages[1].messageId;
 
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.ON_MESSAGE_DELETED,
       payload: deletedMessage,
     });
@@ -416,12 +459,14 @@ describe('Messages-Reducers', () => {
   });
 
   it('should reset all messages on RESET_MESSAGES', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.RESET_MESSAGES,
     });
     expect(nextState).toEqual({
       ...mockData,
+      stringSet,
       hasMorePrev: false,
       hasMoreNext: false,
       allMessages: [],
@@ -429,11 +474,13 @@ describe('Messages-Reducers', () => {
   });
 
   it('should apply reactions on ON_REACTION_UPDATED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const id = "12345678";
     const reactions = [{ key: '123', value: '123' }, { key: '1234', value: '1234' }];
     const nextState = reducers({
       ...mockData,
+      stringSet,
       allMessages: [generateMockMessage(id)],
     }, {
       type: actionTypes.ON_REACTION_UPDATED,
@@ -446,9 +493,10 @@ describe('Messages-Reducers', () => {
   });
 
   it('should handle SET_CURRENT_CHANNEL', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const channel = { url: mockMessage1.channelUrl };
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.SET_CURRENT_CHANNEL,
       payload: channel,
     });
@@ -457,17 +505,19 @@ describe('Messages-Reducers', () => {
   });
 
   it('should handle SET_CHANNEL_INVALID', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.SET_CHANNEL_INVALID,
     });
     expect(nextState.isInvalid).toEqual(true);
   });
 
   it('should handle SET_EMOJI_CONTAINER', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const emojiContainer = { key: 'value' };
-    const nextState = reducers(mockData, {
+    const nextState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.SET_EMOJI_CONTAINER,
       payload: emojiContainer,
     });
@@ -478,7 +528,8 @@ describe('Messages-Reducers', () => {
     const mockData = generateMockChannel();
     const messageTypes = { ADMIN: 'admin', USER: 'user', FILE: 'file' };
     test('messageType filter is ADMIN', () => {
-      const appliedParamsState = reducers(mockData, {
+      const { stringSet } = useLocalization();
+      const appliedParamsState = reducers({ ...mockData, stringSet }, {
         type: actionTypes.MESSAGE_LIST_PARAMS_CHANGED,
         payload: { messageTypeFilter: messageTypes.ADMIN },
       });
@@ -502,7 +553,8 @@ describe('Messages-Reducers', () => {
       });
     });
     test('messageType filter is USER', () => {
-      const appliedParamsState = reducers(mockData, {
+      const { stringSet } = useLocalization();
+      const appliedParamsState = reducers({ ...mockData, stringSet }, {
         type: actionTypes.MESSAGE_LIST_PARAMS_CHANGED,
         payload: { messageTypeFilter: messageTypes.USER },
       });
@@ -526,7 +578,8 @@ describe('Messages-Reducers', () => {
       });
     });
     test('messageType filter is FILE', () => {
-      const appliedParamsState = reducers(mockData, {
+      const { stringSet } = useLocalization();
+      const appliedParamsState = reducers({ ...mockData, stringSet }, {
         type: actionTypes.MESSAGE_LIST_PARAMS_CHANGED,
         payload: { messageTypeFilter: messageTypes.FILE },
       });
@@ -552,9 +605,10 @@ describe('Messages-Reducers', () => {
   });
 
   it('should filter by customType of messageListParams when message received', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const paramsCustomTypes = ['a', 'b', 'c'];
-    const appliedParamsState = reducers(mockData, {
+    const appliedParamsState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.MESSAGE_LIST_PARAMS_CHANGED,
       payload: { customTypesFilter: paramsCustomTypes },
     });
@@ -579,9 +633,10 @@ describe('Messages-Reducers', () => {
   });
 
   it('should filter by senderUserIds of messageListParams when message received', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const paramsSenderUserIds = ['mark-1', 'mark-2', 'mark-3'];
-    const appliedParamsState = reducers(mockData, {
+    const appliedParamsState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.MESSAGE_LIST_PARAMS_CHANGED,
       payload: { senderUserIdsFilter: paramsSenderUserIds },
     });
@@ -606,6 +661,7 @@ describe('Messages-Reducers', () => {
   });
 
   it('should filter by MESSAGE_LIST_PARAMS_CHANGED when ON_MESSAGE_UPDATED', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const changingMessage = uuidv4();
     const updatingMessage = {
@@ -618,7 +674,7 @@ describe('Messages-Reducers', () => {
     };
     mockData.allMessages.unshift(updatingMessage);
 
-    const appliedParamsState = reducers(mockData, {
+    const appliedParamsState = reducers({ ...mockData, stringSet }, {
       type: actionTypes.MESSAGE_LIST_PARAMS_CHANGED,
       payload: {
         messageTypeFilter: 'user',
@@ -673,6 +729,7 @@ describe('Messages-Reducers', () => {
   });
 
   it('should not update with coming message when received message already exsits', () => {
+    const { stringSet } = useLocalization();
     const mockData = generateMockChannel();
     const changingMessage = uuidv4();
     const updatingMessage = {
@@ -686,6 +743,7 @@ describe('Messages-Reducers', () => {
     const onMessageUpdatedState = reducers(
       {
         ...mockData,
+        stringSet,
         allMessages: [updatingMessage, ...mockData.allMessages],
       },
       {

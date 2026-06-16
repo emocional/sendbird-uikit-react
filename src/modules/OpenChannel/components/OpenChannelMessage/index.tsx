@@ -1,3 +1,4 @@
+import './open-channel-message.scss';
 import React, { useState, useRef, ReactElement } from 'react';
 import { AdminMessage, FileMessage, UserMessage } from '@sendbird/chat/message';
 import { User } from '@sendbird/chat';
@@ -8,7 +9,6 @@ import OpenChannelAdminMessage from '../../../../ui/OpenChannelAdminMessage';
 import OpenChannelOGMessage from '../../../../ui/OpenchannelOGMessage';
 import OpenChannelThumbnailMessage from '../../../../ui/OpenchannelThumbnailMessage';
 import OpenChannelFileMessage from '../../../../ui/OpenchannelFileMessage';
-// import UnknownMessage from '../../../../ui/UnknownMessage';
 
 import DateSeparator from '../../../../ui/DateSeparator';
 import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
@@ -18,10 +18,10 @@ import FileViewer from '../../../../ui/FileViewer';
 import RemoveMessageModal from './RemoveMessageModal';
 import { MessageTypes, SendingMessageStatus, getMessageType } from './utils';
 import { useOpenChannelContext } from '../../context/OpenChannelProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import type { RenderMessageProps } from '../../../../types';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { CoreMessageType, SendableMessageType } from '../../../../utils';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export type OpenChannelMessageProps = {
   renderMessage?: (props: RenderMessageProps) => React.ReactElement;
@@ -46,11 +46,11 @@ export default function OpenChannelMessage(
   const { dateLocale, stringSet } = useLocalization();
   const editDisabled = currentOpenChannel?.isFrozen;
 
-  const globalState = useSendbirdStateContext();
-  const currentUserId = globalState?.config?.userId;
-  const isOgMessageEnabledInOpenChannel = globalState.config.openChannel.enableOgtag;
+  const { state } = useSendbird();
+  const currentUserId = state?.config?.userId;
+  const isOgMessageEnabledInOpenChannel = state.config.openChannel.enableOgtag;
 
-  let sender: User = null;
+  let sender: User | undefined;
   if (message?.messageType !== 'admin') {
     sender = (message as SendableMessageType)?.sender;
   }
@@ -73,7 +73,7 @@ export default function OpenChannelMessage(
 
   if (renderMessage) {
     return (
-      <div className="sendbird-msg-hoc sendbird-msg--scroll-ref">
+      <div className="sendbird-open-channel-msg-hoc sendbird-msg--scroll-ref" data-testid="sendbird-message-hoc">
         {renderMessage({ message, chainTop, chainBottom })}
       </div>
     );
@@ -99,7 +99,7 @@ export default function OpenChannelMessage(
   }
 
   return (
-    <div className="sendbird-msg-hoc sendbird-msg--scroll-ref">
+    <div className="sendbird-open-channel-msg-hoc sendbird-msg--scroll-ref" data-testid="sendbird-message-hoc">
       <>
         {/* date-separator */}
         {hasSeparator && message?.createdAt && (

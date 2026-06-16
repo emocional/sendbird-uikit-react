@@ -1,8 +1,7 @@
 import React, { ReactElement, useState } from 'react';
 import { MultipleFilesMessage, SendingStatus } from '@sendbird/chat/message';
 
-import type { OnBeforeDownloadFileMessageType } from '../../modules/GroupChannel/context/GroupChannelProvider';
-import useSendbirdStateContext from '../../hooks/useSendbirdStateContext';
+import type { OnBeforeDownloadFileMessageType } from '../../modules/GroupChannel/context/types';
 import Icon, { IconColors, IconTypes } from '../Icon';
 import ImageRenderer, { getBorderRadiusForMultipleImageRenderer } from '../ImageRenderer';
 import ImageGrid from '../ImageGrid';
@@ -11,6 +10,7 @@ import './index.scss';
 import { MULTIPLE_FILES_IMAGE_BORDER_RADIUS, MULTIPLE_FILES_IMAGE_SIDE_LENGTH, MULTIPLE_FILES_IMAGE_THUMBNAIL_SIDE_LENGTH } from './const';
 import { isGif } from '../../utils';
 import { UploadedFileInfoWithUpload } from '../../types';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 export const ThreadMessageKind = {
   PARENT: 'parent',
@@ -39,7 +39,7 @@ export default function MultipleFilesMessageItemBody({
   statefulFileInfoList = [],
   onBeforeDownloadFileMessage = null,
 }: Props): ReactElement {
-  const logger = useSendbirdStateContext?.()?.config?.logger;
+  const { state: { config: { logger } } } = useSendbird();
   const [currentFileViewerIndex, setCurrentFileViewerIndex] = useState(-1);
 
   function onClose() {
@@ -55,7 +55,7 @@ export default function MultipleFilesMessageItemBody({
   }
 
   return (
-    threadMessageKindKey && (
+    threadMessageKindKey ? (
       <>
         {currentFileViewerIndex > -1 && (
           <FileViewer
@@ -66,9 +66,8 @@ export default function MultipleFilesMessageItemBody({
             onClickRight={onClickRight}
             onClose={onClose}
             onDownloadClick={async (e) => {
-              if (!onBeforeDownloadFileMessage) {
-                return null;
-              }
+              if (!onBeforeDownloadFileMessage) return;
+
               try {
                 const allowDownload = await onBeforeDownloadFileMessage({ message, index: currentFileViewerIndex });
                 if (!allowDownload) {
@@ -90,7 +89,7 @@ export default function MultipleFilesMessageItemBody({
                 key={`sendbird-multiple-files-image-renderer-${index}-${fileInfo.url}`}
               >
                 <ImageRenderer
-                  url={fileInfo.thumbnails?.[0]?.url ?? fileInfo.url}
+                  url={fileInfo.thumbnails?.[0]?.url ?? fileInfo.url ?? ''}
                   fixedSize={false}
                   width={MULTIPLE_FILES_IMAGE_SIDE_LENGTH[threadMessageKindKey]}
                   maxSideLength={MULTIPLE_FILES_IMAGE_SIDE_LENGTH.CHAT_WEB}
@@ -103,7 +102,7 @@ export default function MultipleFilesMessageItemBody({
                   shadeOnHover={true}
                   isUploaded={!!fileInfo.isUploaded}
                   placeHolder={({ style }) => {
-                    if (isGif(fileInfo.mimeType)) return <ImagePlaceholder.GIF style={style} />;
+                    if (fileInfo.mimeType && isGif(fileInfo.mimeType)) return <ImagePlaceholder.GIF style={style} />;
                     return <ImagePlaceholder.Default style={style} />;
                   }}
                   defaultComponent={<ImagePlaceholder.LoadError />}
@@ -113,7 +112,7 @@ export default function MultipleFilesMessageItemBody({
           })}
         </ImageGrid>
       </>
-    )
+    ) : <></>
   );
 }
 

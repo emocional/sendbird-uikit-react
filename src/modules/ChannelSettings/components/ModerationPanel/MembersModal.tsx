@@ -1,45 +1,48 @@
 import React, {
   ReactElement,
+  ReactNode,
   useContext,
   useEffect,
   useState,
 } from 'react';
-import type { Member } from '@sendbird/chat/groupChannel';
 import { Role } from '@sendbird/chat';
+import type { Member, MemberListQuery, MemberListQueryParams } from '@sendbird/chat/groupChannel';
 
 import Modal from '../../../../ui/Modal';
-import UserListItem from '../../../../ui/UserListItem';
-import IconButton from '../../../../ui/IconButton';
-import Icon, { IconTypes, IconColors } from '../../../../ui/Icon';
-import ContextMenu, { MenuItem, MenuItems, MuteMenuItem, OperatorMenuItem } from '../../../../ui/ContextMenu';
+import UserListItem, { type UserListItemProps } from '../../../../ui/UserListItem';
 import { noop } from '../../../../utils/utils';
 
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
 import { useOnScrollPositionChangeDetector } from '../../../../hooks/useOnScrollReachedEndDetector';
+import { UserListItemMenu } from '../../../../ui/UserListItemMenu';
+import useChannelSettings from '../../context/useChannelSettings';
 
-interface Props {
+export interface MembersModalProps {
   onCancel(): void;
+  renderUserListItem?: (props: UserListItemProps & { index: number }) => ReactNode;
+  memberListQueryParams?: MemberListQueryParams;
 }
 
-export default function MembersModal({ onCancel }: Props): ReactElement {
-  const [members, setMembers] = useState([]);
-  const [memberQuery, setMemberQuery] = useState(null);
+export function MembersModal({
+  onCancel,
+  renderUserListItem = (props) => <UserListItem {...props} />,
+  memberListQueryParams = {},
+}: MembersModalProps): ReactElement {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [memberQuery, setMemberQuery] = useState<MemberListQuery | null>(null);
 
-  const { channel } = useChannelSettingsContext();
-  const state = useSendbirdStateContext();
-  const currentUserId = state?.config?.userId;
+  const { state: { channel } } = useChannelSettings();
   const { stringSet } = useContext(LocalizationContext);
 
   useEffect(() => {
     const memberListQuery = channel?.createMemberListQuery({
       limit: 20,
+      ...memberListQueryParams,
     });
-    memberListQuery.next().then((members) => {
+    memberListQuery?.next().then((members) => {
       setMembers(members);
     });
-    setMemberQuery(memberListQuery);
+    setMemberQuery(memberListQuery ?? null);
   }, []);
   return (
     <div>
@@ -54,8 +57,7 @@ export default function MembersModal({ onCancel }: Props): ReactElement {
           className="sendbird-more-members__popup-scroll"
           onScroll={useOnScrollPositionChangeDetector({
             onReachedBottom: async () => {
-              const { hasNext } = memberQuery;
-              if (hasNext) {
+              if (memberQuery && memberQuery.hasNext) {
                 memberQuery.next().then((o) => {
                   setMembers([
                     ...members,
@@ -66,129 +68,52 @@ export default function MembersModal({ onCancel }: Props): ReactElement {
             },
           })}
         >
-          {
-            members.map((member: Member) => {
-              return (
-                <UserListItem
-                  user={member}
-                  key={member.userId}
-                  currentUser={currentUserId}
-                  action={({ parentRef, actionRef }) => (
-                    <>
-                      {channel?.myRole === 'operator' && currentUserId !== member.userId && (
-                        <ContextMenu
-                          menuTrigger={(toggleDropdown) => (
-                            <IconButton
-                              className="sendbird-user-message__more__menu"
-                              width="32px"
-                              height="32px"
-                              onClick={() => {
-                                toggleDropdown();
-                              }}
-                            >
-                              <Icon
-                                width="24px"
-                                height="24px"
-                                type={IconTypes.MORE}
-                                fillColor={IconColors.CONTENT_INVERSE}
-                              />
-                            </IconButton>
-                          )}
-                          menuItems={(closeDropdown) => (
-                            <MenuItems
-                              parentContainRef={parentRef}
-                              parentRef={actionRef} // for catching location(x, y) of MenuItems
-                              closeDropdown={closeDropdown}
-                              openLeft
-                            >
-                              <OperatorMenuItem
-                                channel={channel}
-                                user={member}
-                                disable={currentUserId === member.userId}
-                                onChange={(_, member, isOperator) => {
-                                  setMembers(members.map(m => {
-                                    if (m.userId === member.userId) {
-                                      return {
-                                        ...member,
-                                        role: isOperator ? Role.OPERATOR : Role.NONE,
-                                      };
-                                    }
-                                    return m;
-                                  }));
-                                  closeDropdown();
-                                }}
-                                onError={() => {
-                                  // FIXME: handle error later
-                                  closeDropdown();
-                                }}
-                                dataSbId={`channel_setting_member_context_menu_${(
-                                  member.role !== 'operator'
-                                ) ? 'register_as_operator' : 'unregister_operator'}`}
-                              >
-                                {
-                                  member.role !== 'operator'
-                                    ? stringSet.CHANNEL_SETTING__MODERATION__REGISTER_AS_OPERATOR
-                                    : stringSet.CHANNEL_SETTING__MODERATION__UNREGISTER_OPERATOR
-                                }
-                              </OperatorMenuItem>
-                              {
-                                // No muted members in broadcast channel
-                                !channel?.isBroadcast && (
-                                  <MuteMenuItem
-                                    channel={channel}
-                                    user={member}
-                                    onChange={(_, member, isMuted) => {
-                                      setMembers(members.map(m => {
-                                        if (m.userId === member.userId) {
-                                          return {
-                                            ...member,
-                                            isMuted,
-                                          };
-                                        }
-                                        return m;
-                                      }));
-                                      closeDropdown();
-                                    }}
-                                    onError={() => {
-                                      // FIXME: handle error later
-                                      closeDropdown();
-                                    }}
-                                    dataSbId={`channel_setting_member_context_menu_${(
-                                      member.isMuted) ? 'unmute' : 'mute'}`
-                                    }
-                                  >
-                                    {
-                                      member.isMuted
-                                        ? stringSet.CHANNEL_SETTING__MODERATION__UNMUTE
-                                        : stringSet.CHANNEL_SETTING__MODERATION__MUTE
-                                    }
-                                  </MuteMenuItem>
-                                )
-                              }
-                              <MenuItem
-                                onClick={() => {
-                                  channel?.banUser(member, -1, '').then(() => {
-                                    setMembers(members.filter(({ userId }) => {
-                                      return userId !== member.userId;
-                                    }));
-                                  });
-                                }}
-                                dataSbId="channel_setting_member_context_menu_ban"
-                              >
-                                {stringSet.CHANNEL_SETTING__MODERATION__BAN}
-                              </MenuItem>
-                            </MenuItems>
-                          )}
-                        />
-                      )}
-                    </>
-                  )}
-                />
-              );
-            })
-          }
+          {members.map((member: Member, index) => (
+            <React.Fragment key={member.userId}>
+              {
+                renderUserListItem({
+                  // NOTE: This `index` is used to display the current user's user item at the top when customizing externally.
+                  index,
+                  user: member,
+                  channel,
+                  renderListItemMenu: (props) => (
+                    <UserListItemMenu
+                      {...props}
+                      onToggleOperatorState={({ newStatus: isOperator }) => {
+                        const newMembers = [...members];
+                        for (const newMember of newMembers) {
+                          if (newMember.userId === member.userId) {
+                            newMember.role = isOperator ? Role.OPERATOR : Role.NONE;
+                            break;
+                          }
+                        }
+                        setMembers(newMembers);
+                      }}
+                      onToggleMuteState={({ newStatus: isMuted }) => {
+                        const newMembers = [...members];
+                        for (const newMember of newMembers) {
+                          if (newMember.userId === member.userId) {
+                            newMember.isMuted = isMuted;
+                            break;
+                          }
+                        }
+                        setMembers(newMembers);
+                      }}
+                      onToggleBanState={() => {
+                        setMembers(members.filter(({ userId }) => {
+                          return userId !== member.userId;
+                        }));
+                      }}
+                    />
+                  ),
+                })
+              }
+            </React.Fragment>
+          ))}
         </div>
       </Modal>
     </div>
   );
 }
+
+export default MembersModal;

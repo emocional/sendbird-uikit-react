@@ -13,7 +13,6 @@ exports[`ui/OpenchannelOGMessage should do a snapshot test of the OpenchannelOGM
       >
         <div
           class="sendbird-context-menu"
-          style="display: inline;"
         >
           <div
             class="sendbird-openchannel-og-message__top__left__avatar sendbird-avatar"
@@ -71,7 +70,6 @@ exports[`ui/OpenchannelOGMessage should do a snapshot test of the OpenchannelOGM
       >
         <div
           class="sendbird-context-menu"
-          style="display: inline;"
         >
           <button
             class="sendbird-openchannel-og-message__top__context-menu--icon sendbird-iconbutton "
@@ -113,6 +111,7 @@ exports[`ui/OpenchannelOGMessage should do a snapshot test of the OpenchannelOGM
         >
           <span
             class="sendbird-link-label__label sendbird-label sendbird-label--subtitle-2 sendbird-label--color-primary"
+            data-testid="sendbird-link-label__label"
           >
             This is the TITLE
           </span>
@@ -129,11 +128,11 @@ exports[`ui/OpenchannelOGMessage should do a snapshot test of the OpenchannelOGM
         >
           <div
             class="sendbird-openchannel-og-message__bottom__og-tag__thumbnail__image sendbird-image-renderer"
-            style="width: 100%; min-width: min(400px, 400px); max-width: 400px;"
+            style="width: 100%; min-width: min(400px, 334px); max-width: 400px;"
           >
             <div
               class="sendbird-image-renderer__image"
-              style="width: 100%; min-width: min(400px, 400px); max-width: 400px; position: absolute; background-repeat: no-repeat; background-position: center; background-size: cover; background-image: url(https://static.sendbird.com/sample/profiles/profile_12_512px.png);"
+              style="width: 100%; min-width: min(400px, 334px); max-width: 400px; position: absolute; background-repeat: no-repeat; background-position: center; background-size: cover; background-image: url(https://static.sendbird.com/sample/profiles/profile_12_512px.png);"
             />
             <img
               alt="test"

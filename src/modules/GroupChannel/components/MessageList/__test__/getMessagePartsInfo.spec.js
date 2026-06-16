@@ -1,4 +1,10 @@
+import { useLocalization } from "../../../../../lib/LocalizationContext";
 import { getMessagePartsInfo } from "../getMessagePartsInfo";
+
+jest.mock('../../../../../lib/LocalizationContext', () => ({
+  ...jest.requireActual('../../../../../lib/LocalizationContext'),
+  useLocalization: jest.fn(),
+}));
 
 const mockChannel = {
   isGroupChannel: () => true,
@@ -40,9 +46,19 @@ const messageGroup3 = [1, 2, 3].map((n, i) => ({
 }));
 
 describe('getMessagePartsInfo', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    useLocalization.mockReturnValue({
+      stringSet: {
+        DATE_FORMAT__MESSAGE_CREATED_AT: 'p',
+      },
+    });
+  });
   it('should group messages that are sent at same time', () => {
+    const { stringSet } = useLocalization();
     const defaultSetting = {
       allMessages: messageGroup1,
+      stringSet,
       isMessageGroupingEnabled: true,
       currentChannel: mockChannel,
       replyType: 'THREAD',
@@ -74,8 +90,10 @@ describe('getMessagePartsInfo', () => {
   });
 
   it('should not group messages if isMessageGroupingEnabled is false', () => {
+    const { stringSet } = useLocalization();
     const defaultSetting = {
       allMessages: messageGroup1,
+      stringSet,
       isMessageGroupingEnabled: false,
       currentChannel: mockChannel,
       replyType: 'THREAD',
@@ -107,8 +125,10 @@ describe('getMessagePartsInfo', () => {
   });
 
   it('should not group messages if sent time are different', () => {
+    const { stringSet } = useLocalization();
     const defaultSetting = {
       allMessages: messageGroup2,
+      stringSet,
       isMessageGroupingEnabled: true,
       currentChannel: mockChannel,
       replyType: 'THREAD',
@@ -139,8 +159,10 @@ describe('getMessagePartsInfo', () => {
     expect(thirdGroupingInfo.hasSeparator).toBe(false);
   });
   it('should not group messages if sender is different', () => {
+    const { stringSet } = useLocalization();
     const defaultSetting = {
       allMessages: messageGroup3,
+      stringSet,
       isMessageGroupingEnabled: true,
       currentChannel: mockChannel,
       replyType: 'THREAD',

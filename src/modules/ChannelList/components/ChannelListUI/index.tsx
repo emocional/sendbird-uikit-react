@@ -5,14 +5,14 @@ import ChannelPreviewAction from '../ChannelPreviewAction';
 import { useChannelListContext } from '../../context/ChannelListProvider';
 import * as channelListActions from '../../dux/actionTypes';
 
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { GroupChannelListUIView } from '../../../GroupChannelList/components/GroupChannelListUI/GroupChannelListUIView';
 import AddChannel from '../AddChannel';
 import { GroupChannelListItemBasicProps } from '../../../GroupChannelList/components/GroupChannelListItem/GroupChannelListItemView';
-import { UserListQuery } from '../../../CreateChannel/context/CreateChannelProvider';
+import { noop } from '../../../../utils/utils';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 interface ChannelPreviewProps extends Omit<GroupChannelListItemBasicProps, 'onLeaveChannel'> {
-  onLeaveChannel(channel?: GroupChannel, onLeaveChannelCb?: (channel: GroupChannel, error?: null) => void): Promise<void>;
+  onLeaveChannel(channel?: GroupChannel, onLeaveChannelCb?: (channel: GroupChannel, error?: unknown) => void): Promise<void>;
 }
 
 export interface ChannelListUIProps {
@@ -24,6 +24,12 @@ export interface ChannelListUIProps {
   userQuery?(): UserListQuery;
 }
 
+/**
+ * @deprecated This component is deprecated and will be removed in the next major update.
+ * Please use the `GroupChannel` component from '@sendbird/uikit-react/GroupChannel' instead.
+ * For more information, please refer to the migration guide:
+ * https://docs.sendbird.com/docs/chat/uikit/v3/react/introduction/group-channel-migration-guide
+ */
 const ChannelListUI: React.FC<ChannelListUIProps> = (props: ChannelListUIProps) => {
   const { renderHeader, renderChannelPreview, renderPlaceHolderError, renderPlaceHolderLoading, renderPlaceHolderEmptyList, userQuery } = props;
 
@@ -39,7 +45,8 @@ const ChannelListUI: React.FC<ChannelListUIProps> = (props: ChannelListUIProps) 
     onProfileEditSuccess,
   } = useChannelListContext();
 
-  const { stores, config } = useSendbirdStateContext();
+  const { state } = useSendbird();
+  const { stores, config } = state;
   const { logger, isOnline = false } = config;
   const sdk = stores.sdkStore.sdk;
 
@@ -63,7 +70,7 @@ const ChannelListUI: React.FC<ChannelListUIProps> = (props: ChannelListUIProps) 
           payload: channel,
         });
       },
-      async onLeaveChannel(channel?: GroupChannel, cb?: (channel: GroupChannel, error?: null) => void) {
+      async onLeaveChannel(channel?: GroupChannel, cb?: (channel: GroupChannel, error?: unknown) => void) {
         logger.info('ChannelList: Leaving channel', channel);
         if (channel) {
           try {
@@ -102,9 +109,9 @@ const ChannelListUI: React.FC<ChannelListUIProps> = (props: ChannelListUIProps) 
       renderPlaceHolderError={renderPlaceHolderError}
       renderPlaceHolderLoading={renderPlaceHolderLoading}
       renderPlaceHolderEmptyList={renderPlaceHolderEmptyList}
-      onChangeTheme={onThemeChange}
+      onChangeTheme={onThemeChange ?? noop}
       allowProfileEdit={allowProfileEdit}
-      onUserProfileUpdated={onProfileEditSuccess}
+      onUserProfileUpdated={onProfileEditSuccess ?? noop}
       channels={allChannels}
       onLoadMore={fetchChannelList}
       initialized={initialized}

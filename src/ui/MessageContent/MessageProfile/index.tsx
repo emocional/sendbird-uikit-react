@@ -1,23 +1,35 @@
-import React, { ReactElement, useContext, useRef } from 'react';
+import React, { ReactElement, useRef } from 'react';
 import '../index.scss';
 import { isSendableMessage } from '../../../utils';
 import ContextMenu, { MenuItems } from '../../ContextMenu';
 import Avatar from '../../Avatar';
 import UserProfile from '../../UserProfile';
 import { MessageContentProps } from '../index';
-import { UserProfileContext } from '../../../lib/UserProfileContext';
+import { useUserProfileContext } from '../../../lib/UserProfileContext';
+import { classnames } from '../../../utils/utils';
 
 export interface MessageProfileProps extends MessageContentProps {
+  className?: string;
   isByMe?: boolean;
   displayThreadReplies?: boolean;
   bottom?: string;
 }
 
-export default function MessageProfile(props: MessageProfileProps): ReactElement {
-  const { message, channel, userId, chainTop, isByMe, displayThreadReplies, bottom } = props;
+export function MessageProfile({
+  // Internal props
+  className = '',
+  isByMe,
+  displayThreadReplies,
+  bottom,
+  // MessageContentProps
+  message,
+  channel,
+  userId,
+  chainBottom = false,
+}: MessageProfileProps) {
   const avatarRef = useRef(null);
 
-  const { disableUserProfile, renderUserProfile } = useContext(UserProfileContext);
+  const { disableUserProfile, renderUserProfile } = useUserProfileContext();
 
   if (isByMe || chainTop || !isSendableMessage(message)) {
     return null;
@@ -27,8 +39,12 @@ export default function MessageProfile(props: MessageProfileProps): ReactElement
     <ContextMenu
       menuTrigger={(toggleDropdown: () => void): ReactElement => (
         <Avatar
-          className={`sendbird-message-content__left__avatar ${displayThreadReplies ? 'use-thread-replies' : ''}`} // @ts-ignore
-          src={channel?.members?.find((member) => member?.userId === message.sender.userId)?.profileUrl || message.sender.profileUrl || ''}
+          className={classnames(className, displayThreadReplies && 'use-thread-replies')}
+          src={
+            channel?.members?.find((member) => member?.userId === message.sender.userId)?.profileUrl
+            || message.sender.profileUrl
+            || ''
+          }
           // TODO: Divide getting profileUrl logic to utils
           ref={avatarRef}
           width="36px"
@@ -65,3 +81,5 @@ export default function MessageProfile(props: MessageProfileProps): ReactElement
     />
   );
 }
+
+export default MessageProfile;

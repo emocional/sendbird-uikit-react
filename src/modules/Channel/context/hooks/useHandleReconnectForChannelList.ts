@@ -4,9 +4,8 @@ import {
   GroupChannel,
   GroupChannelListQuery,
 } from '@sendbird/chat/groupChannel';
-import { Logger } from '../../../../lib/SendbirdState';
+import type { Logger, SdkStore } from '../../../../lib/Sendbird/types';
 import useReconnectOnIdle from './useReconnectOnIdle';
-import { SdkStore } from '../../../../lib/types';
 import { ChannelListActionTypes } from '../../../ChannelList/dux/actionTypes';
 import { GroupChannelListQueryParamsInternal } from '../../../ChannelList/context/ChannelListProvider';
 import { MarkAsDeliveredSchedulerType } from '../../../../lib/hooks/useMarkAsDeliveredScheduler';
@@ -17,16 +16,16 @@ import { DELIVERY_RECEIPT } from '../../../../utils/consts';
 interface UseHandleReconnectForChannelListProps {
   // Dynamic props
   isOnline: boolean;
-  reconnectOnIdle: boolean;
+  reconnectOnIdle?: boolean;
 
   // Static props
   logger: Logger;
   sdk: SdkStore['sdk'];
-  currentGroupChannel: GroupChannel;
+  currentGroupChannel: GroupChannel | null;
   channelListDispatcher: React.Dispatch<ChannelListActionTypes>
   setChannelSource: (query: GroupChannelListQuery) => void;
-  userFilledChannelListQuery: GroupChannelListQueryParamsInternal;
-  sortChannelList: (channels: GroupChannel[]) => GroupChannel[];
+  userFilledChannelListQuery?: GroupChannelListQueryParamsInternal;
+  sortChannelList?: (channels: GroupChannel[]) => GroupChannel[];
   disableAutoSelect: boolean;
   markAsDeliveredScheduler: MarkAsDeliveredSchedulerType;
   disableMarkAsDelivered: boolean;
@@ -87,7 +86,7 @@ function useHandleReconnectForChannelList({
                 logger.info('ChannelList refresh - channel list sorted', sortedChannelList);
               }
               // select first channel
-              let newCurrentChannel: GroupChannel = !disableAutoSelect ? sortedChannelList[0] : null;
+              let newCurrentChannel: GroupChannel | null = !disableAutoSelect ? sortedChannelList[0] : null;
               if (currentGroupChannel?.url) {
                 const foundChannel = sortedChannelList.find((channel) => (
                   channel.url === currentGroupChannel.url

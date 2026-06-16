@@ -1,0 +1,53 @@
+name: Build and Test
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+  # Emocional CI (`.github/workflows/CI.yml`) cubre `main`; este workflow queda para PRs.
+  workflow_dispatch:
+concurrency:
+  group: build-and-test-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: |
+          yarn install --immutable
+
+      - name: Run lint
+        if: ${{ success() }}
+        run: |
+          yarn lint
+
+      - name: Run build
+        if: ${{ success() }}
+        run: |
+          yarn build
+
+      - name: Run test
+        if: ${{ success() }}
+        timeout-minutes: 15
+        run: |
+          yarn test --forceExit --runInBand || {
+            if [ -f "./test-results/junit-report.xml" ]; then
+              echo "Tests failed. Retrying failed tests..."
+              node scripts/failed-test-retry.js
+            else
+              echo "Tests failed and no JUnit report found."
+              exit 1
+            fi
+          }

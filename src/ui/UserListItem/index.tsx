@@ -1,153 +1,191 @@
-import React, { ChangeEvent, MutableRefObject, ReactElement, useContext } from 'react';
-import { User } from '@sendbird/chat';
-import { Member } from '@sendbird/chat/groupChannel';
+import React, { ChangeEvent, MutableRefObject, ReactElement, ReactNode, useRef } from 'react';
+import type { User } from '@sendbird/chat';
+import type { GroupChannel, Member } from '@sendbird/chat/groupChannel';
 import './index.scss';
 
-import { UserProfileContext } from '../../lib/UserProfileContext';
-import { LocalizationContext } from '../../lib/LocalizationContext';
+import { useUserProfileContext } from '../../lib/UserProfileContext';
+import { useLocalization } from '../../lib/LocalizationContext';
+
 import Avatar from '../Avatar/index';
 import MutedAvatarOverlay from '../Avatar/MutedAvatarOverlay';
 import Checkbox from '../Checkbox';
 import UserProfile from '../UserProfile';
 import ContextMenu, { MenuItems } from '../ContextMenu';
 import Label, { LabelTypography, LabelColors } from '../Label';
-import { getGlobalUserTag } from './utils';
+import { UserListItemMenuProps } from '../UserListItemMenu/UserListItemMenu';
+import { classnames } from '../../utils/utils';
+import pxToNumber from '../../utils/pxToNumber';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface UserListItemProps {
   user: User | Member;
+  channel?: GroupChannel;
   className?: string;
   checked?: boolean;
   checkBox?: boolean;
   isOperator?: boolean;
   disabled?: boolean;
   disableMessaging?: boolean;
+  /** @deprecated Doesn't need to fill this props */
   currentUser?: string;
-  action?({ actionRef, parentRef }: { actionRef: MutableRefObject<any>; parentRef?: MutableRefObject<any> }): ReactElement;
+  /** @deprecated Use the props `renderListItemMenu` instead */
+  action?({ actionRef, parentRef }: { actionRef: MutableRefObject<any>, parentRef?: MutableRefObject<any> }): ReactElement;
   onChange?(e: ChangeEvent<HTMLInputElement>): void;
   avatarSize?: string;
   /** @deprecated Please use the onUserAvatarClick instead */
   onClick?(): void;
   onUserAvatarClick?(): void;
-  onSubmit?: (item: string) => void;
+  renderListItemMenu?: (props: UserListItemMenuProps) => ReactNode;
+  size?: 'normal' | 'small';
 }
 
-export default function UserListItem({
+export function UserListItem({
   user,
-  className,
+  channel,
+  className = undefined,
   checked,
   checkBox,
   isOperator,
   disabled,
   disableMessaging,
-  currentUser,
   action,
   onChange,
   avatarSize = '40px',
   onClick,
   onUserAvatarClick,
-  onSubmit,
+  renderListItemMenu,
+  size = 'normal',
 }: UserListItemProps): ReactElement {
   const operator = isOperator ?? (user as Member)?.role === 'operator';
   const uniqueKey = user.userId;
-  const actionRef = React.useRef(null);
-  const parentRef = React.useRef(null);
-  const avatarRef = React.useRef(null);
-  const { disableUserProfile, renderUserProfile } = useContext(UserProfileContext);
-  const { stringSet } = useContext(LocalizationContext);
+  const actionRef = useRef(null);
+  const parentRef = useRef(null);
+  const avatarRef = useRef(null);
+  const { disableUserProfile, renderUserProfile } = useUserProfileContext();
+  const { stringSet } = useLocalization();
+  const { state: { config } } = useSendbird();
+  const currentUser = config.userId;
+
+  const itemClassName = size === 'small' ? 'sendbird-user-list-item--small' : 'sendbird-user-list-item';
+  const avatarClassName = size === 'small' ? 'sendbird-user-list-item--small__avatar' : 'sendbird-user-list-item__avatar';
+  const titleClassName = size === 'small' ? 'sendbird-user-list-item--small__title' : 'sendbird-user-list-item__title';
+  const subtitleClassName = size === 'small' ? 'sendbird-user-list-item--small__subtitle' : 'sendbird-user-list-item__subtitle';
+  const checkboxClassName = size === 'small' ? 'sendbird-user-list-item--small__checkbox' : 'sendbird-user-list-item__checkbox';
+  const actionClassName = size === 'small' ? 'sendbird-user-list-item--small__action' : 'sendbird-user-list-item__action';
+  const operatorClassName = size === 'small' ? 'sendbird-user-list-item--small__operator' : 'sendbird-user-list-item__operator';
+
   return (
     <div
-      className={[...(Array.isArray(className) ? className : [className]), 'sendbird-user-list-item'].join(' ')}
+      className={classnames(itemClassName, ...(Array.isArray(className) ? className : [className]))}
       ref={parentRef}
       style={{ cursor: 'pointer' }}
       onClick={() => onSubmit(user.userId)}
     >
-      {(user as Member)?.isMuted && <MutedAvatarOverlay height={40} width={40} />}
+
       <ContextMenu
         menuTrigger={(toggleDropdown) => (
-          <Avatar
-            className="sendbird-user-list-item__avatar"
-            ref={avatarRef}
-            src={user?.profileUrl || user?.plainProfileUrl || ''}
-            width={avatarSize}
-            height={avatarSize}
-            onClick={() => {
-              if (!disableUserProfile) {
-                toggleDropdown();
-                (onUserAvatarClick ?? onClick)?.();
-              }
-            }}
-          />
+          <>
+            <Avatar
+              className={avatarClassName}
+              ref={avatarRef}
+              src={user?.profileUrl || user?.plainProfileUrl || ''}
+              width={avatarSize}
+              height={avatarSize}
+              onClick={() => {
+                if (!disableUserProfile) {
+                  toggleDropdown();
+                  (onUserAvatarClick ?? onClick)?.();
+                }
+              }}
+            />
+            {(user as Member)?.isMuted && (
+              <MutedAvatarOverlay height={pxToNumber(avatarSize)} width={pxToNumber(avatarSize)} />
+            )}
+          </>
         )}
         menuItems={(closeDropdown) =>
           renderUserProfile ? (
             renderUserProfile({
               user,
-              currentUserId: currentUser,
+              currentUserId: currentUser ?? '',
               close: closeDropdown,
               avatarRef,
             })
-          ) : (
-            <MenuItems
-              openLeft
-              parentRef={avatarRef}
-              // for catching location(x, y) of MenuItems
-              parentContainRef={avatarRef}
-              // for toggling more options(menus & reactions)
-              closeDropdown={closeDropdown}
-              style={{ paddingTop: '0px', paddingBottom: '0px' }}
-            >
-              <UserProfile disableMessaging={disableMessaging} user={user} currentUserId={currentUser} onSuccess={closeDropdown} />
-            </MenuItems>
-          )
-        }
+            : (
+              <MenuItems
+                openLeft
+                parentRef={avatarRef}
+                parentContainRef={avatarRef}
+                closeDropdown={closeDropdown}
+                style={{ paddingTop: '0px', paddingBottom: '0px' }}
+              >
+                <UserProfile
+                  disableMessaging={disableMessaging}
+                  user={user}
+                  currentUserId={currentUser}
+                  onSuccess={closeDropdown}
+                />
+              </MenuItems>
+            )
+        )}
       />
-      <Label className="sendbird-user-list-item__title" type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
+      <Label
+        className={titleClassName}
+        type={LabelTypography.SUBTITLE_1}
+        color={LabelColors.ONBACKGROUND_1}
+      >
         {user.nickname || stringSet.NO_NAME}
         {currentUser === user.userId && stringSet.CHANNEL_SETTING__MEMBERS__YOU}
       </Label>
-      {user?.metaData['professional'] && (
-        <div
-          style={{
-            top: 17,
-            right: 25,
-            fontSize: 12,
-            color: 'black',
-            borderRadius: 99999,
-            position: 'absolute',
-            padding: '4px 8px 4px 8px',
-            backgroundColor: '#FAFAFAFF',
-          }}
+      {!user.nickname && (
+        <Label
+          className={subtitleClassName}
+          type={LabelTypography.CAPTION_3}
+          color={LabelColors.ONBACKGROUND_2}
         >
-          {getGlobalUserTag(user.metaData['professional'])}
-        </div>
+          {user.userId}
+        </Label>
       )}
-      {
-        // if there is now nickname, display userId
-        !user.nickname && (
-          <Label className="sendbird-user-list-item__subtitle" type={LabelTypography.CAPTION_3} color={LabelColors.ONBACKGROUND_2}>
-            {user.userId}
-          </Label>
-        )
-      }
       {checkBox && (
-        <label className="sendbird-user-list-item__checkbox" htmlFor={uniqueKey}>
-          <Checkbox id={uniqueKey} checked={checked} disabled={disabled} onChange={(event) => onChange(event)} />
+        <label
+          className={checkboxClassName}
+          htmlFor={uniqueKey}
+        >
+          <Checkbox
+            id={uniqueKey}
+            checked={checked}
+            disabled={disabled}
+            onChange={(event) => onChange?.(event)}
+          />
         </label>
       )}
       {operator && (
         <Label
-          className={['sendbird-user-list-item__operator', checkBox ? 'checkbox' : ''].join(' ')}
+          className={classnames(operatorClassName, checkBox && 'checkbox')}
           type={LabelTypography.SUBTITLE_2}
           color={LabelColors.ONBACKGROUND_2}
         >
           {stringSet.LABEL__OPERATOR}
         </Label>
       )}
-      {action && (
-        <div className="sendbird-user-list-item__action" ref={actionRef}>
+      {!checkBox && !renderListItemMenu && action && (
+        <div
+          className={actionClassName}
+          ref={actionRef}
+        >
           {action({ actionRef, parentRef })}
+        </div>
+      )}
+      {!checkBox && renderListItemMenu && (
+        <div
+          className={actionClassName}
+          ref={actionRef}
+        >
+          {renderListItemMenu({ channel, user })}
         </div>
       )}
     </div>
   );
 }
+
+export default UserListItem;

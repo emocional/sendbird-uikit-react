@@ -3,8 +3,6 @@ import './leave-channel.scss';
 import React from 'react';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
 import { noop } from '../../../../utils/utils';
 
 import Modal from '../../../../ui/Modal';
@@ -15,6 +13,9 @@ import Label, {
   LabelTypography,
   LabelColors,
 } from '../../../../ui/Label';
+import { isDefaultChannelName } from '../../../../utils';
+import useChannelSettings from '../../context/useChannelSettings';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export type LeaveChannelProps = {
   onSubmit: () => void;
@@ -27,21 +28,18 @@ const LeaveChannel: React.FC<LeaveChannelProps> = (props: LeaveChannelProps) => 
     onCancel = noop,
   } = props;
 
-  const { channel, onLeaveChannel } = useChannelSettingsContext();
+  const { state: { channel, onLeaveChannel } } = useChannelSettings();
   const { stringSet } = useLocalization();
-  const state = useSendbirdStateContext();
+  const { state } = useSendbird();
   const logger = state?.config?.logger;
   const isOnline = state?.config?.isOnline;
   const { isMobile } = useMediaQueryContext();
-  const getChannelName = (channel: GroupChannel) => {
-    if (channel?.name && channel?.name !== 'Group Channel') {
-      return channel.name;
-    }
-    if (channel?.name === 'Group Channel' || !channel?.name) {
-      return (channel?.members || []).map((member) => member.nickname || stringSet.NO_NAME).join(', ');
-    }
+  const getChannelName = (channel: GroupChannel | null) => {
+    if (!channel?.name && !channel?.members) return stringSet.NO_TITLE;
 
-    return stringSet.NO_TITLE;
+    if (isDefaultChannelName(channel)) return (channel?.members || []).map((member) => member.nickname || stringSet.NO_NAME).join(', ');
+
+    return channel.name;
   };
   if (isMobile) {
     return (
@@ -58,7 +56,7 @@ const LeaveChannel: React.FC<LeaveChannelProps> = (props: LeaveChannelProps) => 
             channel?.leave()
               .then(() => {
                 logger.info('ChannelSettings: Leaving channel successful!', channel);
-                onLeaveChannel();
+                onLeaveChannel?.();
               });
           }}
           className="sendbird-channel-settings__leave-label--mobile"

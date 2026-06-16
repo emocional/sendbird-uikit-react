@@ -6,7 +6,7 @@ import './index.scss';
 import React from 'react';
 import type { UserMessage } from '@sendbird/chat/message';
 
-import { LabelTypography } from '../Label';
+import { LabelColors, LabelTypography } from '../Label';
 import LinkLabel from '../LinkLabel';
 import { convertWordToStringObj, StringObjType, StringObj } from '../../utils';
 import MentionLabel from '../MentionLabel';
@@ -20,7 +20,7 @@ interface WordProps {
 }
 
 // Word and StringObj will include types: normal, mention, url
-export default function Word(props: WordProps): JSX.Element {
+export default function Word(props: WordProps): JSX.Element | null {
   const {
     word,
     message,
@@ -32,9 +32,9 @@ export default function Word(props: WordProps): JSX.Element {
     return null;
   }
   return (
-    <span className="sendbird-word">
+    <span className="sendbird-word" data-testid="sendbird-ui-word">
       {
-        convertWordToStringObj(word, message?.mentionedUsers).map((stringObj, index) => {
+        message?.mentionedUsers && convertWordToStringObj(word, message.mentionedUsers).map((stringObj, index) => {
           const type = stringObj?.type || '';
           const value = stringObj?.value || '';
           const userId = stringObj?.userId || '';
@@ -59,6 +59,7 @@ export default function Word(props: WordProps): JSX.Element {
                 className="sendbird-word__url"
                 src={word}
                 type={LabelTypography.BODY_1}
+                color={isByMe ? LabelColors.ONCONTENT_1 : LabelColors.ONBACKGROUND_1}
               >
                 {value}
               </LinkLabel>

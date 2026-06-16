@@ -8,21 +8,20 @@ import Modal from '../../../../ui/Modal';
 import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
 import Icon, { IconTypes, IconColors } from '../../../../ui/Icon';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettingsProvider';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export default function DeleteChannel(): ReactElement {
   const [showDeleteChannelModal, setShowDeleteChannelModal] = useState(false);
   const { stringSet } = useContext(LocalizationContext);
-  const globalState = useSendbirdStateContext();
-  const isOnline = globalState?.config?.isOnline;
-  const logger = globalState?.config?.logger;
+  const { state: { config: { isOnline, logger } } } = useSendbird();
 
   const { channel, onDeleteChannel } = useOpenChannelSettingsContext();
 
   const deleteChannel = () => {
     channel?.delete().then((response) => {
       logger.info('OpenChannelSettings: Delete channel success', response);
+      setShowDeleteChannelModal(false);
       if (onDeleteChannel) {
         onDeleteChannel(channel);
       }
@@ -70,7 +69,7 @@ export default function DeleteChannel(): ReactElement {
         showDeleteChannelModal && (
           <Modal
             isFullScreenOnMobile
-            onCancel={() => {
+            onClose={() => {
               setShowDeleteChannelModal(false);
             }}
             onSubmit={() => {

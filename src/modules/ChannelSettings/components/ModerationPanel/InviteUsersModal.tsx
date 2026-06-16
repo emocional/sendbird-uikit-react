@@ -1,31 +1,36 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { User } from '@sendbird/chat';
 
 import Modal from '../../../../ui/Modal';
 import { ButtonTypes } from '../../../../ui/Button';
-import UserListItem from '../../../../ui/UserListItem';
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
+import UserListItem, { type UserListItemProps } from '../../../../ui/UserListItem';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { useOnScrollPositionChangeDetector } from '../../../../hooks/useOnScrollReachedEndDetector';
 import { UserListQuery } from '../../../../types';
+import useChannelSettings from '../../context/useChannelSettings';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 type UserId = string;
-interface Props {
+export interface InviteUsersModalProps {
   onCancel(): void;
   onSubmit(userIds: UserId[]): void;
+  renderUserListItem?: (props: UserListItemProps) => ReactNode;
 }
 
-export default function InviteUsers({ onCancel, onSubmit }: Props) {
-  const [users, setUsers] = useState([]);
-  const [userListQuery, setUserListQuery] = useState(null);
+export function InviteUsersModal({
+  onCancel,
+  onSubmit,
+  renderUserListItem = (props) => <UserListItem {...props} />,
+}: InviteUsersModalProps) {
+  const [users, setUsers] = useState<User[]>([]);
+  const [userListQuery, setUserListQuery] = useState<UserListQuery | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<Record<UserId, User>>({});
 
-  const state = useSendbirdStateContext();
+  const { state } = useSendbird();
   const sdk = state?.stores?.sdkStore?.sdk;
   const globalUserListQuery = state?.config?.userListQuery;
 
-  const { channel, overrideInviteUser, queries } = useChannelSettingsContext();
+  const { state: { channel, overrideInviteUser, queries } } = useChannelSettings();
   const { stringSet } = useLocalization();
 
   const onScroll = useOnScrollPositionChangeDetector({
@@ -39,7 +44,7 @@ export default function InviteUsers({ onCancel, onSubmit }: Props) {
 
   const onInviteUsers = async () => {
     const userIdsToInvite = Object.keys(selectedUsers);
-    if (typeof overrideInviteUser === 'function') {
+    if (channel && typeof overrideInviteUser === 'function') {
       overrideInviteUser({ users: userIdsToInvite, onClose: onCancel, channel });
     } else {
       await channel?.inviteWithUserIds(userIdsToInvite);
@@ -60,7 +65,7 @@ export default function InviteUsers({ onCancel, onSubmit }: Props) {
 
   const membersMap = useMemo(() => {
     // UIKit policy: In a super or broadcast channel, do not check the members when inviting users.
-    if (channel?.isSuper || channel?.isBroadcast) return { [sdk.currentUser.userId]: sdk.currentUser };
+    if (channel?.isSuper || channel?.isBroadcast) return { [sdk.currentUser?.userId ?? '']: sdk.currentUser };
 
     return channel?.members.reduce((acc, cur) => {
       acc[cur.userId] = cur;
@@ -95,17 +100,20 @@ export default function InviteUsers({ onCancel, onSubmit }: Props) {
         <div className="sendbird-more-members__popup-scroll" onScroll={onScroll}>
           <div className="sendbird-more-members__popup-scroll__inner">
             {users.map((user) => {
-              const isMember = Boolean(membersMap[user.userId]);
+              const isMember = Boolean(membersMap ? membersMap[user.userId] : false);
               const isSelected = Boolean(selectedUsers[user.userId]);
               return (
-                <UserListItem
-                  key={user.userId}
-                  checkBox
-                  checked={isMember || isSelected}
-                  disabled={isMember}
-                  user={user}
-                  onChange={() => onSelectUser(user)}
-                />
+                <React.Fragment key={user.userId}>
+                  {
+                    renderUserListItem({
+                      user,
+                      checkBox: true,
+                      checked: isMember || isSelected,
+                      disabled: isMember,
+                      onChange: () => onSelectUser(user),
+                    })
+                  }
+                </React.Fragment>
               );
             })}
           </div>
@@ -114,3 +122,5 @@ export default function InviteUsers({ onCancel, onSubmit }: Props) {
     </div>
   );
 }
+
+export default InviteUsersModal;

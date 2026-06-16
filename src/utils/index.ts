@@ -1,5 +1,5 @@
-import SendbirdChat, { Emoji, EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
-import { GroupChannel, Member, SendbirdGroupChat, GroupChannelListQuery, GroupChannelListOrder } from '@sendbird/chat/groupChannel';
+import { Emoji, EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
+import { GroupChannel, Member, GroupChannelListQuery, GroupChannelListOrder } from '@sendbird/chat/groupChannel';
 import {
   AdminMessage,
   BaseMessage,
@@ -10,11 +10,15 @@ import {
   UploadedFileInfo,
   UserMessage,
 } from '@sendbird/chat/message';
-import { OpenChannel, SendbirdOpenChat } from '@sendbird/chat/openChannel';
+import { SendableMessage } from '@sendbird/chat/lib/__definition';
 
 import { getOutgoingMessageState, OutgoingMessageStates } from './exports/getOutgoingMessageState';
-import { MessageContentMiddleContainerType, Nullable } from '../types';
+import { HTMLTextDirection, Nullable } from '../types';
+import { isSafari } from './browser';
 import { match } from 'ts-pattern';
+import isSameSecond from 'date-fns/isSameSecond';
+import { MESSAGE_TEMPLATE_KEY } from './consts';
+import { TemplateType } from '../ui/TemplateMessageItemBody/types';
 
 // https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Complete_list_of_MIME_types
 export const SUPPORTED_MIMES = {
@@ -25,6 +29,7 @@ export const SUPPORTED_MIMES = {
     'image/gif',
     'image/svg+xml',
     'image/webp', // not supported in IE
+    'image/bmp',
   ],
   VIDEO: [
     'video/mpeg',
@@ -54,6 +59,7 @@ export const SUPPORTED_MIMES = {
     'text/calendar',
     'text/javascript',
     'text/xml',
+    'text/x-log',
     'video/quicktime', // NOTE: Assume this video is a normal file, not video
   ],
   APPLICATION: [
@@ -95,23 +101,47 @@ export const SUPPORTED_MIMES = {
     'application/zip',
     'application/x-7z-compressed',
   ],
+  ARCHIVE: [
+    'application/zip',
+    'application/x-rar-compressed',
+    'application/x-7z-compressed',
+    'application/x-tar',
+    'application/gzip',
+    'application/x-bzip',
+    'application/x-bzip2',
+    'application/x-xz',
+    'application/x-iso9660-image',
+  ],
 };
 
-export const getMimeTypesUIKitAccepts = (acceptableMimeTypes?: string[]): string => {
-  if (Array.isArray(acceptableMimeTypes) && acceptableMimeTypes.length > 0) {
-    return acceptableMimeTypes
+export const SUPPORTED_FILE_EXTENSIONS = {
+  IMAGE: ['.apng', '.avif', '.gif', '.jpg', '.jpeg', '.jfif', '.pjpeg', '.pjp', '.png', '.svg', '.webp', '.bmp', '.ico', '.cur', '.tif', '.tiff', '.heic', '.heif'],
+  VIDEO: ['.mp4', '.webm', '.ogv', '.3gp', '.3g2', '.avi', '.mov', '.wmv', '.mpg', '.mpeg', '.m4v', '.mkv'],
+  AUDIO: ['.aac', '.midi', '.mp3', '.oga', '.opus', '.wav', '.weba', '.3gp', '.3g2'],
+  DOCUMENT: ['.txt', '.log', '.csv', '.rtf', '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'],
+  ARCHIVE: ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz', '.iso'],
+};
+
+export const getMimeTypesUIKitAccepts = (acceptableTypes?: string[]): string => {
+  if (Array.isArray(acceptableTypes) && acceptableTypes.length > 0) {
+    const uniqueTypes = acceptableTypes
       .reduce((prev, curr) => {
-        switch (curr) {
+        const lowerCurr = curr.toLowerCase();
+        switch (lowerCurr) {
           case 'image': {
-            prev.push(...SUPPORTED_MIMES.IMAGE);
+            prev.push(...SUPPORTED_MIMES.IMAGE, ...SUPPORTED_FILE_EXTENSIONS.IMAGE);
             break;
           }
           case 'video': {
-            prev.push(...SUPPORTED_MIMES.VIDEO);
+            prev.push(...SUPPORTED_MIMES.VIDEO, ...SUPPORTED_FILE_EXTENSIONS.VIDEO);
             break;
           }
           case 'audio': {
-            prev.push(...SUPPORTED_MIMES.AUDIO);
+            prev.push(...SUPPORTED_MIMES.AUDIO, ...SUPPORTED_FILE_EXTENSIONS.AUDIO);
+            break;
+          }
+          case 'archive': {
+            prev.push(...SUPPORTED_MIMES.ARCHIVE, ...SUPPORTED_FILE_EXTENSIONS.ARCHIVE);
             break;
           }
           default: {
@@ -119,13 +149,32 @@ export const getMimeTypesUIKitAccepts = (acceptableMimeTypes?: string[]): string
             break;
           }
         }
-
         return prev;
-      }, [] as string[])
-      .join();
+      }, [] as string[]);
+
+    // To remove duplicates
+    return Array.from(new Set(uniqueTypes)).join(',');
   }
 
-  return Object.values(SUPPORTED_MIMES).reduce((prev, curr) => (prev.concat(curr)), []).join();
+  return [
+    ...Object.values(SUPPORTED_MIMES).flat(),
+    ...Object.values(SUPPORTED_FILE_EXTENSIONS).flat(),
+  ].join(',');
+};
+
+export const isFileAllowedByAccept = (file: File, acceptableMimeTypes?: string[]): boolean => {
+  const tokens = getMimeTypesUIKitAccepts(acceptableMimeTypes)
+    .split(',')
+    .map((token) => token.trim().toLowerCase())
+    .filter(Boolean);
+  if (tokens.length === 0) return true;
+  const name = file.name.toLowerCase();
+  const type = (file.type || '').toLowerCase();
+  return tokens.some((token) => {
+    if (token.startsWith('.')) return name.endsWith(token);
+    if (token.endsWith('/*')) return type.startsWith(token.slice(0, -1));
+    return type === token;
+  });
 };
 
 /* eslint-disable no-redeclare */
@@ -182,15 +231,15 @@ const SendingMessageStatus: SendingMessageStatus = {
 export type CoreMessageType = AdminMessage | UserMessage | FileMessage | MultipleFilesMessage;
 export type SendableMessageType = UserMessage | FileMessage | MultipleFilesMessage;
 
-export const isTextuallyNull = (text: string): boolean => {
-  if (text === '' || text === null) {
-    return true;
-  }
-  return false;
-};
-
+export const isMOVType = (type: string): boolean => type === 'video/quicktime';
+/**
+ * @link: https://sendbird.atlassian.net/browse/SBISSUE-16031?focusedCommentId=270601
+ * We limitedly support .mov file type for ThumbnailMessage only in Safari browser.
+ * */
+export const isSupportedVideoFileTypeInSafari = (type: string): boolean => isSafari(navigator.userAgent) && isMOVType(type);
 export const isImage = (type: string): boolean => SUPPORTED_MIMES.IMAGE.indexOf(type) >= 0;
-export const isVideo = (type: string): boolean => SUPPORTED_MIMES.VIDEO.indexOf(type) >= 0;
+export const isVideo = (type: string): boolean => SUPPORTED_MIMES.VIDEO.indexOf(type) >= 0
+  || isSupportedVideoFileTypeInSafari(type);
 export const isGif = (type: string): boolean => type === 'image/gif';
 export const isSupportedFileView = (type: string): boolean => isImage(type) || isVideo(type);
 export const isAudio = (type: string): boolean => SUPPORTED_MIMES.AUDIO.indexOf(type) >= 0;
@@ -227,6 +276,7 @@ export const isFailedMessage = (
 export const isPendingMessage = (
   message: SendableMessageType,
 ): boolean => (message?.sendingStatus === 'pending');
+
 export const isSentStatus = (state: string): boolean => (
   state === OutgoingMessageStates.SENT
   || state === OutgoingMessageStates.DELIVERED
@@ -247,15 +297,15 @@ export const isUserMessage = (message: CoreMessageType): message is UserMessage 
       : message?.messageType === 'user'
   )
 );
-export const isFileMessage = (message: CoreMessageType): message is FileMessage => (
-  message && (
+export const isFileMessage = (message?: CoreMessageType): message is FileMessage => (
+  !!message && (
     message['isFileMessage'] && typeof message.isFileMessage === 'function'
       ? message.isFileMessage()
       : message?.messageType === 'file'
   )
 );
 export const isMultipleFilesMessage = (
-  message: CoreMessageType,
+  message?: CoreMessageType,
 ): message is MultipleFilesMessage => (
   message && (
     message['isMultipleFilesMessage'] && typeof message.isMultipleFilesMessage === 'function'
@@ -273,38 +323,34 @@ export const isThreadMessage = (message: CoreMessageType): boolean => (
   !!message.parentMessageId && !!message.parentMessage
 );
 
-export const isTemplateMessage = (message: CoreMessageType): boolean => !!(
-  message && message.extendedMessagePayload?.['template']
+/**
+ * @deprecated This feature is deprecated and will be removed in May 2026.
+ */
+export const isFormMessage = (message: CoreMessageType): boolean => !!(
+  message.messageForm
 );
-export enum UI_CONTAINER_TYPES {
-  DEFAULT = '',
-  WIDE = 'ui_container_type__wide',
-  DEFAULT_CAROUSEL = 'ui_container_type__default-carousel',
-}
 
-export const getMessageContentMiddleClassNameByContainerType = ({
-  message,
-  isMobile,
-}: {
-  message: CoreMessageType,
-  isMobile: boolean,
-}): UI_CONTAINER_TYPES => {
-  /**
-   * FULL: template message only.
-   * WIDE: all message types.
-   */
-  const containerType: string | undefined = message.extendedMessagePayload?.['ui']?.['container_type'];
-  if (!isMobile) return UI_CONTAINER_TYPES.DEFAULT;
-  if (containerType === MessageContentMiddleContainerType.WIDE) {
-    return UI_CONTAINER_TYPES.WIDE;
-  }
-  return UI_CONTAINER_TYPES.DEFAULT;
+export const isTemplateMessage = (message: CoreMessageType): boolean => !!(
+  message && message.extendedMessagePayload?.[MESSAGE_TEMPLATE_KEY]
+);
+
+export const isValidTemplateMessageType = (templatePayload: unknown): boolean => {
+  const type = templatePayload['type'];
+  return !(type && !MessageTemplateTypes[type]);
+};
+
+export const MessageTemplateTypes: Record<TemplateType, TemplateType> = {
+  default: 'default',
+};
+
+export const uiContainerType = {
+  [MessageTemplateTypes.default]: 'ui_container_type__default',
 };
 
 export const isOGMessage = (message: CoreMessageType): message is UserMessage => {
   if (!message || !isUserMessage(message)) return false;
   return (
-    message.ogMetaData
+    !!message.ogMetaData
       && !!(message.ogMetaData.url || message.ogMetaData.title || message.ogMetaData.description || message.ogMetaData.defaultImage)
   );
 };
@@ -340,7 +386,7 @@ export const isAudioMessage = (message: CoreMessageType): message is FileMessage
 
 export const isImageFileInfo = (fileInfo: UploadedFileInfo): boolean => {
   if (!fileInfo) return false;
-  return (isImage(fileInfo.mimeType) || isGif(fileInfo.mimeType));
+  return !!fileInfo.mimeType && (isImage(fileInfo.mimeType) || isGif(fileInfo.mimeType));
 };
 
 export const isAudioMessageMimeType = (type: string): boolean => (/^audio\//.test(type));
@@ -416,15 +462,6 @@ export const getClassName = (classNames: string | Array<string | Array<string>>)
     : classNames
 );
 
-export const startsWithAtAndEndsWithBraces = (str: string) => {
-  const regex = /^\{@.*\}$/;
-  return regex.test(str);
-};
-
-export const removeAtAndBraces = (str: string) => {
-  return str.replace(/^\{@|}$/g, '');
-};
-
 export const isReactedBy = (userId: string, reaction: Reaction): boolean => (
   reaction.userIds.some((reactorUserId: string): boolean => reactorUserId === userId)
 );
@@ -444,54 +481,19 @@ export const getEmojiTooltipString = (reaction: Reaction, userId: string, member
     .join(', ')}${you}`);
 };
 
-// TODO: Use the interface after language tranlsatation of Sendbird.js
-interface UIKitStore {
-  stores: {
-    sdkStore: {
-      sdk: SendbirdChat | SendbirdOpenChat | SendbirdGroupChat,
-    },
-    userStore: {
-      user: User,
-    },
-  },
-  config: {
-    isReactionEnabled: boolean,
-  }
-}
-export const getCurrentUserId = (store: UIKitStore): string => (store?.stores?.userStore?.user?.userId);
-export const getUseReaction = (store: UIKitStore, channel: GroupChannel | OpenChannel): boolean => {
-  if (!store?.config?.isReactionEnabled)
-    return false;
-  if (!store?.stores?.sdkStore?.sdk?.appInfo?.useReaction)
-    return false;
-  if (channel?.isGroupChannel())
-    return !((channel as GroupChannel).isBroadcast || (channel as GroupChannel).isSuper);
-  return store?.config?.isReactionEnabled;
-};
-
 export function getSuggestedReplies(message?: BaseMessage): string[] {
-  if (Array.isArray(message?.extendedMessagePayload?.suggested_replies)) {
+  if (message?.extendedMessagePayload && Array.isArray(message?.extendedMessagePayload?.suggested_replies)) {
     return message.extendedMessagePayload.suggested_replies;
   } else {
     return [];
   }
 }
 
-export const isMessageSentByMe = (
-  userId: string,
-  message: SendableMessageType,
-): boolean => (
-  !!(userId && message?.sender?.userId && userId === message.sender.userId)
-);
-
 const URL_REG = /^((http|https):\/\/)?([a-z\d-]+\.)+[a-z]{2,}(\:[0-9]{1,5})?(\/[-a-zA-Z\d%_.~+&=]*)*(\?[;&a-zA-Z\d%_.~+=-]*)?(#\S*)?$/;
 /** @deprecated
  * URL detection in a message text will be handled in utils/tokens/tokenize.ts
  */
 export const isUrl = (text: string): boolean => URL_REG.test(text);
-
-const MENTION_TAG_REG = /\@\{.*?\}/i;
-export const isMentionedText = (text: string): boolean => MENTION_TAG_REG.test(text);
 
 export const truncateString = (fullStr: string, strLen?: number): string => {
   if (!strLen) strLen = 40;
@@ -543,6 +545,13 @@ export const getEmojiMapAll = (emojiContainer: EmojiContainer): Map<string, Emoj
     });
   });
   return emojiMap;
+};
+export const getEmojiListByCategoryIds = (emojiContainer: EmojiContainer, categoryIds: number[]): Array<Emoji> => {
+  if (!categoryIds) return getEmojiListAll(emojiContainer) || [];
+
+  return emojiContainer?.emojiCategories
+    ?.filter((emojiCategory: EmojiCategory) => categoryIds.includes(emojiCategory.id))
+    .flatMap((emojiCategory: EmojiCategory) => emojiCategory.emojis) || [];
 };
 const findEmojiUrl = (targetKey: string) => ({ key }) => key === targetKey;
 export const getEmojiUrl = (emojiContainer?: EmojiContainer, emojiKey?: string): string => {
@@ -849,19 +858,7 @@ export const getChannelsWithUpsertedChannel = (
   } else {
     channels.push(channel);
   }
-  return sortChannelList(channels, order);
-};
-
-export const getMatchedUserIds = (word: string, users: Array<User>, _template?: string): boolean => {
-  const template = _template || '@'; // Use global variable
-  // const matchedUserIds = [];
-  // users.map((user) => user?.userId).forEach((userId) => {
-  //   if (word.indexOf(`${template}{${userId}}`) > -1) {
-  //     matchedUserIds.push(userId);
-  //   }
-  // });
-  // return matchedUserIds;
-  return users.map((user) => user?.userId).some((userId) => word.indexOf(`${template}{${userId}}`) > -1);
+  return sortChannelList(channels, order ?? GroupChannelListOrder.LATEST_LAST_MESSAGE);
 };
 
 export enum StringObjType {
@@ -936,5 +933,28 @@ export const arrayEqual = (array1: Array<unknown>, array2: Array<unknown>): bool
 };
 
 export const isSendableMessage = (message?: BaseMessage | null): message is SendableMessageType => {
-  return Boolean(message) && 'sender' in message;
+  return Boolean(message) && 'sender' in (message as SendableMessage);
+};
+
+/**
+ * If the channel is just created, the channel's createdAt and currentUser's invitedAt are the same.
+ */
+export const isChannelJustCreated = (channel: GroupChannel): boolean => {
+  return isSameSecond(channel.createdAt, channel.invitedAt) && !channel.lastMessage;
+};
+
+export const getHTMLTextDirection = (direction: HTMLTextDirection, forceLeftToRightMessageLayout: boolean): string => {
+  return forceLeftToRightMessageLayout ? 'ltr' : direction;
+};
+
+export const DEFAULT_GROUP_CHANNEL_NAME = 'Group Channel';
+
+export const DEFAULT_AI_CHATBOT_CHANNEL_NAME = 'AI Chatbot Widget Channel';
+
+export const isDefaultChannelName = (channel: GroupChannel) => {
+  return (
+    !channel?.name
+    || channel.name === DEFAULT_GROUP_CHANNEL_NAME
+    || channel.name === DEFAULT_AI_CHATBOT_CHANNEL_NAME
+  );
 };

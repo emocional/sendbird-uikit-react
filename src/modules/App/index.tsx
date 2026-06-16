@@ -12,9 +12,9 @@ import { AppLayout } from './AppLayout';
 import './index.scss';
 
 import { AppLayoutProps } from './types';
-import { UserListQuery } from '../../types';
+import { GroupChannel } from '@sendbird/chat/groupChannel';
 
-interface AppProps {
+export interface AppProps {
   appId: SendbirdProviderProps['appId'];
   userId: SendbirdProviderProps['userId'];
   accessToken?: SendbirdProviderProps['accessToken'];
@@ -27,22 +27,15 @@ interface AppProps {
   profileUrl?: SendbirdProviderProps['profileUrl'];
   dateLocale?: SendbirdProviderProps['dateLocale'];
   config?: SendbirdProviderProps['config'];
-  isReactionEnabled?: SendbirdProviderProps['isReactionEnabled'];
-  isMentionEnabled?: SendbirdProviderProps['isMentionEnabled'];
-  isVoiceMessageEnabled?: SendbirdProviderProps['isVoiceMessageEnabled'];
   voiceRecord?: SendbirdProviderProps['voiceRecord'];
-  replyType?: SendbirdProviderProps['replyType'];
   isMultipleFilesMessageEnabled?: SendbirdProviderProps['isMultipleFilesMessageEnabled'];
+  autoscrollMessageOverflowToTop?: SendbirdProviderProps['autoscrollMessageOverflowToTop'];
   colorSet?: SendbirdProviderProps['colorSet'];
   stringSet?: SendbirdProviderProps['stringSet'];
   allowProfileEdit?: SendbirdProviderProps['allowProfileEdit'];
-  disableUserProfile?: SendbirdProviderProps['disableUserProfile'];
   disableMarkAsDelivered?: SendbirdProviderProps['disableMarkAsDelivered'];
   renderUserProfile?: SendbirdProviderProps['renderUserProfile'];
-  showSearchIcon?: SendbirdProviderProps['showSearchIcon'];
   imageCompression?: SendbirdProviderProps['imageCompression'];
-  isTypingIndicatorEnabledOnChannelList?: SendbirdProviderProps['isTypingIndicatorEnabledOnChannelList'];
-  isMessageReceiptStatusEnabledOnChannelList?: SendbirdProviderProps['isMessageReceiptStatusEnabledOnChannelList'];
   uikitOptions?: SendbirdProviderProps['uikitOptions'];
   isUserIdUsedForNickname?: SendbirdProviderProps['isUserIdUsedForNickname'];
   sdkInitParams?: SendbirdProviderProps['sdkInitParams'];
@@ -52,6 +45,8 @@ interface AppProps {
   isMessageGroupingEnabled?: AppLayoutProps['isMessageGroupingEnabled'];
   disableAutoSelect?: AppLayoutProps['disableAutoSelect'];
   onProfileEditSuccess?: AppLayoutProps['onProfileEditSuccess'];
+  htmlTextDirection?: AppLayoutProps['htmlTextDirection'];
+  forceLeftToRightMessageLayout?: AppLayoutProps['forceLeftToRightMessageLayout'];
 
   /**
    * The default value is false.
@@ -59,9 +54,22 @@ interface AppProps {
    * */
   enableLegacyChannelModules?: boolean;
 
-  userQuery?(): UserListQuery;
-  enableAutoChat?: SendbirdProviderProps['enableAutoChat'];
-  searcherFilter?: SendbirdProviderProps['searcherFilter'];
+  /** @deprecated Please use `uikitOptions.common.enableUsingDefaultUserProfile` instead * */
+  disableUserProfile?: SendbirdProviderProps['disableUserProfile'];
+  /** @deprecated Please use `uikitOptions.groupChannel.replyType` instead * */
+  replyType?: SendbirdProviderProps['replyType'];
+  /** @deprecated Please use `uikitOptions.groupChannel.enableReactions` instead * */
+  isReactionEnabled?: SendbirdProviderProps['isReactionEnabled'];
+  /** @deprecated Please use `uikitOptions.groupChannel.enableMention` instead * */
+  isMentionEnabled?: SendbirdProviderProps['isMentionEnabled'];
+  /** @deprecated Please use `uikitOptions.groupChannel.enableVoiceMessage` instead * */
+  isVoiceMessageEnabled?: SendbirdProviderProps['isVoiceMessageEnabled'];
+  /** @deprecated Please use `uikitOptions.groupChannelList.enableTypingIndicator` instead * */
+  isTypingIndicatorEnabledOnChannelList?: SendbirdProviderProps['isTypingIndicatorEnabledOnChannelList'];
+  /** @deprecated Please use `uikitOptions.groupChannelList.enableMessageReceiptStatus` instead * */
+  isMessageReceiptStatusEnabledOnChannelList?: SendbirdProviderProps['isMessageReceiptStatusEnabledOnChannelList'];
+  /** @deprecated Please use `uikitOptions.groupChannelSettings.enableMessageSearch` instead * */
+  showSearchIcon?: SendbirdProviderProps['showSearchIcon'];
 }
 
 export default function App(props: AppProps) {
@@ -71,27 +79,33 @@ export default function App(props: AppProps) {
     accessToken = '',
     customApiHost = '',
     customWebSocketHost = '',
-    breakpoint = null,
+    breakpoint,
     theme = 'light',
-    userListQuery = null,
+    userListQuery,
     nickname = '',
     profileUrl = '',
-    dateLocale = null,
+    dateLocale,
     config = {},
     voiceRecord,
     isMessageGroupingEnabled = true,
-    colorSet = null,
-    stringSet = null,
+    colorSet,
+    stringSet,
     allowProfileEdit = false,
     disableMarkAsDelivered = false,
-    renderUserProfile = null,
-    onProfileEditSuccess = null,
+    renderUserProfile,
+    onProfileEditSuccess,
     imageCompression = {},
     disableAutoSelect = false,
     sdkInitParams,
     customExtensionParams,
     eventHandlers,
+    isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop = false,
+    isUserIdUsedForNickname = true,
+    enableLegacyChannelModules = false,
     uikitOptions,
+    htmlTextDirection = 'ltr',
+    forceLeftToRightMessageLayout = false,
     // The below configs are duplicates of the Dashboard UIKit Configs.
     // Since their default values will be set in the Sendbird component,
     // we don't need to set them here.
@@ -101,16 +115,10 @@ export default function App(props: AppProps) {
     replyType,
     disableUserProfile,
     isVoiceMessageEnabled,
-    isMultipleFilesMessageEnabled,
     isTypingIndicatorEnabledOnChannelList,
     isMessageReceiptStatusEnabledOnChannelList,
-    isUserIdUsedForNickname = true,
-    enableLegacyChannelModules = false,
-    userQuery,
-    enableAutoChat,
-    searcherFilter,
   } = props;
-  const [currentChannel, setCurrentChannel] = useState(null);
+  const [currentChannel, setCurrentChannel] = useState<GroupChannel>();
 
   return (
     <Sendbird
@@ -124,38 +132,37 @@ export default function App(props: AppProps) {
       theme={theme}
       nickname={nickname}
       profileUrl={profileUrl}
-      dateLocale={dateLocale}
+      dateLocale={dateLocale }
       userListQuery={userListQuery}
       config={config}
       colorSet={colorSet}
-      disableUserProfile={disableUserProfile}
       disableMarkAsDelivered={disableMarkAsDelivered}
       renderUserProfile={renderUserProfile}
       imageCompression={imageCompression}
-      isReactionEnabled={isReactionEnabled}
-      isMentionEnabled={isMentionEnabled}
-      isVoiceMessageEnabled={isVoiceMessageEnabled}
       isMultipleFilesMessageEnabled={isMultipleFilesMessageEnabled}
+      autoscrollMessageOverflowToTop={autoscrollMessageOverflowToTop}
       voiceRecord={voiceRecord}
-      onUserProfileMessage={(channel) => {
+      onStartDirectMessage={(channel) => {
         setCurrentChannel(channel);
       }}
-      enableAutoChat={enableAutoChat}
-      searcherFilter={searcherFilter}
-      isTypingIndicatorEnabledOnChannelList={isTypingIndicatorEnabledOnChannelList}
-      isMessageReceiptStatusEnabledOnChannelList={isMessageReceiptStatusEnabledOnChannelList}
-      replyType={replyType}
-      showSearchIcon={showSearchIcon}
       uikitOptions={uikitOptions}
       isUserIdUsedForNickname={isUserIdUsedForNickname}
       sdkInitParams={sdkInitParams}
       customExtensionParams={customExtensionParams}
       eventHandlers={eventHandlers}
+      isTypingIndicatorEnabledOnChannelList={isTypingIndicatorEnabledOnChannelList}
+      isMessageReceiptStatusEnabledOnChannelList={isMessageReceiptStatusEnabledOnChannelList}
+      replyType={replyType}
+      showSearchIcon={showSearchIcon}
+      disableUserProfile={disableUserProfile}
+      isReactionEnabled={isReactionEnabled}
+      isMentionEnabled={isMentionEnabled}
+      isVoiceMessageEnabled={isVoiceMessageEnabled}
+      htmlTextDirection={htmlTextDirection}
+      forceLeftToRightMessageLayout={forceLeftToRightMessageLayout}
     >
       <AppLayout
-        isReactionEnabled={isReactionEnabled}
-        replyType={replyType}
-        showSearchIcon={showSearchIcon}
+        autoscrollMessageOverflowToTop={autoscrollMessageOverflowToTop}
         isMessageGroupingEnabled={isMessageGroupingEnabled}
         allowProfileEdit={allowProfileEdit}
         onProfileEditSuccess={onProfileEditSuccess}
@@ -163,7 +170,9 @@ export default function App(props: AppProps) {
         currentChannel={currentChannel}
         setCurrentChannel={setCurrentChannel}
         enableLegacyChannelModules={enableLegacyChannelModules}
-        userQuery={userQuery}
+        isReactionEnabled={isReactionEnabled}
+        replyType={replyType}
+        showSearchIcon={showSearchIcon}
       />
     </Sendbird>
   );

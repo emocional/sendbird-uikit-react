@@ -1,16 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useVoicePlayerContext } from '.';
-import { VOICE_PLAYER_AUDIO_ID } from '../../utils/consts';
+import { VOICE_PLAYER_AUDIO_ID, VOICE_MESSAGE_MIME_TYPE } from '../../utils/consts';
 import { useVoiceRecorderContext } from '../VoiceRecorder';
 
-import { AudioUnitDefaultValue, VoicePlayerStatusType } from './dux/initialState';
+import { AudioUnitDefaultValue, VOICE_PLAYER_STATUS, VoicePlayerStatusType } from './dux/initialState';
 import { generateGroupKey } from './utils';
 
 export interface UseVoicePlayerProps {
-  key: string;
-  channelUrl: string;
+  key?: string;
+  channelUrl?: string;
   audioFile?: File;
   audioFileUrl?: string;
+  audioFileMimeType?: string;
 }
 
 export interface UseVoicePlayerContext {
@@ -25,18 +26,22 @@ export interface UseVoicePlayerContext {
 export const useVoicePlayer = ({
   key = '',
   channelUrl = '',
-  audioFile = null,
+  audioFile,
   audioFileUrl = '',
+  audioFileMimeType = VOICE_MESSAGE_MIME_TYPE,
 }: UseVoicePlayerProps): UseVoicePlayerContext => {
-  const [groupKey] = useState<string>(generateGroupKey(channelUrl, key));
+  const groupKey = generateGroupKey(channelUrl, key);
   const {
     play,
     pause,
     stop,
+    reset,
     voicePlayerStore,
   } = useVoicePlayerContext();
   const { isRecordable } = useVoiceRecorderContext();
   const currentAudioUnit = voicePlayerStore?.audioStorage?.[groupKey] || AudioUnitDefaultValue();
+  const currentAudioUnitRef = useRef(currentAudioUnit);
+  currentAudioUnitRef.current = currentAudioUnit;
 
   const playVoicePlayer = () => {
     if (!isRecordable) {
@@ -44,6 +49,7 @@ export const useVoicePlayer = ({
         groupKey,
         audioFile,
         audioFileUrl,
+        audioFileMimeType,
       });
     }
   };
@@ -59,9 +65,13 @@ export const useVoicePlayer = ({
   useEffect(() => {
     return () => {
       if (audioFile || audioFileUrl) {
-        // Can't get the current AudioPlayer through the React hooks(useReducer or useState) in this scope
+        // Pause via DOM because reset() captured in this closure has stale currentPlayer
         const voiceAudioPlayerElement = document.getElementById(VOICE_PLAYER_AUDIO_ID);
         (voiceAudioPlayerElement as HTMLAudioElement)?.pause?.();
+        const status = currentAudioUnitRef.current?.playingStatus;
+        if (status && status !== VOICE_PLAYER_STATUS.IDLE) {
+          reset?.(groupKey);
+        }
       }
     };
   }, []);

@@ -1,22 +1,22 @@
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 
-import type { SendBirdStateConfig } from '../../lib/types';
+import type { SendbirdStateConfig } from '../../lib/Sendbird/types';
 import { getIsReactionEnabled } from '../getIsReactionEnabled';
 
-const normalGroupChannel = (props?) => ({
+const normalGroupChannel = (props?: any) => ({
   isBroadcast: false,
   isEphemeral: false,
   isSuper: false,
   ...props,
 } as GroupChannel);
-const normalConfigs = (props?, groupChannelProps?) => ({
+const normalConfigs = (props?: any, groupChannelProps?: any) => ({
   groupChannel: {
     enableReactions: true,
     enableReactionsSupergroup: false,
     ...groupChannelProps,
   },
   ...props,
-} as SendBirdStateConfig);
+} as SendbirdStateConfig);
 
 describe('Global-utils/getIsReactionEnabled', () => {
   it('should prioritize the moduleLevel than global config', () => {
@@ -32,20 +32,17 @@ describe('Global-utils/getIsReactionEnabled', () => {
       config: normalConfigs(),
       moduleLevel: moduleLevel2,
     })).toBe(moduleLevel2);
-  });
 
-  it('should prioritize the isSuper than moduleLevel', () => {
-    const isSuper = true;
     expect(getIsReactionEnabled({
-      channel: normalGroupChannel({ isSuper }),
+      channel: normalGroupChannel({ isSuper: true }),
       config: normalConfigs(),
-      moduleLevel: true,
-    })).toBe(false);
+      moduleLevel: moduleLevel,
+    })).toBe(moduleLevel);
     expect(getIsReactionEnabled({
-      channel: normalGroupChannel({ isSuper }),
+      channel: normalGroupChannel({ isSuper: true }),
       config: normalConfigs(),
-      moduleLevel: false,
-    })).toBe(false);
+      moduleLevel: moduleLevel2,
+    })).toBe(moduleLevel2);
   });
 
   it('should prioritize moduleLevel than enableReactionsSupergroup', () => {

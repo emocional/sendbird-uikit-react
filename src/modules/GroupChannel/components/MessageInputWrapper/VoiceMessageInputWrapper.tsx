@@ -11,16 +11,15 @@ import { VoiceMessageInput } from '../../../../ui/VoiceMessageInput';
 import { VoiceMessageInputStatus } from '../../../../ui/VoiceMessageInput/types';
 import Modal from '../../../../ui/Modal';
 import Button, { ButtonSizes, ButtonTypes } from '../../../../ui/Button';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
-import { VOICE_RECORDER_DEFAULT_MIN } from '../../../../utils/consts';
 import { VOICE_PLAYER_STATUS } from '../../../../hooks/VoicePlayer/dux/initialState';
 import uuidv4 from '../../../../utils/uuid';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
-export interface VoiceMessageInputWrapperProps {
+export type VoiceMessageInputWrapperProps = {
   channel?: GroupChannel;
   onCancelClick?: () => void;
   onSubmitClick?: (file: File, duration: number) => void;
-}
+};
 
 export const VoiceMessageInputWrapper = ({
   channel,
@@ -28,14 +27,14 @@ export const VoiceMessageInputWrapper = ({
   onSubmitClick,
 }: VoiceMessageInputWrapperProps): React.ReactElement => {
   const uuid = useRef<string>(uuidv4()).current;
-  const [audioFile, setAudioFile] = useState<File>(null);
+  const [audioFile, setAudioFile] = useState<File | null>(null);
   const [voiceInputState, setVoiceInputState] = useState<VoiceMessageInputStatus>(VoiceMessageInputStatus.READY_TO_RECORD);
   const [isSubmitted, setSubmit] = useState(false);
   const [isDisabled, setDisabled] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const { stringSet } = useLocalization();
-  const { config } = useSendbirdStateContext();
-  const minRecordingTime = config?.voiceRecord?.minRecordingTime || VOICE_RECORDER_DEFAULT_MIN;
+  const { state } = useSendbird();
+  const { config } = state;
   const {
     start,
     stop,
@@ -54,7 +53,7 @@ export const VoiceMessageInputWrapper = ({
   const voicePlayer = useVoicePlayer({
     channelUrl: channel?.url,
     key: uuid,
-    audioFile: audioFile,
+    audioFile: audioFile ?? undefined,
   });
   const {
     play,
@@ -76,7 +75,7 @@ export const VoiceMessageInputWrapper = ({
   // call onSubmitClick when submit button is clicked and recorded audio file is created
   useEffect(() => {
     if (isSubmitted && audioFile) {
-      onSubmitClick(audioFile, recordingTime);
+      onSubmitClick?.(audioFile, recordingTime);
       setSubmit(false);
       setAudioFile(null);
     }
@@ -85,7 +84,7 @@ export const VoiceMessageInputWrapper = ({
   // operate which control button should be displayed
   useEffect(() => {
     if (audioFile) {
-      if (recordingTime < minRecordingTime) {
+      if (recordingTime < config.voiceRecord.minRecordingTime) {
         setVoiceInputState(VoiceMessageInputStatus.READY_TO_RECORD);
         setAudioFile(null);
       } else if (playingStatus === VOICE_PLAYER_STATUS.PLAYING) {
@@ -103,7 +102,7 @@ export const VoiceMessageInputWrapper = ({
         maximumValue={recordingStatus === VoiceRecorderStatus.COMPLETED ? recordingTime : recordingLimit}
         currentType={voiceInputState}
         onCancelClick={() => {
-          onCancelClick();
+          onCancelClick?.();
           cancel();
           stopVoicePlayer();
         }}
@@ -125,7 +124,7 @@ export const VoiceMessageInputWrapper = ({
               break;
             }
             case VoiceMessageInputStatus.RECORDING: {
-              if (recordingTime >= minRecordingTime && !isDisabled) {
+              if (recordingTime >= config.voiceRecord.minRecordingTime && !isDisabled) {
                 stop();
               } else if (isDisabled) {
                 cancel();
@@ -158,9 +157,9 @@ export const VoiceMessageInputWrapper = ({
             }
             hideFooter
             isCloseOnClickOutside
-            onCancel={() => {
+            onClose={() => {
               setShowModal(false);
-              onCancelClick();
+              onCancelClick?.();
             }}
           >
             <div className="sendbird-voice-message-input-wrapper-alert__body">
@@ -170,7 +169,7 @@ export const VoiceMessageInputWrapper = ({
                 size={ButtonSizes.BIG}
                 onClick={() => {
                   setShowModal(false);
-                  onCancelClick();
+                  onCancelClick?.();
                 }}
               >
                 {stringSet.BUTTON__OK}

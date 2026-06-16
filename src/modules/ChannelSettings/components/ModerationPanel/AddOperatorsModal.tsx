@@ -3,8 +3,8 @@ import React, {
   useEffect,
   useState,
   useContext,
+  ReactNode,
 } from 'react';
-import { OperatorFilter } from '@sendbird/chat/groupChannel';
 
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
 import Modal from '../../../../ui/Modal';
@@ -13,35 +13,38 @@ import Label, {
   LabelColors,
 } from '../../../../ui/Label';
 import { ButtonTypes } from '../../../../ui/Button';
-import UserListItem from '../../../../ui/UserListItem';
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
+import UserListItem, { UserListItemProps } from '../../../../ui/UserListItem';
+import { Member, MemberListQuery, OperatorFilter } from '@sendbird/chat/groupChannel';
 import { useOnScrollPositionChangeDetector } from '../../../../hooks/useOnScrollReachedEndDetector';
+import useChannelSettings from '../../context/useChannelSettings';
 
-interface Props {
+export interface AddOperatorsModalProps {
   onCancel(): void;
   onSubmit(members: Array<string>): void;
+  renderUserListItem?: (props: UserListItemProps) => ReactNode;
 }
 
 export default function AddOperatorsModal({
   onCancel,
   onSubmit,
-}: Props): ReactElement {
-  const [members, setMembers] = useState([]);
+  renderUserListItem = (props) => <UserListItem {...props} />,
+}: AddOperatorsModalProps): ReactElement {
+  const [members, setMembers] = useState<Member[]>([]);
   const [selectedMembers, setSelectedMembers] = useState({});
-  const [memberQuery, setMemberQuery] = useState(null);
+  const [memberQuery, setMemberQuery] = useState<MemberListQuery | null>(null);
   const { stringSet } = useContext(LocalizationContext);
 
-  const { channel } = useChannelSettingsContext();
+  const { state: { channel } } = useChannelSettings();
 
   useEffect(() => {
     const memberListQuery = channel?.createMemberListQuery({
       operatorFilter: OperatorFilter.NONOPERATOR,
       limit: 20,
     });
-    memberListQuery.next().then((members) => {
+    memberListQuery?.next().then((members) => {
       setMembers(members);
     });
-    setMemberQuery(memberListQuery);
+    setMemberQuery(memberListQuery ?? null);
   }, []);
 
   const selectedCount = Object.keys(selectedMembers).filter((m) => selectedMembers[m]).length;
@@ -84,26 +87,26 @@ export default function AddOperatorsModal({
         >
           {
             members.map((member) => (
-              <UserListItem
-                checkBox
-                checked={selectedMembers[member.userId]}
-                isOperator={member?.role === 'operator'}
-                disabled={member?.role === 'operator'}
-                onChange={
-                  (event) => {
-                    const modifiedSelectedMembers = {
-                      ...selectedMembers,
-                      [event.target.id]: event.target.checked,
-                    };
-                    if (!event.target.checked) {
-                      delete modifiedSelectedMembers[event.target.id];
-                    }
-                    setSelectedMembers(modifiedSelectedMembers);
-                  }
+              <React.Fragment key={member.userId}>
+                {
+                  renderUserListItem({
+                    user: member,
+                    checkBox: true,
+                    checked: selectedMembers[member.userId],
+                    disabled: member?.role === 'operator',
+                    onChange: (event) => {
+                      const modifiedSelectedMembers = {
+                        ...selectedMembers,
+                        [event.target.id]: event.target.checked,
+                      };
+                      if (!event.target.checked) {
+                        delete modifiedSelectedMembers[event.target.id];
+                      }
+                      setSelectedMembers(modifiedSelectedMembers);
+                    },
+                  })
                 }
-                user={member}
-                key={member.userId}
-              />
+              </React.Fragment>
             ))
           }
         </div>

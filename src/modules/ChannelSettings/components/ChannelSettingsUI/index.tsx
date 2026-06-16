@@ -1,45 +1,64 @@
 import './channel-settings-ui.scss';
 
-import React, { useContext, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
+import useChannelSettings from '../../context/useChannelSettings';
+import { useLocalization } from '../../../../lib/LocalizationContext';
+import useMenuItems from './hooks/useMenuItems';
 
+import { deleteNullish, classnames } from '../../../../utils/utils';
 import { ChannelSettingsHeader, ChannelSettingsHeaderProps } from './ChannelSettingsHeader';
 
 import PlaceHolder, { PlaceHolderTypes } from '../../../../ui/PlaceHolder';
 import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
-import { LocalizationContext } from '../../../../lib/LocalizationContext';
 import Icon, { IconTypes, IconColors } from '../../../../ui/Icon';
-import ChannelProfile from '../ChannelProfile';
-import ModerationPanel from '../ModerationPanel';
-import LeaveChannelModal from '../LeaveChannel';
-import UserPanel from '../UserPanel';
-import { deleteNullish } from '../../../../utils/utils';
+import { UserListItemProps } from '../../../../ui/UserListItem';
 
+import ChannelProfile from '../ChannelProfile';
+import LeaveChannelModal from '../LeaveChannel';
+import MenuItem from './MenuItem';
+import MenuListByRole from './MenuListByRole';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+
+interface ModerationPanelProps {
+  menuItems: ReturnType<typeof useMenuItems>;
+}
 export interface ChannelSettingsUIProps {
   renderHeader?: (props: ChannelSettingsHeaderProps) => React.ReactElement;
   renderChannelProfile?: () => React.ReactElement;
-  renderModerationPanel?: () => React.ReactElement;
+  renderModerationPanel?: (props: ModerationPanelProps) => React.ReactElement;
   renderLeaveChannel?: () => React.ReactElement;
   renderPlaceholderError?: () => React.ReactElement;
   renderPlaceholderLoading?: () => React.ReactElement;
+  /**
+   * @deprecated This prop is deprecated and will be removed in the next major update.
+   * Please use the `renderUserListItem` prop of the `ChannelSettingsProvider` instead.
+   */
+  renderUserListItem?: (props: UserListItemProps) => ReactNode;
 }
 
 const ChannelSettingsUI = (props: ChannelSettingsUIProps) => {
   const {
-    renderHeader = (p) => <ChannelSettingsHeader {...p} />,
+    renderHeader = (props: ChannelSettingsHeaderProps) => <ChannelSettingsHeader {...props} />,
     renderLeaveChannel,
     renderChannelProfile,
-    renderModerationPanel,
+    renderModerationPanel = (props: ModerationPanelProps) => <MenuListByRole {...props} />,
     renderPlaceholderError,
     renderPlaceholderLoading,
   } = deleteNullish(props);
+  const { state } = useSendbird();
+  const { isOnline } = state.config;
+  const {
+    state: {
+      channel,
+      invalidChannel,
+      onCloseClick,
+      loading,
+    },
+  } = useChannelSettings();
+  const { stringSet } = useLocalization();
+  const menuItems = useMenuItems();
 
-  const state = useSendbirdStateContext();
-  const isOnline = state?.config?.isOnline;
-  const { stringSet } = useContext(LocalizationContext);
-  const { channel, invalidChannel, onCloseClick, loading } = useChannelSettingsContext();
   const [showLeaveChannelModal, setShowLeaveChannelModal] = useState(false);
 
   if (loading) {
@@ -63,40 +82,33 @@ const ChannelSettingsUI = (props: ChannelSettingsUIProps) => {
       {renderHeader(headerProps)}
       <div className="sendbird-channel-settings__scroll-area">
         {renderChannelProfile?.() || <ChannelProfile />}
-        {renderModerationPanel?.() || (channel?.myRole === 'operator' ? <ModerationPanel /> : <UserPanel />)}
+        {renderModerationPanel?.({ menuItems })}
         {renderLeaveChannel?.() || (
-          <div
-            className={[
-              'sendbird-channel-settings__panel-item',
-              'sendbird-channel-settings__leave-channel',
-              !isOnline ? 'sendbird-channel-settings__panel-item__disabled' : '',
-            ].join(' ')}
-            role="button"
+          <MenuItem
+            className={classnames(!isOnline ? 'sendbird-channel-settings__panel-item__disabled' : '', 'sendbird-channel-settings__panel-item__leave-channel')}
             onKeyDown={() => {
-              if (!isOnline) {
-                return;
-              }
+              if (!isOnline) return;
               setShowLeaveChannelModal(true);
             }}
             onClick={() => {
-              if (!isOnline) {
-                return;
-              }
+              if (!isOnline) return;
               setShowLeaveChannelModal(true);
             }}
-            tabIndex={0}
-          >
-            <Icon
-              className={['sendbird-channel-settings__panel-icon-left', 'sendbird-channel-settings__panel-icon__leave'].join(' ')}
-              type={IconTypes.LEAVE}
-              fillColor={IconColors.ERROR}
-              height="24px"
-              width="24px"
-            />
-            <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
-              {stringSet.CHANNEL_SETTING__LEAVE_CHANNEL__TITLE}
-            </Label>
-          </div>
+            renderLeft={() => (
+              <Icon
+                className={['sendbird-channel-settings__panel-icon-left', 'sendbird-channel-settings__panel-icon__leave'].join(' ')}
+                type={IconTypes.LEAVE}
+                fillColor={IconColors.ERROR}
+                height="24px"
+                width="24px"
+              />
+            )}
+            renderMiddle={() => (
+              <Label type={LabelTypography.SUBTITLE_1} color={LabelColors.ONBACKGROUND_1}>
+                {stringSet.CHANNEL_SETTING__LEAVE_CHANNEL__TITLE}
+              </Label>
+            )}
+          />
         )}
         {showLeaveChannelModal && (
           <LeaveChannelModal
@@ -115,3 +127,8 @@ const ChannelSettingsUI = (props: ChannelSettingsUIProps) => {
 };
 
 export default ChannelSettingsUI;
+/** NOTE: For exportation */
+export { OperatorList } from '../ModerationPanel/OperatorList';
+export { MemberList } from '../ModerationPanel/MemberList';
+export { MutedMemberList } from '../ModerationPanel/MutedMemberList';
+export { BannedUserList } from '../ModerationPanel/BannedUserList';

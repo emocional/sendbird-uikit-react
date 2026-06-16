@@ -6,14 +6,21 @@ import scss from "rollup-plugin-scss";
 import postcss from "rollup-plugin-postcss";
 import replace from "@rollup/plugin-replace";
 import autoprefixer from "autoprefixer";
+import postcssRtl from "postcss-rtlcss";
 import copy from "rollup-plugin-copy";
 import nodePolyfills from "rollup-plugin-polyfill-node";
 import {visualizer} from "rollup-plugin-visualizer";
 import ts2 from "rollup-plugin-typescript2"
+import { createRequire } from "module";
 
-// config from package.json
-import pkg from "./package.json" assert {type: "json"};
 import inputs from "./rollup.module-exports.mjs";
+import { readFileSync, writeFileSync } from 'fs';
+import postcssRTLOptions from "./postcssRtlOptions.mjs";
+
+// Read package.json without `with { type: "json" }` import attributes:
+// that syntax only works on Node 18.20.0+/20.10.0+ but engines.node in
+// package.json declares >=18, so older 18.x would crash here at parse time.
+const pkg = createRequire(import.meta.url)("./package.json");
 
 const APP_VERSION_STRING = "__react_dev_mode__";
 
@@ -32,6 +39,7 @@ export default {
       chunkFileNames: 'chunks/bundle-[hash].js',
       format: "cjs",
       sourcemap: true,
+      interop: "compat",
     },
   ],
   external: [
@@ -56,11 +64,46 @@ export default {
           const result = scss.renderSync({ file: id });
           resolvecss({ code: result.css.toString() });
         }),
-      plugins: [autoprefixer],
-      sourceMap: true,
+      plugins: [autoprefixer, postcssRtl(postcssRTLOptions)],
+      sourceMap: false,
       extract: "dist/index.css",
       extensions: [".sass", ".scss", ".css"],
     }),
+    {
+      name: 'postcss-single-file',
+      async writeBundle(outputOptions, bundle) {
+        // Path to your CSS file
+        const cssFilePath = './dist/dist/index.css';
+
+        try {
+          // Read the content of the CSS file
+          const cssContent = readFileSync(cssFilePath, 'utf-8');
+
+          // Split the content into lines
+          const lines = cssContent.split('\n');
+
+          // Find lines starting with @import
+          const importLines = [];
+          const otherLines = [];
+          lines.forEach(line => {
+            if (line.trim().startsWith('@import')) {
+              importLines.push(line);
+            } else {
+              otherLines.push(line);
+            }
+          });
+          // Combine import lines and other lines
+          const modifiedContent = importLines.join('\n') + '\n' + otherLines.join('\n');
+
+          // Write the modified content back to the file
+          writeFileSync(cssFilePath, modifiedContent);
+
+          console.log('Moved @import lines to the top of the CSS file successfully.');
+        } catch (error) {
+          console.error('Error occurred while moving @import lines to the top of the CSS file:', error);
+        }
+      },
+    },
     replace({
       preventAssignment: false,
       exclude: "node_modules/**",

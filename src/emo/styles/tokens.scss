@@ -1,0 +1,46 @@
+@import '../../styles/variables';
+
+.sendbird-icon-color--emocional [class*='fill'] {
+  @include themed() {
+    fill: #d4d4d8ff;
+  }
+}
+
+.sendbird-color--emocional_border {
+  @include themed() {
+    color: #dee1e580;
+  }
+
+  &--background-color {
+    @include themed() {
+      background-color: #dee1e580;
+    }
+  }
+}
+
+.emo-invite-user-list-item {
+  cursor: pointer;
+  position: relative;
+}
+
+.emo-invite-user-list-item__tag {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.emo-channel-preview__tag {
+  margin-top: 2px;
+  font-size: 12px;
+  border-radius: 12px;
+  text-align: center;
+  width: min-content;
+  white-space: nowrap;
+  padding: 2px 6px;
+  background-color: #fafafaff;
+}
+
+.emo-channel-preview__tag--selected {
+  background-color: #fff;
+}

@@ -10,6 +10,7 @@ import Loader from '../Loader';
 import Icon, { IconTypes, IconColors } from '../Icon';
 import { LabelTypography, LabelColors } from '../Label';
 import { VOICE_PLAYER_STATUS } from '../../hooks/VoicePlayer/dux/initialState';
+import { classnames } from '../../utils/utils';
 
 export interface VoiceMessageItemBodyProps {
   className?: string;
@@ -40,6 +41,7 @@ export const VoiceMessageItemBody = ({
     channelUrl,
     key: `${message?.messageId}`,
     audioFileUrl: message?.url,
+    audioFileMimeType: message?.type,
   });
 
   useEffect(() => {
@@ -49,22 +51,20 @@ export const VoiceMessageItemBody = ({
       setUsingReaction(false);
     }
   }, [isReactionEnabled, message?.reactions?.length]);
-  const progresBarMaxSize = useMemo(() => {
+  const progressBarMaxSize = useMemo(() => {
+    const DEFAULT_MAX_SIZE = 1;
     if (message?.metaArrays) {
       const duration = message?.metaArrays.find((metaArray) => metaArray.key === 'KEY_VOICE_MESSAGE_DURATION')?.value[0];
-      return duration && parseInt(duration);
+      return duration ? parseInt(duration) : DEFAULT_MAX_SIZE;
     }
-    return 1;
+    return DEFAULT_MAX_SIZE;
   }, [message?.metaArrays]);
 
   return (
-    <div
-      className={`sendbird-voice-message-item-body ${className} ${usingReaction ? 'is-reactions-contained' : ''}`}
-      style={{ marginLeft: 10 }}
-    >
+    <div className={classnames('sendbird-voice-message-item-body', className, usingReaction && 'is-reactions-contained')}>
       <ProgressBar
         className="sendbird-voice-message-item-body__progress-bar"
-        maxSize={duration || progresBarMaxSize}
+        maxSize={duration || progressBarMaxSize}
         currentSize={playbackTime}
         colorType={isByMe ? ProgressBarColorTypes.PRIMARY : ProgressBarColorTypes.GRAY}
       />
@@ -95,7 +95,7 @@ export const VoiceMessageItemBody = ({
       </div>
       <PlaybackTime
         className="sendbird-voice-message-item-body__playback-time"
-        time={progresBarMaxSize - playbackTime}
+        time={progressBarMaxSize - playbackTime}
         labelType={LabelTypography.BODY_1}
         labelColor={isByMe ? LabelColors.ONCONTENT_1 : LabelColors.ONBACKGROUND_1}
       />

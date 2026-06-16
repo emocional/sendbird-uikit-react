@@ -1,10 +1,10 @@
-import { ImageCompressionOptions } from '../lib/Sendbird';
+import type { ImageCompressionOptions, ImageCompressionOutputFormatType, Logger } from '../lib/Sendbird/types';
 import pxToNumber from './pxToNumber';
-import { Logger } from '../lib/SendbirdState';
 
 interface CompressImageParams {
   imageFile: File;
   compressionRate: number;
+  outputFormat: ImageCompressionOutputFormatType;
   resizingWidth?: number;
   resizingHeight?: number;
 }
@@ -14,6 +14,7 @@ export const compressImage = ({
   compressionRate,
   resizingWidth,
   resizingHeight,
+  outputFormat,
 }: CompressImageParams): Promise<File> => {
   const image = document.createElement('img');
   return new Promise((resolve, reject) => {
@@ -51,16 +52,22 @@ export const compressImage = ({
 
       ctx.drawImage(image, 0, 0, targetResizingWidth, targetResizingHeight);
 
+      // Change the file.name & file.type for converting file type
+      const targetFileType = outputFormat === 'preserve' ? imageFile.type : `image/${outputFormat}`;
+      const targetSubtype = targetFileType.split('/').pop();
+      const dotIndex = imageFile.name.lastIndexOf('.');
+      // targetName = `fileName.targetSubtype`
+      const targetName = `${dotIndex === -1 ? imageFile.name : imageFile.name.substring(0, dotIndex)}.${targetSubtype}`;
       ctx.canvas.toBlob(
         (blob) => {
           if (blob) {
-            const file = new File([blob], imageFile.name, { type: imageFile.type });
+            const file = new File([blob], targetName, { type: targetFileType });
             resolve(file);
           } else {
             reject(new Error('Failed to compress image'));
           }
         },
-        imageFile.type,
+        targetFileType,
         compressionRate,
       );
     };
@@ -77,9 +84,9 @@ export const compressImages = async ({
   logger,
   imageCompression,
 }: CompressImagesParams) => {
-  const { compressionRate } = imageCompression;
-  const resizingWidth = pxToNumber(imageCompression.resizingWidth);
-  const resizingHeight = pxToNumber(imageCompression.resizingHeight);
+  const { compressionRate, outputFormat = 'preserve' } = imageCompression;
+  const resizingWidth = imageCompression.resizingWidth ? pxToNumber(imageCompression.resizingWidth) : undefined;
+  const resizingHeight = imageCompression.resizingHeight ? pxToNumber(imageCompression.resizingHeight) : undefined;
 
   const result = {
     failedIndexes: [] as number[],
@@ -90,7 +97,7 @@ export const compressImages = async ({
     logger?.warning('utils - compressImages: There are no files.', files);
     return result;
   }
-  if (compressionRate < 0 || 1 < compressionRate) {
+  if (!compressionRate || compressionRate < 0 || 1 < compressionRate) {
     logger?.warning('utils - compressImages: The compressionRate is not acceptable.', compressionRate);
     return result;
   }
@@ -111,9 +118,11 @@ export const compressImages = async ({
             compressionRate,
             resizingWidth,
             resizingHeight,
+            outputFormat,
           });
           result.compressedFiles.push(compressedImage);
         } catch (err) {
+          result.compressedFiles.push(file);
           result.failedIndexes.push(index);
           logger?.warning('utils - compressImages: Failed to compress image file', { file, err });
         }

@@ -1,4 +1,5 @@
 import React, { useMemo, useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
 import format from 'date-fns/format';
 import type { FileMessage, MultipleFilesMessage } from '@sendbird/chat/message';
 
@@ -7,19 +8,23 @@ import DateSeparator from '../../../../ui/DateSeparator';
 import Label, { LabelTypography, LabelColors } from '../../../../ui/Label';
 import RemoveMessage from '../RemoveMessageModal';
 import FileViewer from '../../../../ui/FileViewer';
-import { useThreadContext } from '../../context/ThreadProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import SuggestedMentionList from '../SuggestedMentionList';
 import MessageInput from '../../../../ui/MessageInput';
 import { ThreadListStateTypes } from '../../types';
 import { MessageInputKeys } from '../../../../ui/MessageInput/const';
 import ThreadListItemContent from './ThreadListItemContent';
-import { Role } from '../../../../lib/types';
+import { Role } from '../../../../lib/Sendbird/types';
 import { useDirtyGetMentions } from '../../../Message/hooks/useDirtyGetMentions';
 import { getIsReactionEnabled } from '../../../../utils/getIsReactionEnabled';
 import { SendableMessageType } from '../../../../utils';
+import { User } from '@sendbird/chat';
+import { getCaseResolvedReplyType } from '../../../../lib/utils/resolvedReplyType';
+import { classnames } from '../../../../utils/utils';
+import { MessageComponentRenderers } from '../../../../ui/MessageContent';
+import useThread from '../../context/useThread';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
-export interface ThreadListItemProps {
+export interface ThreadListItemProps extends MessageComponentRenderers {
   className?: string;
   message: SendableMessageType;
   chainTop?: boolean;
@@ -29,53 +34,51 @@ export interface ThreadListItemProps {
   handleScroll?: () => void;
 }
 
-export default function ThreadListItem({
-  className,
-  message,
-  chainTop,
-  chainBottom,
-  hasSeparator,
-  renderCustomSeparator,
-  handleScroll,
-}: ThreadListItemProps): React.ReactElement {
-  const { stores, config } = useSendbirdStateContext();
+export default function ThreadListItem(props: ThreadListItemProps): React.ReactElement {
   const {
-    isReactionEnabled,
-    isMentionEnabled,
-    isOnline,
-    replyType,
-    userMention,
-    logger,
-  } = config;
+    className,
+    message,
+    chainTop,
+    chainBottom,
+    hasSeparator,
+    renderCustomSeparator,
+    handleScroll,
+  } = props;
+  const { state: { stores, config } } = useSendbird();
+  const { isOnline, userMention, logger, groupChannel } = config;
   const userId = stores?.userStore?.user?.userId;
   const { dateLocale, stringSet } = useLocalization();
-  const threadContext = useThreadContext?.();
   const {
-    currentChannel,
-    nicknamesMap,
-    emojiContainer,
-    toggleReaction,
-    threadListState,
-    updateMessage,
-    resendMessage,
-    deleteMessage,
-    isMuted,
-    isChannelFrozen,
-    onBeforeDownloadFileMessage,
-  } = threadContext;
-  const openingMessage = threadContext?.message;
+    state: {
+      message: openingMessage,
+      currentChannel,
+      nicknamesMap,
+      emojiContainer,
+      threadListState,
+      isMuted,
+      isChannelFrozen,
+      onBeforeDownloadFileMessage,
+    },
+    actions: {
+      toggleReaction,
+      updateMessage,
+      resendMessage,
+      deleteMessage,
+    },
+  } = useThread();
 
   const [showEdit, setShowEdit] = useState(false);
   const [showRemove, setShowRemove] = useState(false);
   const [showFileViewer, setShowFileViewer] = useState(false);
-  const usingReaction = getIsReactionEnabled({
+  const isReactionEnabled = getIsReactionEnabled({
     channel: currentChannel,
     config,
-    moduleLevel: isReactionEnabled,
   });
+  const isMentionEnabled = groupChannel.enableMention;
+  const replyType = getCaseResolvedReplyType(groupChannel.replyType).upperCase;
 
   // Move to message
-  const messageScrollRef = useRef(null);
+  const messageScrollRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (openingMessage?.messageId === message?.messageId && messageScrollRef?.current) {
       messageScrollRef.current?.scrollIntoView({ block: 'center', inline: 'center' });
@@ -90,11 +93,11 @@ export default function ThreadListItem({
   // mention
   const editMessageInputRef = useRef(null);
   const [mentionNickname, setMentionNickname] = useState('');
-  const [mentionedUsers, setMentionedUsers] = useState([]);
-  const [mentionedUserIds, setMentionedUserIds] = useState([]);
-  const [messageInputEvent, setMessageInputEvent] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [mentionSuggestedUsers, setMentionSuggestedUsers] = useState([]);
+  const [mentionedUsers, setMentionedUsers] = useState<User[]>([]);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [messageInputEvent, setMessageInputEvent] = useState<React.KeyboardEvent<HTMLDivElement> | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [mentionSuggestedUsers, setMentionSuggestedUsers] = useState<User[]>([]);
   const displaySuggestedMentionList = isOnline
     && isMentionEnabled
     && mentionNickname.length > 0
@@ -115,6 +118,8 @@ export default function ThreadListItem({
       }
     }));
   }, [mentionedUserIds]);
+
+  const { startTyping, stopTyping } = useTypingLifecycle(currentChannel, showEdit);
 
   // edit input
   const disabled = !(threadListState === ThreadListStateTypes.INITIALIZED)
@@ -137,7 +142,7 @@ export default function ThreadListItem({
           displaySuggestedMentionList && (
             <SuggestedMentionList
               targetNickname={mentionNickname}
-              inputEvent={messageInputEvent}
+              inputEvent={messageInputEvent ?? undefined}
               // renderUserMentionItem={renderUserMentionItem}
               onUserItemClick={(user) => {
                 if (user) {
@@ -167,18 +172,17 @@ export default function ThreadListItem({
           mentionSelectedUser={selectedUser}
           isMentionEnabled={isMentionEnabled}
           message={message}
-          onStartTyping={() => {
-            currentChannel?.startTyping?.();
-          }}
-          onUpdateMessage={({ messageId, message, mentionTemplate }) => {
+          onStartTyping={startTyping}
+          onStopTyping={stopTyping}
+          onUpdateMessage={({ messageId, message: editedMessage, mentionTemplate, mentionedUserIds: currentMentionedUserIds }) => {
             updateMessage({
               messageId,
-              message,
-              mentionedUsers,
+              message: editedMessage,
+              mentionedUserIds: currentMentionedUserIds,
               mentionTemplate,
             });
             setShowEdit(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onCancelEdit={() => {
             setMentionNickname('');
@@ -186,7 +190,7 @@ export default function ThreadListItem({
             setMentionedUserIds([]);
             setMentionSuggestedUsers([]);
             setShowEdit(false);
-            currentChannel?.endTyping?.();
+            stopTyping();
           }}
           onUserMentioned={(user) => {
             if (selectedUser?.userId === user?.userId) {
@@ -217,7 +221,8 @@ export default function ThreadListItem({
   return (
     <div
       ref={messageScrollRef}
-      className={`sendbird-thread-list-item ${className}`}
+      className={classnames('sendbird-thread-list-item', className)}
+      data-testid="sendbird-thread-list-item"
     >
       {/* date separator */}
       {
@@ -233,13 +238,13 @@ export default function ThreadListItem({
         ))
       }
       <ThreadListItemContent
+        {...props}
         userId={userId}
         channel={currentChannel}
         message={message}
         chainTop={chainTop}
         chainBottom={chainBottom}
-        isReactionEnabled={usingReaction}
-        isMentionEnabled={isMentionEnabled}
+        isReactionEnabled={isReactionEnabled}
         disableQuoteMessage
         replyType={replyType}
         nicknamesMap={nicknamesMap}
@@ -267,9 +272,8 @@ export default function ThreadListItem({
             setShowFileViewer(false);
           }}
           onDownloadClick={async (e) => {
-            if (!onBeforeDownloadFileMessage) {
-              return null;
-            }
+            if (!onBeforeDownloadFileMessage) return;
+
             try {
               const allowDownload = await onBeforeDownloadFileMessage({ message: message as FileMessage | MultipleFilesMessage });
               if (!allowDownload) {

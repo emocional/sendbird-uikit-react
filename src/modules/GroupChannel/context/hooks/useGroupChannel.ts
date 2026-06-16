@@ -1,0 +1,265 @@
+import { useSyncExternalStore } from 'use-sync-external-store/shim';
+import { useContext, useCallback, useMemo } from 'react';
+import type { GroupChannel } from '@sendbird/chat/groupChannel';
+import type { SendbirdError } from '@sendbird/chat';
+
+import type {
+  FileMessage,
+  FileMessageCreateParams,
+  MultipleFilesMessage,
+  MultipleFilesMessageCreateParams,
+  UserMessage,
+  UserMessageCreateParams,
+  UserMessageUpdateParams,
+} from '@sendbird/chat/message';
+
+import { SendableMessageType } from '../../../../utils';
+import { getMessageTopOffset } from '../utils';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { GroupChannelContext } from '../GroupChannelProvider';
+import type { GroupChannelState, MessageActions } from '../types';
+import { useMessageActions } from './useMessageActions';
+
+export interface GroupChannelActions extends MessageActions {
+  // Channel actions
+  setCurrentChannel: (channel: GroupChannel) => void;
+  handleChannelError: (error: SendbirdError) => void;
+  markAsReadAll: (channel: GroupChannel) => void;
+  markAsUnread: (message: SendableMessageType, source?: 'manual' | 'internal') => void;
+  setReadStateChanged: (state: string) => void;
+  setFirstUnreadMessageId: (messageId: number | string | null) => void;
+
+  // Message actions
+  sendUserMessage: (params: UserMessageCreateParams) => Promise<UserMessage>;
+  sendFileMessage: (params: FileMessageCreateParams) => Promise<FileMessage>;
+  sendMultipleFilesMessage: (params: MultipleFilesMessageCreateParams) => Promise<MultipleFilesMessage>;
+  updateUserMessage: (messageId: number, params: UserMessageUpdateParams) => Promise<UserMessage>;
+
+  setNewMessageIds: (ids: number[]) => void;
+
+  // UI actions
+  setQuoteMessage: (message: SendableMessageType | null) => void;
+  setAnimatedMessageId: (messageId: number | null) => void;
+  setIsScrollBottomReached: (isReached: boolean) => void;
+
+  // Scroll actions
+  scrollToBottom: (animated?: boolean) => Promise<void>;
+  scrollToMessage: (
+    createdAt: number,
+    messageId: number,
+    messageFocusAnimated?: boolean,
+    scrollAnimated?: boolean
+  ) => Promise<void>;
+
+  // Reaction action
+  toggleReaction: (message: SendableMessageType, emojiKey: string, isReacted: boolean) => void;
+}
+
+export const useGroupChannel = () => {
+  const store = useContext(GroupChannelContext);
+  if (!store) throw new Error('useGroupChannel must be used within a GroupChannelProvider');
+
+  const { state: { config } } = useSendbird();
+  const { markAsReadScheduler } = config;
+  const state: GroupChannelState = useSyncExternalStore(store.subscribe, store.getState);
+
+  const setAnimatedMessageId = useCallback((messageId: number | null) => {
+    store.setState(state => ({ ...state, animatedMessageId: messageId }));
+  }, []);
+
+  const setIsScrollBottomReached = useCallback((isReached: boolean) => {
+    store.setState(state => ({ ...state, isScrollBottomReached: isReached }));
+  }, []);
+
+  const scrollToBottom = useCallback(async (animated?: boolean) => {
+    if (!state.scrollRef.current) return;
+    setAnimatedMessageId(null);
+    setIsScrollBottomReached(true);
+
+    if (config.isOnline && state.hasNext()) {
+      await state.resetWithStartingPoint(Number.MAX_SAFE_INTEGER);
+    }
+
+    // Wait for DOM to be updated after resetWithStartingPoint or state changes
+    // Use requestAnimationFrame to ensure DOM is fully rendered (compatible with React 16-19)
+    requestAnimationFrame(() => {
+      state.scrollPubSub?.publish('scrollToBottom', { animated });
+    });
+
+    if (state.currentChannel && !state.hasNext()) {
+      state.resetNewMessages();
+      if (!state.disableMarkAsRead) {
+        if (!config.groupChannel.enableMarkAsUnread && state.currentChannel.myMemberState !== 'none') {
+          markAsReadScheduler.push(state.currentChannel);
+        }
+      }
+    }
+  }, [state.scrollRef.current, config.isOnline, markAsReadScheduler, config.groupChannel.enableMarkAsUnread]);
+
+  const markAsReadAll = useCallback((channel: GroupChannel) => {
+    if (config.isOnline && !state.disableMarkAsRead && channel) {
+      markAsReadScheduler?.push(channel);
+    }
+  }, [config.isOnline, state.disableMarkAsRead]);
+
+  const scrollToMessage = useCallback(async (
+    createdAt: number,
+    messageId: number,
+    messageFocusAnimated?: boolean,
+    scrollAnimated?: boolean,
+  ) => {
+    const element = state.scrollRef.current;
+    const parentNode = element?.parentNode as HTMLDivElement;
+    const clickHandler = {
+      activate() {
+        if (!element || !parentNode) return;
+        element.style.pointerEvents = 'auto';
+        parentNode.style.cursor = 'auto';
+      },
+      deactivate() {
+        if (!element || !parentNode) return;
+        element.style.pointerEvents = 'none';
+        parentNode.style.cursor = 'wait';
+      },
+    };
+
+    clickHandler.deactivate();
+
+    const message = state.messages.find((it) => it.messageId === messageId || it.createdAt === createdAt);
+
+    if (message) {
+      const topOffset = getMessageTopOffset(message.createdAt);
+      if (topOffset !== null) state.scrollPubSub.publish('scroll', { top: topOffset, animated: scrollAnimated });
+      if (messageFocusAnimated ?? true) setAnimatedMessageId(messageId);
+    } else if (state.initialized) {
+      await state.resetWithStartingPoint(createdAt);
+      setTimeout(() => {
+        // NOTE: Inside setTimeout callback, the closure-captured `state` is a stale snapshot (before reset).
+        // Use store.getState() to get the latest state (including updated messages) at callback execution time.
+        const currentState = store.getState();
+
+        if (currentState.messages.length === 0) return; // empty channel case.
+        let message = null;
+        let distance = Number.MAX_SAFE_INTEGER;
+        for (const it of currentState.messages) {
+          if (it.createdAt > createdAt) break;
+          const diff = Math.abs(it.createdAt - createdAt);
+          if (diff < distance) {
+            distance = diff;
+            message = it;
+          }
+        }
+
+        const topOffset = getMessageTopOffset(message.createdAt);
+        if (topOffset !== null) {
+          state.scrollPubSub.publish('scroll', {
+            top: topOffset,
+            lazy: false,
+            animated: scrollAnimated,
+          });
+        }
+        if (messageFocusAnimated ?? true) setAnimatedMessageId(messageId);
+      }, 500);
+    }
+    clickHandler.activate();
+  }, [
+    setAnimatedMessageId,
+    state.initialized,
+    state.scrollRef.current,
+    state.messages?.map(it => it?.messageId),
+  ]);
+
+  const toggleReaction = useCallback((message: SendableMessageType, emojiKey: string, isReacted: boolean) => {
+    if (!state.currentChannel) return;
+    if (isReacted) {
+      state.currentChannel.deleteReaction(message, emojiKey)
+        .catch(error => {
+          config.logger?.warning('Failed to delete reaction:', error);
+        });
+    } else {
+      state.currentChannel.addReaction(message, emojiKey)
+        .catch(error => {
+          config.logger?.warning('Failed to add reaction:', error);
+        });
+    }
+  }, [state.currentChannel?.deleteReaction, state.currentChannel?.addReaction]);
+
+  const messageActions = useMessageActions({
+    ...state,
+    scrollToBottom,
+  });
+
+  const setCurrentChannel = useCallback((channel: GroupChannel | null) => {
+    store.setState(state => ({
+      ...state,
+      currentChannel: channel,
+      fetchChannelError: null,
+      quoteMessage: state.currentChannel?.url === channel?.url ? state.quoteMessage : null,
+      animatedMessageId: null,
+      nicknamesMap: channel ? new Map(
+        channel.members.map(({ userId, nickname }) => [userId, nickname]),
+      ) : new Map(),
+    }), true);
+  }, []);
+
+  const handleChannelError = useCallback((error: SendbirdError) => {
+    store.setState(state => ({
+      ...state,
+      currentChannel: null,
+      fetchChannelError: error,
+      quoteMessage: null,
+      animatedMessageId: null,
+    }));
+  }, []);
+
+  const setQuoteMessage = useCallback((message: SendableMessageType | null) => {
+    store.setState(state => ({ ...state, quoteMessage: message }));
+  }, []);
+
+  const setReadStateChanged = useCallback((readState: string) => {
+    store.setState(state => ({ ...state, readState }));
+  }, []);
+
+  const setFirstUnreadMessageId = useCallback((messageId: number | null) => {
+    store.setState(state => ({ ...state, firstUnreadMessageId: messageId }));
+  }, []);
+
+  const setNewMessageIds = useCallback((newMessageIds: number[]) => {
+    store.setState(state => ({ ...state, newMessageIds }));
+  }, []);
+
+  const actions: GroupChannelActions = useMemo(() => {
+    return {
+      setCurrentChannel,
+      handleChannelError,
+      markAsReadAll,
+      markAsUnread: state.markAsUnread,
+      setReadStateChanged,
+      setFirstUnreadMessageId,
+      setNewMessageIds,
+      setQuoteMessage,
+      scrollToBottom,
+      scrollToMessage,
+      toggleReaction,
+      setAnimatedMessageId,
+      setIsScrollBottomReached,
+      ...messageActions,
+    };
+  }, [
+    setCurrentChannel,
+    handleChannelError,
+    markAsReadAll,
+    state.markAsUnread,
+    setReadStateChanged,
+    setFirstUnreadMessageId,
+    setQuoteMessage,
+    scrollToBottom,
+    scrollToMessage,
+    toggleReaction,
+    setAnimatedMessageId,
+    setIsScrollBottomReached,
+    messageActions,
+  ]);
+
+  return { state, actions };
+};

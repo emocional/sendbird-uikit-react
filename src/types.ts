@@ -10,6 +10,8 @@ import type {
 } from '@sendbird/chat/message';
 import { CoreMessageType } from './utils';
 import { MessageProps } from './modules/GroupChannel/components/Message/MessageView';
+// @emo-integration — re-export para consumidores (emo-front)
+export type { EmocionalUserListQuery } from './emo/types';
 
 export type ReplyType = 'NONE' | 'QUOTE_REPLY' | 'THREAD';
 export type Nullable<T> = T | null;
@@ -88,7 +90,4 @@ export interface UploadedFileInfoWithUpload {
 
 export type SendbirdTheme = 'light' | 'dark';
 
-export enum MessageContentMiddleContainerType {
-  DEFAULT = 'default',
-  WIDE = 'wide',
-}
+export type HTMLTextDirection = 'ltr' | 'rtl';

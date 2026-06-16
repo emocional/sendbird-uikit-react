@@ -68,6 +68,8 @@ import IconToggleOn from '../../svgs/icon-toggleon.svg';
 import IconUser from '../../svgs/icon-user.svg';
 import IconFeedbackLike from '../../svgs/icon-feedback-like.svg';
 import IconFeedbackDislike from '../../svgs/icon-feedback-dislike.svg';
+import IconMarkAsUnread from '../../svgs/icon-mark-as-unread.svg';
+import IconFloatingButtonClose from '../../svgs/icon-floating-button-close.svg';
 
 import { noop } from '../../utils/utils';
 
@@ -133,11 +135,13 @@ function changeTypeToIconComponent(type: Types) {
     case Types.USER: return <IconUser />;
     case Types.FEEDBACK_LIKE: return <IconFeedbackLike />;
     case Types.FEEDBACK_DISLIKE: return <IconFeedbackDislike />;
+    case Types.MARK_AS_UNREAD: return <IconMarkAsUnread />;
+    case Types.FLOATING_BUTTON_CLOSE: return <IconFloatingButtonClose />;
     default: return 'icon'; // If you see this text 'icon' replace icon for it
   }
 }
 
-type IconProps = {
+export interface IconProps {
   className?: string | string[];
   /** Type: Use strings from below list */
   type: Types;
@@ -147,7 +151,8 @@ type IconProps = {
   height?: string | number;
   onClick?: React.MouseEventHandler<HTMLDivElement> & React.KeyboardEventHandler<HTMLDivElement>;
   children?: React.ReactNode;
-};
+  testID?: string;
+}
 export default function Icon({
   className = '',
   type,
@@ -156,6 +161,7 @@ export default function Icon({
   height = 26,
   onClick = noop,
   children = null,
+  testID,
 }: IconProps) {
   const iconStyle = {
     width: typeof width === 'string' ? width : `${width}px`,
@@ -171,6 +177,7 @@ export default function Icon({
         changeTypeToIconClassName(type),
         changeColorToClassName(fillColor),
       ].join(' ')}
+      data-testid={testID}
       role={'button'}
       onClick={onClick}
       onKeyDown={onClick}

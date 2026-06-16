@@ -1,7 +1,6 @@
 import React, { ReactElement, useContext, useState } from 'react';
 
 import { UserListItem } from '../ParticipantUI/ParticipantItem';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 
 import Button, { ButtonTypes, ButtonSizes } from '../../../../ui/Button';
 import ContextMenu, { MenuItem, MenuItems, MuteMenuItem } from '../../../../ui/ContextMenu';
@@ -12,11 +11,12 @@ import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettings
 import OperatorListModal from './OperatorsModal';
 import AddOperatorsModal from './AddOperatorsModal';
 import { Participant } from '@sendbird/chat';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 const OperatorList = (): ReactElement => {
   const [showAdd, setShowAdd] = useState<boolean>(false);
   const [showMore, setShowMore] = useState<boolean>(false);
-  const state = useSendbirdStateContext();
+  const { state } = useSendbird();
   const currentUserId = state?.config?.userId;
   const { stringSet } = useContext(LocalizationContext);
   const { channel } = useOpenChannelSettingsContext();
@@ -60,7 +60,7 @@ const OperatorList = (): ReactElement => {
                               closeDropdown();
                             });
                           }}
-                          dataSbId="open_channel_setting_operator_context_menu_unregister_operator"
+                          testID="open_channel_setting_operator_context_menu_unregister_operator"
                         >
                           {stringSet.OPEN_CHANNEL_SETTING__MODERATION__UNREGISTER_OPERATOR}
                         </MenuItem>
@@ -72,7 +72,7 @@ const OperatorList = (): ReactElement => {
                             // FIXME: handle error later
                             closeDropdown();
                           }}
-                          dataSbId={`open_channel_setting_operator_context_menu_${operator.isMuted ? 'unmute' : 'mute'}`}
+                          testID={`open_channel_setting_operator_context_menu_${operator.isMuted ? 'unmute' : 'mute'}`}
                         >
                           {
                             operator.isMuted
@@ -86,14 +86,14 @@ const OperatorList = (): ReactElement => {
                               closeDropdown();
                             });
                           }}
-                          dataSbId="open_channel_setting_operator_context_menu_ban"
+                          testID="open_channel_setting_operator_context_menu_ban"
                         >
                           {stringSet.OPEN_CHANNEL_SETTING__MODERATION__BAN}
                         </MenuItem>
                       </MenuItems>
                     )}
                   />
-                ) : null
+                ) : <></>
             )}
           />
         ))
@@ -109,7 +109,7 @@ const OperatorList = (): ReactElement => {
           {stringSet.OPEN_CHANNEL_SETTINGS__OPERATORS__TITLE_ADD}
         </Button>
         {
-          channel?.operators?.length > 10 && (
+          channel?.operators && channel.operators.length > 10 && (
             <Button
               type={ButtonTypes.SECONDARY}
               size={ButtonSizes.SMALL}

@@ -18,7 +18,7 @@ import { UserListItem } from './ParticipantItem';
 import ParticipantsModal from './ParticipantsModal';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
 import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettingsProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 interface ParticipantListProps {
   isOperatorView?: boolean;
@@ -27,8 +27,8 @@ interface ParticipantListProps {
 export default function ParticipantList({
   isOperatorView = false,
 }: ParticipantListProps): ReactElement {
-  const globalState = useSendbirdStateContext();
-  const currentUserId = globalState?.config?.userId;
+  const { state } = useSendbird();
+  const currentUserId = state?.config?.userId;
   const { channel } = useOpenChannelSettingsContext();
   const { stringSet } = useContext(LocalizationContext);
   const [participants, setParticipants] = useState<Array<User> | null>(null);
@@ -58,19 +58,21 @@ export default function ParticipantList({
     <div
       className="sendbird-openchannel-settings__participant-list"
       onScroll={(e) => {
-        const { hasNext } = participantListQuery;
-        const target = e.target as HTMLTextAreaElement;
-        const fetchMore = (
-          target.clientHeight + target.scrollTop === target.scrollHeight
-        );
+        if (participantListQuery) {
+          const { hasNext } = participantListQuery;
+          const target = e.target as HTMLTextAreaElement;
+          const fetchMore = (
+            target.clientHeight + target.scrollTop === target.scrollHeight
+          );
 
-        if (hasNext && fetchMore) {
-          participantListQuery.next().then((fetchedParticipants) => {
-            setParticipants([
-              ...participants,
-              ...fetchedParticipants,
-            ]);
-          });
+          if (hasNext && fetchMore) {
+            participantListQuery.next().then((fetchedParticipants) => {
+              setParticipants([
+                ...(participants ?? []),
+                ...fetchedParticipants,
+              ]);
+            });
+          }
         }
       }}
     >
@@ -120,7 +122,7 @@ export default function ParticipantList({
                                 // FIXME: handle error later
                                 closeDropdown();
                               }}
-                              dataSbId={`open_channel_setting_partitipant_conext_menu_${(
+                              testID={`open_channel_setting_partitipant_conext_menu_${(
                                 isOperator) ? 'unregister_operator' : 'register_as_operator'}`
                               }
                             >
@@ -141,7 +143,7 @@ export default function ParticipantList({
                                 // FIXME: handle error later
                                 closeDropdown();
                               }}
-                              dataSbId={`open_channel_setting_partitipant_conext_menu_${p.isMuted ? 'unmute' : 'mute'}`}
+                              testID={`open_channel_setting_partitipant_conext_menu_${p.isMuted ? 'unmute' : 'mute'}`}
                             >
                               {
                                 p.isMuted
@@ -156,7 +158,7 @@ export default function ParticipantList({
                                   refreshList();
                                 });
                               }}
-                              dataSbId="open_channel_setting_partitipant_conext_menu_ban"
+                              testID="open_channel_setting_partitipant_conext_menu_ban"
                             >
                               {stringSet.OPEN_CHANNEL_SETTING__MODERATION__BAN}
                             </MenuItem>

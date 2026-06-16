@@ -1,18 +1,18 @@
 import type { EveryMessage, RenderCustomSeparatorProps, RenderMessageParamsType, ReplyType } from '../../../../types';
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { EmojiContainer, User } from '@sendbird/chat';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useTypingLifecycle } from '../../../../hooks/useTypingLifecycle';
+import { type EmojiCategory, EmojiContainer, User } from '@sendbird/chat';
 import { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { FileMessage, UserMessage, UserMessageCreateParams, UserMessageUpdateParams } from '@sendbird/chat/message';
 import format from 'date-fns/format';
 import es from 'date-fns/locale/es';
 
 import { useLocalization } from '../../../../lib/LocalizationContext';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { MAX_USER_MENTION_COUNT, MAX_USER_SUGGESTION_COUNT, ThreadReplySelectType } from '../../context/const';
 import { isDisabledBecauseFrozen, isDisabledBecauseMuted } from '../../context/utils';
 import { useDirtyGetMentions } from '../../../Message/hooks/useDirtyGetMentions';
 import useDidMountEffect from '../../../../utils/useDidMountEffect';
-import { CoreMessageType, getClassName, getSuggestedReplies, SendableMessageType } from '../../../../utils';
+import { CoreMessageType, getSuggestedReplies, SendableMessageType } from '../../../../utils';
 import DateSeparator from '../../../../ui/DateSeparator';
 import Label, { LabelColors, LabelTypography } from '../../../../ui/Label';
 import MessageInput from '../../../../ui/MessageInput';
@@ -21,12 +21,15 @@ import MessageContent, { MessageContentProps } from '../../../../ui/MessageConte
 
 import SuggestedReplies, { SuggestedRepliesProps } from '../SuggestedReplies';
 import SuggestedMentionListView from '../SuggestedMentionList/SuggestedMentionListView';
-import type { OnBeforeDownloadFileMessageType } from '../../context/GroupChannelProvider';
-import { deleteNullish } from '../../../../utils/utils';
+import type { OnBeforeDownloadFileMessageType } from '../../context/types';
+import { classnames, deleteNullish } from '../../../../utils/utils';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import NewMessageIndicator from '../../../../ui/NewMessageSeparator';
 
 export interface MessageProps {
   message: EveryMessage;
   hasSeparator?: boolean;
+  hasNewMessageSeparator?: boolean;
   chainTop?: boolean;
   chainBottom?: boolean;
   handleScroll?: (isBottomMessageAffected?: boolean) => void;
@@ -51,6 +54,14 @@ export interface MessageProps {
    * */
   renderEditInput?: () => React.ReactElement;
   /**
+   * A function that is called when the new message separator visibility changes.
+   */
+  onNewMessageSeparatorVisibilityChange?: (isVisible: boolean) => void;
+  /**
+   * A function that forces scroll to message when new message is received.
+   */
+  scrollMessageOverflowToTop?: (ref: React.MutableRefObject<any>, message: CoreMessageType) => void;
+  /**
    * @deprecated Please use `children` instead
    * @description Customizes all child components of the message.
    * */
@@ -63,22 +74,24 @@ export interface MessageViewProps extends MessageProps {
 
   editInputDisabled: boolean;
   shouldRenderSuggestedReplies: boolean;
-  isReactionEnabled: boolean;
+  isReactionEnabled?: boolean;
   replyType: ReplyType;
   threadReplySelectType: ThreadReplySelectType;
   nicknamesMap: Map<string, string>;
 
-  renderUserMentionItem: (props: { user: User }) => React.ReactElement;
+  renderUserMentionItem?: (props: { user: User }) => React.ReactElement;
+  filterEmojiCategoryIds?: (message: SendableMessageType) => EmojiCategory['id'][];
   scrollToMessage: (createdAt: number, messageId: number) => void;
   toggleReaction: (message: SendableMessageType, emojiKey: string, isReacted: boolean) => void;
-  setQuoteMessage: React.Dispatch<React.SetStateAction<SendableMessageType>>;
-  onQuoteMessageClick: (params: { message: SendableMessageType }) => void;
-  onReplyInThreadClick: (params: { message: SendableMessageType }) => void;
+  setQuoteMessage: React.Dispatch<React.SetStateAction<SendableMessageType | null>>;
+  onQuoteMessageClick?: (params: { message: SendableMessageType }) => void;
+  onReplyInThreadClick?: (params: { message: SendableMessageType }) => void;
 
   sendUserMessage: (params: UserMessageCreateParams) => void;
   updateUserMessage: (messageId: number, params: UserMessageUpdateParams) => void;
   resendMessage: (failedMessage: SendableMessageType) => void;
   deleteMessage: (message: CoreMessageType) => Promise<void>;
+  markAsUnread?: (message: SendableMessageType) => void;
 
   renderFileViewer: (props: { message: FileMessage; onCancel: () => void }) => React.ReactElement;
   renderRemoveMessageModal?: (props: { message: EveryMessage; onCancel: () => void }) => React.ReactElement;
@@ -88,13 +101,17 @@ export interface MessageViewProps extends MessageProps {
    */
   onBeforeDownloadFileMessage?: OnBeforeDownloadFileMessageType;
 
-  animatedMessageId: number;
-  setAnimatedMessageId: React.Dispatch<React.SetStateAction<number>>;
+  animatedMessageId: number | null;
+  setAnimatedMessageId: React.Dispatch<React.SetStateAction<number | null>>;
+
+  newMessageIds?: number[] | null;
+  setNewMessageIds?: (ids: number[]) => void;
+
   onMessageAnimated?: () => void;
   /** @deprecated * */
-  highLightedMessageId?: number;
+  highLightedMessageId?: number | null;
   /** @deprecated * */
-  setHighLightedMessageId?: React.Dispatch<React.SetStateAction<number>>;
+  setHighLightedMessageId?: React.Dispatch<React.SetStateAction<number | null>>;
   /** @deprecated * */
   onMessageHighlighted?: () => void;
   usedInLegacy?: boolean;
@@ -107,9 +124,12 @@ const MessageView = (props: MessageViewProps) => {
     message,
     children,
     hasSeparator,
+    hasNewMessageSeparator,
     chainTop,
     chainBottom,
     handleScroll,
+    onNewMessageSeparatorVisibilityChange,
+    scrollMessageOverflowToTop,
 
     // MessageViewProps
     channel,
@@ -132,46 +152,58 @@ const MessageView = (props: MessageViewProps) => {
     updateUserMessage,
     resendMessage,
     deleteMessage,
+    markAsUnread,
 
     setAnimatedMessageId,
     animatedMessageId,
     onMessageAnimated,
     usedInLegacy = true,
+
+    newMessageIds,
+    setNewMessageIds,
   } = props;
 
   const {
     renderUserMentionItem,
     renderMessage,
-    renderMessageContent = (props) => <MessageContent {...props} />,
-    renderSuggestedReplies = (props) => <SuggestedReplies {...props} />,
+    renderMessageContent = (props: MessageContentProps) => <MessageContent {...props} />,
+    renderSuggestedReplies = (props: SuggestedRepliesProps) => <SuggestedReplies {...props} />,
     renderCustomSeparator,
     renderEditInput,
     renderFileViewer,
     renderRemoveMessageModal,
+    filterEmojiCategoryIds,
   } = deleteNullish(props);
 
   const { dateLocale, stringSet } = useLocalization();
-  const globalStore = useSendbirdStateContext();
+  const { state } = useSendbird();
 
-  const { userId, isOnline, isMentionEnabled, userMention, logger } = globalStore.config;
+  const {
+    userId,
+    isOnline,
+    userMention,
+    logger,
+    groupChannel,
+  } = state.config;
   const maxUserMentionCount = userMention?.maxMentionCount || MAX_USER_MENTION_COUNT;
   const maxUserSuggestionCount = userMention?.maxSuggestionCount || MAX_USER_SUGGESTION_COUNT;
 
   const [showEdit, setShowEdit] = useState(false);
   const [showRemove, setShowRemove] = useState(false);
   const [showFileViewer, setShowFileViewer] = useState(false);
-  const [isAnimated, setIsAnimated] = useState(false);
+  // isAnimated state removed — animation now driven by animatedMessageId + onAnimationEnd
   const [mentionNickname, setMentionNickname] = useState('');
-  const [mentionedUsers, setMentionedUsers] = useState([]);
-  const [mentionedUserIds, setMentionedUserIds] = useState([]);
-  const [messageInputEvent, setMessageInputEvent] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [mentionSuggestedUsers, setMentionSuggestedUsers] = useState([]);
+  const [mentionedUsers, setMentionedUsers] = useState<User[]>([]);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [messageInputEvent, setMessageInputEvent] = useState<React.KeyboardEvent<HTMLDivElement> | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [mentionSuggestedUsers, setMentionSuggestedUsers] = useState<User[]>([]);
   const editMessageInputRef = useRef(null);
   const messageScrollRef = useRef(null);
-
-  const displaySuggestedMentionList =
-    isOnline && isMentionEnabled && mentionNickname.length > 0 && !isDisabledBecauseFrozen(channel) && !isDisabledBecauseMuted(channel);
+  const displaySuggestedMentionList = isOnline
+    && groupChannel.enableMention && mentionNickname.length > 0
+    && !isDisabledBecauseFrozen(channel)
+    && !isDisabledBecauseMuted(channel);
 
   const mentionNodes = useDirtyGetMentions({ ref: editMessageInputRef }, { logger });
   const ableMention = mentionNodes?.length < maxUserMentionCount;
@@ -190,46 +222,102 @@ const MessageView = (props: MessageViewProps) => {
     );
   }, [mentionedUserIds]);
 
-  /**
-   * Move the message list scroll
-   * when the message's height is changed by `showEdit` OR `message.reactions`
-   */
+  const { startTyping, stopTyping } = useTypingLifecycle(channel, showEdit);
+
+  // Side effect: scroll position update when showEdit is toggled or reactions updated
   useDidMountEffect(() => {
     handleScroll?.();
   }, [showEdit, message?.reactions?.length]);
 
+  // Side effect: scroll position update when message updated
   useDidMountEffect(() => {
     handleScroll?.(true);
   }, [message?.updatedAt, (message as UserMessage)?.message]);
+
+  // Side effect: scroll position update when suggested replies are rendered or hidden
+  const prevShouldRenderSuggestedReplies = useRef(shouldRenderSuggestedReplies);
+  useEffect(() => {
+    if (prevShouldRenderSuggestedReplies.current !== shouldRenderSuggestedReplies) {
+      handleScroll?.();
+    } else {
+      prevShouldRenderSuggestedReplies.current = shouldRenderSuggestedReplies;
+    }
+  }, [shouldRenderSuggestedReplies]);
 
   useLayoutEffect(() => {
     // Keep the scrollBottom value after fetching new message list (but GroupChannel module is not needed.)
     if (usedInLegacy) handleScroll?.(true);
   }, []);
 
-  useLayoutEffect(() => {
-    const timeouts = [];
+  // Animation: once triggered, protect with local state until CSS animation completes
+  const [showBounce, setShowBounce] = useState(false);
+  const isAnimationTarget = animatedMessageId === message.messageId;
+  // Fallback timer ref so handleAnimationEnd can cancel it once the real
+  // animation completes (avoids double cleanup).
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Hold cleanup logic in a ref so we don't have to put unstable props
+  // (animatedMessageId, onMessageAnimated) in effect deps — otherwise a
+  // non-memoized onMessageAnimated would cancel the fallback timer on every
+  // render before it can fire.
+  const finalizeAnimationRef = useRef<() => void>(() => {});
+  finalizeAnimationRef.current = () => {
+    setShowBounce(false);
+    // Only clear if this message is still the animation target
+    if (animatedMessageId === message.messageId) {
+      setAnimatedMessageId(null);
+      onMessageAnimated?.();
+    }
+  };
 
-    if (animatedMessageId === message.messageId && messageScrollRef?.current) {
-      timeouts.push(
-        setTimeout(() => {
-          setIsAnimated(true);
-        }, 500)
-      );
-
-      timeouts.push(
-        setTimeout(() => {
-          setAnimatedMessageId(null);
-          onMessageAnimated?.();
-        }, 1600)
-      );
-    } else {
-      setIsAnimated(false);
+  useEffect(() => {
+    if (isAnimationTarget) {
+      setShowBounce(true);
+      // The bounce keyframe is applied to a descendant `.sendbird-message-content`,
+      // which is not rendered when consumers supply a custom `renderMessage`.
+      // In that case `onAnimationEnd` never fires and the animation state would
+      // be stuck, so schedule a fallback to force cleanup after the CSS
+      // animation duration (1s) plus a small buffer (matches the prior
+      // setTimeout-based timing).
+      if (fallbackTimerRef.current !== null) clearTimeout(fallbackTimerRef.current);
+      fallbackTimerRef.current = setTimeout(() => {
+        fallbackTimerRef.current = null;
+        finalizeAnimationRef.current();
+      }, 1600);
     }
     return () => {
-      timeouts.forEach((it) => clearTimeout(it));
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
     };
-  }, [animatedMessageId, messageScrollRef.current, message.messageId]);
+  }, [isAnimationTarget]);
+
+  const handleAnimationEnd = useCallback((e: React.AnimationEvent) => {
+    if (e.animationName === 'bounce') {
+      if (fallbackTimerRef.current !== null) {
+        clearTimeout(fallbackTimerRef.current);
+        fallbackTimerRef.current = null;
+      }
+      finalizeAnimationRef.current();
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (newMessageIds?.length > 0 && newMessageIds.includes(message.messageId)) {
+      let rafId: number | null = null;
+
+      rafId = requestAnimationFrame(() => {
+        scrollMessageOverflowToTop(messageScrollRef, message);
+        setNewMessageIds([]);
+      });
+
+      return () => {
+        if (rafId !== null) {
+          cancelAnimationFrame(rafId);
+        }
+      };
+    }
+  }, [newMessageIds]);
 
   const renderedCustomSeparator = useMemo(() => renderCustomSeparator?.({ message }) ?? null, [message, renderCustomSeparator]);
 
@@ -271,16 +359,19 @@ const MessageView = (props: MessageViewProps) => {
           onQuoteMessageClick: onQuoteMessageClick,
           onMessageHeightChange: handleScroll,
           onBeforeDownloadFileMessage,
+          filterEmojiCategoryIds,
+          markAsUnread,
         })}
         {/* Suggested Replies */}
         {shouldRenderSuggestedReplies &&
           renderSuggestedReplies({
             replyOptions: getSuggestedReplies(message),
             onSendMessage: sendUserMessage,
-            message,
-          })}
+            type: groupChannel?.suggestedRepliesDirection,
+          })
+        }
         {/* Modal */}
-        {showRemove && renderRemoveMessageModal({ message, onCancel: () => setShowRemove(false) })}
+        {showRemove && renderRemoveMessageModal?.({ message, onCancel: () => setShowRemove(false) })}
         {showFileViewer && renderFileViewer({ message: message as FileMessage, onCancel: () => setShowFileViewer(false) })}
       </>
     );
@@ -294,7 +385,7 @@ const MessageView = (props: MessageViewProps) => {
             <SuggestedMentionListView
               currentChannel={channel}
               targetNickname={mentionNickname}
-              inputEvent={messageInputEvent}
+              inputEvent={messageInputEvent ?? undefined}
               renderUserMentionItem={renderUserMentionItem}
               onUserItemClick={(user) => {
                 if (user) {
@@ -321,19 +412,18 @@ const MessageView = (props: MessageViewProps) => {
             disabled={editInputDisabled}
             ref={editMessageInputRef}
             mentionSelectedUser={selectedUser}
-            isMentionEnabled={isMentionEnabled}
+            isMentionEnabled={groupChannel.enableMention}
             message={message}
-            onStartTyping={() => {
-              channel?.startTyping?.();
-            }}
-            onUpdateMessage={({ messageId, message, mentionTemplate }) => {
+            onStartTyping={startTyping}
+            onStopTyping={stopTyping}
+            onUpdateMessage={({ messageId, message: editedMessage, mentionTemplate, mentionedUserIds: currentMentionedUserIds }) => {
               updateUserMessage(messageId, {
-                message,
-                mentionedUsers,
+                message: editedMessage,
+                mentionedUserIds: currentMentionedUserIds ?? [],
                 mentionedMessageTemplate: mentionTemplate,
               });
               setShowEdit(false);
-              channel?.endTyping?.();
+              stopTyping();
             }}
             onCancelEdit={() => {
               setMentionNickname('');
@@ -341,7 +431,7 @@ const MessageView = (props: MessageViewProps) => {
               setMentionedUserIds([]);
               setMentionSuggestedUsers([]);
               setShowEdit(false);
-              channel?.endTyping?.();
+              stopTyping();
             }}
             onUserMentioned={(user) => {
               if (selectedUser?.userId === user?.userId) {
@@ -376,7 +466,12 @@ const MessageView = (props: MessageViewProps) => {
 
   return (
     <div
-      className={getClassName(['sendbird-msg-hoc sendbird-msg--scroll-ref', isAnimated ? 'sendbird-msg-hoc__animated' : ''])}
+      className={classnames(
+        'sendbird-msg-hoc sendbird-msg--scroll-ref',
+        showBounce && 'sendbird-msg-hoc__animated',
+      )}
+      onAnimationEnd={showBounce ? handleAnimationEnd : undefined}
+      data-testid="sendbird-message-view"
       style={children || renderMessage ? undefined : { marginBottom: '2px' }}
       data-sb-message-id={message.messageId}
       data-sb-created-at={message.createdAt}
@@ -393,6 +488,15 @@ const MessageView = (props: MessageViewProps) => {
             </Label>
           </DateSeparator>
         ))}
+      {/* new message indicator */}
+      {hasNewMessageSeparator
+        && (
+          <NewMessageIndicator onVisibilityChange={onNewMessageSeparatorVisibilityChange}>
+            <Label type={LabelTypography.CAPTION_2} color={LabelColors.PRIMARY}>
+              New Messages
+            </Label>
+          </NewMessageIndicator>
+        )}
       {renderChildren()}
     </div>
   );

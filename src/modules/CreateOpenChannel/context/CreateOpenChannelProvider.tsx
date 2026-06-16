@@ -1,8 +1,7 @@
 import React, { useCallback } from 'react';
 import { OpenChannel, OpenChannelCreateParams } from '@sendbird/chat/openChannel';
-import useSendbirdStateContext from '../../../hooks/useSendbirdStateContext';
-import { Logger } from '../../../lib/SendbirdState';
-import { SdkStore } from '../../../lib/types';
+import { SdkStore, Logger } from '../../../lib/Sendbird/types';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface CreateNewOpenChannelCallbackProps {
   name: string;
@@ -15,12 +14,7 @@ export interface CreateOpenChannelContextInterface extends CreateOpenChannelProv
   createNewOpenChannel: (props: CreateNewOpenChannelCallbackProps) => void;
 }
 
-const CreateOpenChannelContext = React.createContext<CreateOpenChannelContextInterface>({
-  sdk: null,
-  sdkInitialized: false,
-  logger: null,
-  createNewOpenChannel: null,
-});
+const CreateOpenChannelContext = React.createContext<CreateOpenChannelContextInterface | null>(null);
 
 export interface CreateOpenChannelProviderProps {
   className?: string;
@@ -35,7 +29,8 @@ export const CreateOpenChannelProvider: React.FC<CreateOpenChannelProviderProps>
   onCreateChannel,
   onBeforeCreateChannel,
 }: CreateOpenChannelProviderProps): React.ReactElement => {
-  const { stores, config } = useSendbirdStateContext();
+  const { state } = useSendbird();
+  const { stores, config } = state;
   const { logger } = config;
   const sdk = stores?.sdkStore?.sdk || null;
   const sdkInitialized = stores?.sdkStore?.initialized || false;
@@ -44,13 +39,13 @@ export const CreateOpenChannelProvider: React.FC<CreateOpenChannelProviderProps>
     const { name, coverUrlOrImage } = params;
     if (sdkInitialized) {
       const params = {} as OpenChannelCreateParams;
-      params.operatorUserIds = [sdk?.currentUser?.userId];
+      params.operatorUserIds = sdk?.currentUser?.userId ? [sdk.currentUser.userId] : [];
       params.name = name;
       params.coverUrlOrImage = coverUrlOrImage;
       sdk.openChannel.createChannel(onBeforeCreateChannel?.(params) || params)
         .then((openChannel) => {
           logger.info('CreateOpenChannel: Succeeded creating openChannel', openChannel);
-          onCreateChannel(openChannel);
+          onCreateChannel?.(openChannel);
         })
         .catch((err) => {
           logger.warning('CreateOpenChannel: Failed creating openChannel', err);
@@ -68,13 +63,15 @@ export const CreateOpenChannelProvider: React.FC<CreateOpenChannelProviderProps>
         createNewOpenChannel: createNewOpenChannel,
       }}
     >
-      <div className={`sendbird-create-open-channel ${className}`}>
+      <div className={`sendbird-create-open-channel ${className}`} style={{ height: 0 }}>
         {children}
       </div>
     </CreateOpenChannelContext.Provider>
   );
 };
 
-export const useCreateOpenChannelContext = (): CreateOpenChannelContextInterface => (
-  React.useContext(CreateOpenChannelContext)
-);
+export const useCreateOpenChannelContext = () => {
+  const context = React.useContext(CreateOpenChannelContext);
+  if (!context) throw new Error('CreateOpenChannelContext not found. Use within the CreateOpenChannel module.');
+  return context;
+};

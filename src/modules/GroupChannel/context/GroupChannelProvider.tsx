@@ -1,115 +1,124 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import type { SendbirdError, User } from '@sendbird/chat';
+import React, { useMemo, useEffect, useRef, createContext, useCallback } from 'react';
 import {
-  FileMessageCreateParams,
-  MultipleFilesMessageCreateParams,
   ReplyType as ChatReplyType,
-  UserMessageCreateParams,
-  UserMessageUpdateParams,
-  type FileMessage,
-  type MultipleFilesMessage,
 } from '@sendbird/chat/message';
-import type { GroupChannel, MessageCollectionParams, MessageFilterParams } from '@sendbird/chat/groupChannel';
+import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import { MessageFilter } from '@sendbird/chat/groupChannel';
-import { useAsyncEffect, useAsyncLayoutEffect, useGroupChannelMessages, useIIFE, usePreservedCallback } from '@sendbird/uikit-tools';
+import {
+  useAsyncEffect,
+  useAsyncLayoutEffect,
+  useIIFE,
+  useGroupChannelMessages,
+} from '@sendbird/uikit-tools';
 
-import type { SendableMessageType } from '../../../utils';
-import { UserProfileProvider, UserProfileProviderProps } from '../../../lib/UserProfileContext';
-import useSendbirdStateContext from '../../../hooks/useSendbirdStateContext';
-import { ThreadReplySelectType } from './const';
-import { RenderUserProfileProps, ReplyType } from '../../../types';
-import useToggleReactionCallback from './hooks/useToggleReactionCallback';
-import { getCaseResolvedReplyType, getCaseResolvedThreadReplySelectType } from '../../../lib/utils/resolvedReplyType';
-import { getMessageTopOffset, isContextMenuClosed } from './utils';
-import { useOnScrollPositionChangeDetectorWithRef } from '../../../hooks/useOnScrollReachedEndDetector';
-import { ScrollTopics, ScrollTopicUnion, useMessageListScroll } from './hooks/useMessageListScroll';
-import PUBSUB_TOPICS, { PubSubSendMessagePayload } from '../../../lib/pubSub/topics';
-import { PubSubTypes } from '../../../lib/pubSub';
-import { useMessageActions } from './hooks/useMessageActions';
-import { usePreventDuplicateRequest } from './hooks/usePreventDuplicateRequest';
+import { UserProfileProvider } from '../../../lib/UserProfileContext';
+import { useMessageListScroll } from './hooks/useMessageListScroll';
 import { getIsReactionEnabled } from '../../../utils/getIsReactionEnabled';
-import { SCROLL_BUFFER } from '../../../utils/consts';
+import {
+  getCaseResolvedReplyType,
+  getCaseResolvedThreadReplySelectType,
+} from '../../../lib/utils/resolvedReplyType';
+import { isContextMenuClosed } from './utils';
+import PUBSUB_TOPICS from '../../../lib/pubSub/topics';
+import { createStore } from '../../../utils/storeManager';
+import { useStore } from '../../../hooks/useStore';
+import { useGroupChannel } from './hooks/useGroupChannel';
+import { ThreadReplySelectType } from './const';
+import type {
+  GroupChannelProviderProps,
+  MessageListQueryParamsType,
+  GroupChannelState,
+} from './types';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
+import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
+import { deleteNullish } from '../../../utils/utils';
+import { CollectionEventSource } from '@sendbird/chat';
 
-type OnBeforeHandler<T> = (params: T) => T | Promise<T>;
-type MessageListQueryParamsType = Omit<MessageCollectionParams, 'filter'> & MessageFilterParams;
-type MessageActions = ReturnType<typeof useMessageActions>;
-type MessageListDataSourceWithoutActions = Omit<ReturnType<typeof useGroupChannelMessages>, keyof MessageActions | `_dangerous_${string}`>;
-export type OnBeforeDownloadFileMessageType = (params: { message: FileMessage | MultipleFilesMessage, index?: number }) => Promise<boolean>;
+const initialState = () => ({
+  currentChannel: null,
+  channelUrl: '',
+  fetchChannelError: null,
+  nicknamesMap: new Map(),
 
-interface ContextBaseType {
-  // Required
-  channelUrl: string;
+  initialized: false,
+  loading: true,
+  messages: [],
+  quoteMessage: null,
+  animatedMessageId: null,
+  isScrollBottomReached: true,
+  readState: null,
 
-  // Flags
-  isReactionEnabled?: boolean;
-  isMessageGroupingEnabled?: boolean;
-  isMultipleFilesMessageEnabled?: boolean;
-  showSearchIcon?: boolean;
-  replyType?: ReplyType;
-  threadReplySelectType?: ThreadReplySelectType;
-  disableUserProfile?: boolean;
-  disableMarkAsRead?: boolean;
-  scrollBehavior?: 'smooth' | 'auto';
+  scrollRef: { current: null },
+  scrollDistanceFromBottomRef: { current: 0 },
+  scrollPositionRef: { current: 0 },
+  messageInputRef: { current: null },
 
-  startingPoint?: number;
+  isReactionEnabled: false,
+  isMessageGroupingEnabled: true,
+  isMultipleFilesMessageEnabled: false,
+  autoscrollMessageOverflowToTop: false,
+  showSearchIcon: true,
+  replyType: 'NONE',
+  threadReplySelectType: ThreadReplySelectType.PARENT,
+  disableMarkAsRead: false,
+  scrollBehavior: 'auto',
+  scrollPubSub: null,
+} as GroupChannelState);
 
-  // Message Focusing
-  animatedMessageId?: number | null;
-  onMessageAnimated?: () => void;
+export const GroupChannelContext = createContext<ReturnType<typeof createStore<GroupChannelState>> | null>(null);
 
-  // Custom
-  messageListQueryParams?: MessageListQueryParamsType;
+const createGroupChannelStore = (props?: Partial<GroupChannelState>) => createStore({
+  ...initialState(),
+  ...props,
+});
 
-  // Handlers
-  onBeforeSendUserMessage?: OnBeforeHandler<UserMessageCreateParams>;
-  onBeforeSendFileMessage?: OnBeforeHandler<FileMessageCreateParams>;
-  onBeforeSendVoiceMessage?: OnBeforeHandler<FileMessageCreateParams>;
-  onBeforeSendMultipleFilesMessage?: OnBeforeHandler<MultipleFilesMessageCreateParams>;
-  onBeforeUpdateUserMessage?: OnBeforeHandler<UserMessageUpdateParams>;
-  onBeforeDownloadFileMessage?: OnBeforeDownloadFileMessageType;
+export const InternalGroupChannelProvider = (props: GroupChannelProviderProps) => {
+  const { children } = props;
 
-  // Click
-  onBackClick?(): void;
-  onChatHeaderActionClick?(event: React.MouseEvent<HTMLElement>): void;
-  onReplyInThreadClick?: (props: { message: SendableMessageType }) => void;
-  onSearchClick?(): void;
-  onQuoteMessageClick?: (props: { message: SendableMessageType }) => void;
+  const defaultProps: Partial<GroupChannelState> = deleteNullish({
+    channelUrl: props?.channelUrl,
+    renderUserProfile: props?.renderUserProfile,
+    disableUserProfile: props?.disableUserProfile,
+    onUserProfileMessage: props?.onUserProfileMessage,
+    onStartDirectMessage: props?.onStartDirectMessage,
+    isReactionEnabled: props?.isReactionEnabled,
+    isMessageGroupingEnabled: props?.isMessageGroupingEnabled,
+    isMultipleFilesMessageEnabled: props?.isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop: props?.autoscrollMessageOverflowToTop,
+    showSearchIcon: props?.showSearchIcon,
+    threadReplySelectType: props?.threadReplySelectType,
+    disableMarkAsRead: props?.disableMarkAsRead,
+    scrollBehavior: props?.scrollBehavior,
+    forceLeftToRightMessageLayout: props?.forceLeftToRightMessageLayout,
+    startingPoint: props?.startingPoint,
+    animatedMessageId: props?.animatedMessageId,
+    onMessageAnimated: props?.onMessageAnimated,
+    messageListQueryParams: props?.messageListQueryParams,
+    filterEmojiCategoryIds: props?.filterEmojiCategoryIds,
+    onBeforeSendUserMessage: props?.onBeforeSendUserMessage,
+    onBeforeSendFileMessage: props?.onBeforeSendFileMessage,
+    onBeforeSendVoiceMessage: props?.onBeforeSendVoiceMessage,
+    onBeforeSendMultipleFilesMessage: props?.onBeforeSendMultipleFilesMessage,
+    onBeforeUpdateUserMessage: props?.onBeforeUpdateUserMessage,
+    onBeforeDownloadFileMessage: props?.onBeforeDownloadFileMessage,
+    onBackClick: props?.onBackClick,
+    onChatHeaderActionClick: props?.onChatHeaderActionClick,
+    onReplyInThreadClick: props?.onReplyInThreadClick,
+    onSearchClick: props?.onSearchClick,
+    onQuoteMessageClick: props?.onQuoteMessageClick,
+    renderUserMentionItem: props?.renderUserMentionItem,
+  });
 
-  // Render
-  renderUserProfile?: (props: RenderUserProfileProps) => React.ReactElement;
-  renderUserMentionItem?: (props: { user: User }) => JSX.Element;
-}
+  const storeRef = useRef(createGroupChannelStore(defaultProps));
 
-export interface GroupChannelContextType extends ContextBaseType, MessageListDataSourceWithoutActions, MessageActions {
-  currentChannel: GroupChannel | null;
-  fetchChannelError: SendbirdError | null;
-  nicknamesMap: Map<string, string>;
+  return (
+    <GroupChannelContext.Provider value={storeRef.current}>
+      {children}
+    </GroupChannelContext.Provider>
+  );
+};
 
-  scrollRef: React.MutableRefObject<HTMLDivElement>;
-  scrollDistanceFromBottomRef: React.MutableRefObject<number>;
-  scrollPubSub: PubSubTypes<ScrollTopics, ScrollTopicUnion>;
-  messageInputRef: React.MutableRefObject<HTMLDivElement>;
-
-  quoteMessage: SendableMessageType | null;
-  setQuoteMessage: React.Dispatch<React.SetStateAction<SendableMessageType | null>>;
-  animatedMessageId: number;
-  setAnimatedMessageId: React.Dispatch<React.SetStateAction<number>>;
-  isScrollBottomReached: boolean;
-  setIsScrollBottomReached: React.Dispatch<React.SetStateAction<boolean>>;
-
-  scrollToBottom: (animated?: boolean) => void;
-  scrollToMessage: (createdAt: number, messageId: number) => void;
-  toggleReaction(message: SendableMessageType, emojiKey: string, isReacted: boolean): void;
-}
-
-export interface GroupChannelProviderProps
-  extends ContextBaseType,
-    Pick<UserProfileProviderProps, 'onUserProfileMessage' | 'renderUserProfile' | 'disableUserProfile'> {
-  children?: React.ReactNode;
-}
-
-export const GroupChannelContext = React.createContext<GroupChannelContextType>(null);
-export const GroupChannelProvider = (props: GroupChannelProviderProps) => {
+const GroupChannelManager :React.FC<React.PropsWithChildren<GroupChannelProviderProps>> = (props) => {
   const {
     channelUrl,
     children,
@@ -118,6 +127,7 @@ export const GroupChannelProvider = (props: GroupChannelProviderProps) => {
     threadReplySelectType: moduleThreadReplySelectType,
     isMessageGroupingEnabled = true,
     isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop,
     showSearchIcon,
     disableMarkAsRead = false,
     scrollBehavior = 'auto',
@@ -137,325 +147,322 @@ export const GroupChannelProvider = (props: GroupChannelProviderProps) => {
     onSearchClick,
     onQuoteMessageClick,
     renderUserMentionItem,
+    filterEmojiCategoryIds,
   } = props;
 
-  // Global context
-  const { config, stores } = useSendbirdStateContext();
-
+  const { state, actions } = useGroupChannel();
+  const { updateState } = useGroupChannelStore();
+  const { state: { config, stores } } = useSendbird();
   const { sdkStore } = stores;
-  const { markAsReadScheduler, logger } = config;
+  const { userId, markAsReadScheduler, logger, pubSub } = config;
 
-  // State
-  const [quoteMessage, setQuoteMessage] = useState<SendableMessageType>(null);
-  const [animatedMessageId, setAnimatedMessageId] = useState<number | null>(null);
-  const [currentChannel, setCurrentChannel] = useState<GroupChannel | null>(null);
-  const [fetchChannelError, setFetchChannelError] = useState<SendbirdError>(null);
+  // ScrollHandler initialization
+  const {
+    scrollRef,
+    scrollPubSub,
+    scrollDistanceFromBottomRef,
+    scrollPositionRef,
+  } = useMessageListScroll(scrollBehavior, [state.currentChannel?.url]);
 
-  // Ref
-  const { scrollRef, scrollPubSub, scrollDistanceFromBottomRef, isScrollBottomReached, setIsScrollBottomReached } = useMessageListScroll(scrollBehavior);
-  const messageInputRef = useRef(null);
+  const { isScrollBottomReached } = state;
 
-  const toggleReaction = useToggleReactionCallback(currentChannel, logger);
-  const replyType = getCaseResolvedReplyType(moduleReplyType ?? config.groupChannel.replyType).upperCase;
-  const threadReplySelectType = getCaseResolvedThreadReplySelectType(
+  const isAutoscrollMessageOverflowToTop = autoscrollMessageOverflowToTop ?? config.autoscrollMessageOverflowToTop ?? false;
+
+  // Configuration resolution
+  const resolvedReplyType = getCaseResolvedReplyType(moduleReplyType ?? config.groupChannel.replyType).upperCase;
+  const resolvedThreadReplySelectType = getCaseResolvedThreadReplySelectType(
     moduleThreadReplySelectType ?? config.groupChannel.threadReplySelectType,
   ).upperCase;
+  const replyType = getCaseResolvedReplyType(moduleReplyType ?? config.groupChannel.replyType).upperCase;
+  const resolvedIsReactionEnabled = getIsReactionEnabled({
+    channel: state.currentChannel,
+    config,
+    moduleLevel: moduleReactionEnabled,
+  });
   const chatReplyType = useIIFE(() => {
     if (replyType === 'NONE') return ChatReplyType.NONE;
     return ChatReplyType.ONLY_REPLY_TO_CHANNEL;
   });
-  const isReactionEnabled = getIsReactionEnabled({
-    channel: currentChannel,
-    config,
-    moduleLevel: moduleReactionEnabled,
-  });
-  const nicknamesMap = useMemo(
-    () => new Map((currentChannel?.members ?? []).map(({ userId, nickname }) => [userId, nickname])),
-    [currentChannel?.members],
-  );
 
-  const preventDuplicateRequest = usePreventDuplicateRequest();
-  const messageDataSource = useGroupChannelMessages(sdkStore.sdk, currentChannel, {
+  const markAsUnreadSourceRef = useRef<'manual' | 'internal' | undefined>(undefined);
+
+  const markAsUnread = useCallback((message: any, source?: 'manual' | 'internal') => {
+    if (!config.groupChannel.enableMarkAsUnread) return;
+    if (!state.currentChannel) {
+      logger?.error?.('GroupChannelProvider: channel is required for markAsUnread');
+      return;
+    }
+
+    try {
+      if (state.currentChannel.markAsUnread) {
+        state.currentChannel.markAsUnread(message);
+        logger?.info?.('GroupChannelProvider: markAsUnread called for message', {
+          messageId: message.messageId,
+          source: source || 'unknown',
+        });
+        markAsUnreadSourceRef.current = source || 'internal';
+      } else {
+        logger?.error?.('GroupChannelProvider: markAsUnread method not available in current SDK version');
+      }
+    } catch (error) {
+      logger?.error?.('GroupChannelProvider: markAsUnread failed', error);
+    }
+  }, [state.currentChannel, logger, config.groupChannel.enableMarkAsUnread]);
+
+  // Message Collection setup
+  const messageDataSource = useGroupChannelMessages(sdkStore.sdk, state.currentChannel!, {
     startingPoint,
     replyType: chatReplyType,
-    collectionCreator: getCollectionCreator(currentChannel, messageListQueryParams),
+    collectionCreator: getCollectionCreator(state.currentChannel!, messageListQueryParams),
     shouldCountNewMessages: () => !isScrollBottomReached,
     markAsRead: (channels) => {
-      // isScrollBottomReached is a state that is updated after the render is completed.
-      // So, we use scrollDistanceFromBottomRef to check quickly if the scroll is at the bottom.
-      if (!disableMarkAsRead && scrollDistanceFromBottomRef.current <= SCROLL_BUFFER) {
-        channels.forEach((it) => markAsReadScheduler.push(it));
+      if (!config.groupChannel.enableMarkAsUnread) {
+        if (isScrollBottomReached && !disableMarkAsRead) {
+          channels.forEach((it) => markAsReadScheduler.push(it));
+        }
       }
     },
-    onMessagesReceived: () => {
-      if (isScrollBottomReached && isContextMenuClosed()) {
-        scrollPubSub.publish('scrollToBottom', {});
+    onMessagesReceived: (messages) => {
+      if (isScrollBottomReached
+        && isContextMenuClosed()
+        // Note: this shouldn't happen ideally, but it happens on re-rendering GroupChannelManager
+        // even though the next messages and the current messages length are the same.
+        // So added this condition to check if they are the same to prevent unnecessary calling scrollToBottom action
+        && messages.length !== state.messages.length) {
+        if (!isAutoscrollMessageOverflowToTop) {
+          // The requestAnimationFrame already ensures DOM is updated
+          requestAnimationFrame(() => {
+            actions?.scrollToBottom(true);
+          });
+        } else {
+          actions.setNewMessageIds(messages.map(it => it.messageId));
+        }
       }
     },
     onChannelDeleted: () => {
-      setCurrentChannel(null);
-      setFetchChannelError(null);
+      actions.setCurrentChannel(null);
+      onBackClick?.();
     },
     onCurrentUserBanned: () => {
-      setCurrentChannel(null);
-      setFetchChannelError(null);
+      actions.setCurrentChannel(null);
+      onBackClick?.();
     },
-    onChannelUpdated: (channel) => setCurrentChannel(channel),
-    logger,
-  });
-
-  useOnScrollPositionChangeDetectorWithRef(scrollRef, {
-    async onReachedTop() {
-      preventDuplicateRequest.lock();
-
-      await preventDuplicateRequest.run(async () => {
-        if (!messageDataSource.hasPrevious()) return;
-
-        const prevViewInfo = { scrollTop: scrollRef.current.scrollTop, scrollHeight: scrollRef.current.scrollHeight };
-        await messageDataSource.loadPrevious();
-
-        // FIXME: We need a good way to detect right after the rendering of the screen instead of using setTimeout.
-        setTimeout(() => {
-          const nextViewInfo = { scrollHeight: scrollRef.current.scrollHeight };
-          const viewUpdated = prevViewInfo.scrollHeight < nextViewInfo.scrollHeight;
-
-          if (viewUpdated) {
-            const bottomOffset = prevViewInfo.scrollHeight - prevViewInfo.scrollTop;
-            scrollPubSub.publish('scroll', { top: nextViewInfo.scrollHeight - bottomOffset, lazy: false, animated: false });
-          }
-        });
-      });
-
-      preventDuplicateRequest.release();
-    },
-    async onReachedBottom() {
-      preventDuplicateRequest.lock();
-
-      await preventDuplicateRequest.run(async () => {
-        if (!messageDataSource.hasNext()) return;
-
-        const prevViewInfo = { scrollTop: scrollRef.current.scrollTop, scrollHeight: scrollRef.current.scrollHeight };
-        await messageDataSource.loadNext();
-
-        setTimeout(() => {
-          const nextViewInfo = { scrollHeight: scrollRef.current.scrollHeight };
-          const viewUpdated = prevViewInfo.scrollHeight < nextViewInfo.scrollHeight;
-
-          if (viewUpdated) {
-            scrollPubSub.publish('scroll', { top: prevViewInfo.scrollTop, lazy: false, animated: false });
-          }
-        });
-      });
-
-      preventDuplicateRequest.release();
-
-      if (currentChannel && !messageDataSource.hasNext()) {
-        messageDataSource.resetNewMessages();
-        if (!disableMarkAsRead) markAsReadScheduler.push(currentChannel);
+    onChannelUpdated: (channel, ctx) => {
+      if (ctx.source === CollectionEventSource.EVENT_CHANNEL_UNREAD
+        && ctx.userIds.includes(userId)
+      ) {
+        actions.setReadStateChanged('unread');
       }
+      if (ctx.source === CollectionEventSource.EVENT_CHANNEL_READ
+        && ctx.userIds.includes(userId)
+      ) {
+        actions.setReadStateChanged('read');
+      }
+      actions.setCurrentChannel(channel);
     },
+    logger: logger as any,
   });
 
-  // SideEffect: Fetch and set to current channel by channelUrl prop.
+  // Channel initialization
   useAsyncEffect(async () => {
     if (sdkStore.initialized && channelUrl) {
       try {
         const channel = await sdkStore.sdk.groupChannel.getChannel(channelUrl);
-        setCurrentChannel(channel);
-        setFetchChannelError(null);
+        actions.setCurrentChannel(channel);
       } catch (error) {
-        setCurrentChannel(null);
-        setFetchChannelError(error);
+        actions.handleChannelError(error);
         logger?.error?.('GroupChannelProvider: error when fetching channel', error);
-      } finally {
-        // Reset states when channel changes
-        setQuoteMessage(null);
-        setAnimatedMessageId(null);
       }
     }
   }, [sdkStore.initialized, sdkStore.sdk, channelUrl]);
 
-  // SideEffect: Scroll to the bottom
-  //  - On the initialized message list
-  //  - On messages sent from the thread
+  // Message sync effect
   useAsyncLayoutEffect(async () => {
     if (messageDataSource.initialized) {
-      // it prevents message load from previous/next before scroll to bottom finished.
-      preventDuplicateRequest.lock();
-      await preventDuplicateRequest.run(() => {
-        return new Promise<void>((resolve) => {
-          scrollPubSub.publish('scrollToBottom', { resolve, animated: false });
-        });
-      });
-      preventDuplicateRequest.release();
+      actions.scrollToBottom();
     }
 
-    const onSentMessageFromOtherModule = (data: PubSubSendMessagePayload) => {
-      if (data.channel.url === channelUrl) scrollPubSub.publish('scrollToBottom', {});
-    };
-    const subscribes = [
-      config.pubSub.subscribe(PUBSUB_TOPICS.SEND_USER_MESSAGE, onSentMessageFromOtherModule),
-      config.pubSub.subscribe(PUBSUB_TOPICS.SEND_FILE_MESSAGE, onSentMessageFromOtherModule),
-    ];
-    return () => {
-      subscribes.forEach((subscribe) => subscribe.remove());
-      scrollPubSub.publish('scrollToBottom', { animated: false });
-    };
-  }, [messageDataSource.initialized, channelUrl]);
-
-  // SideEffect: Reset MessageCollection with startingPoint prop.
-  useEffect(() => {
-    if (typeof startingPoint === 'number') {
-      // We do not handle animation for message search here.
-      // Please update the animatedMessageId prop to trigger the animation.
-      scrollToMessage(startingPoint, 0, false, false);
-    }
-  }, [startingPoint]);
-
-  // SideEffect: Update animatedMessageId prop to state.
-  useEffect(() => {
-    if (_animatedMessageId) setAnimatedMessageId(_animatedMessageId);
-  }, [_animatedMessageId]);
-
-  const scrollToBottom = usePreservedCallback(async (animated?: boolean) => {
-    if (!scrollRef.current) return;
-
-    setAnimatedMessageId(null);
-    setIsScrollBottomReached(true);
-
-    if (config.isOnline && messageDataSource.hasNext()) {
-      await messageDataSource.resetWithStartingPoint(Number.MAX_SAFE_INTEGER);
-      scrollPubSub.publish('scrollToBottom', { animated });
-    } else {
-      scrollPubSub.publish('scrollToBottom', { animated });
-    }
-
-    if (currentChannel && !messageDataSource.hasNext()) {
-      messageDataSource.resetNewMessages();
-      if (!disableMarkAsRead) markAsReadScheduler.push(currentChannel);
-    }
-  });
-
-  const scrollToMessage = usePreservedCallback(
-    async (createdAt: number, messageId: number, messageFocusAnimated?: boolean, scrollAnimated?: boolean) => {
-      // NOTE: To prevent multiple clicks on the message in the channel while scrolling
-      //  Check if it can be replaced with event.stopPropagation()
-      const element = scrollRef.current;
-      const parentNode = element?.parentNode as HTMLDivElement;
-      const clickHandler = {
-        activate() {
-          if (!element || !parentNode) return;
-          element.style.pointerEvents = 'auto';
-          parentNode.style.cursor = 'auto';
-        },
-        deactivate() {
-          if (!element || !parentNode) return;
-          element.style.pointerEvents = 'none';
-          parentNode.style.cursor = 'wait';
-        },
-      };
-
-      clickHandler.deactivate();
-
-      setAnimatedMessageId(null);
-      const message = messageDataSource.messages.find((it) => it.messageId === messageId || it.createdAt === createdAt);
-      if (message) {
-        const topOffset = getMessageTopOffset(message.createdAt);
-        if (topOffset) scrollPubSub.publish('scroll', { top: topOffset, animated: scrollAnimated });
-        if (messageFocusAnimated ?? true) setAnimatedMessageId(messageId);
-      } else {
-        await messageDataSource.resetWithStartingPoint(createdAt);
-        setTimeout(() => {
-          const topOffset = getMessageTopOffset(createdAt);
-          if (topOffset) scrollPubSub.publish('scroll', { top: topOffset, lazy: false, animated: scrollAnimated });
-          if (messageFocusAnimated ?? true) setAnimatedMessageId(messageId);
-        });
+    const handleExternalMessage = (data) => {
+      // send message
+      if (data.channel.url === state.currentChannel?.url) {
+        actions.scrollToBottom(true);
       }
+    };
 
-      clickHandler.activate();
-    },
-  );
+    if (pubSub?.subscribe === undefined) return;
+    const subscriptions = [
+      pubSub.subscribe(PUBSUB_TOPICS.SEND_USER_MESSAGE, handleExternalMessage),
+      pubSub.subscribe(PUBSUB_TOPICS.SEND_FILE_MESSAGE, handleExternalMessage),
+    ];
 
-  const messageActions = useMessageActions({ ...props, ...messageDataSource, scrollToBottom, quoteMessage, replyType });
+    return () => {
+      subscriptions.forEach(subscription => subscription.remove());
+    };
+  }, [messageDataSource.initialized, state.currentChannel?.url]);
 
+  // Starting point handling — skip when animated message handles scroll
+  useEffect(() => {
+    if (typeof startingPoint === 'number' && state.initialized && !_animatedMessageId) {
+      actions.scrollToMessage(startingPoint, 0, false, false);
+    }
+  }, [state.initialized, startingPoint]);
+
+  // Animated message handling — scroll + animation
+  // NOTE: Depend on state.initialized so that deep-link / direct Provider usage
+  // (animatedMessageId + startingPoint set on initial mount) retries after the
+  // channel is initialized. Without it, scrollToMessage runs while messages are
+  // empty and the starting-point effect is suppressed by !_animatedMessageId,
+  // leaving the message un-scrolled and un-animated.
+  useEffect(() => {
+    if (_animatedMessageId && state.initialized) {
+      if (typeof startingPoint === 'number') {
+        // Search result click: scroll to message and animate
+        actions.scrollToMessage(startingPoint, _animatedMessageId, true, false);
+      } else {
+        // Thread parent jump: scroll already handled by startingPoint effect, just animate
+        actions.setAnimatedMessageId(_animatedMessageId);
+      }
+    }
+  }, [_animatedMessageId, state.initialized]);
+
+  // State update effect
+  const eventHandlers = useMemo(() => ({
+    onBeforeSendUserMessage,
+    onBeforeSendFileMessage,
+    onBeforeSendVoiceMessage,
+    onBeforeSendMultipleFilesMessage,
+    onBeforeUpdateUserMessage,
+    onBeforeDownloadFileMessage,
+    onBackClick,
+    onChatHeaderActionClick,
+    onReplyInThreadClick,
+    onSearchClick,
+    onQuoteMessageClick,
+    onMessageAnimated,
+  }), [
+    onBeforeSendUserMessage,
+    onBeforeSendFileMessage,
+    onBeforeSendVoiceMessage,
+    onBeforeSendMultipleFilesMessage,
+    onBeforeUpdateUserMessage,
+    onBeforeDownloadFileMessage,
+    onBackClick,
+    onChatHeaderActionClick,
+    onReplyInThreadClick,
+    onSearchClick,
+    onQuoteMessageClick,
+    onMessageAnimated,
+  ]);
+
+  const renderProps = useMemo(() => ({
+    renderUserMentionItem,
+    filterEmojiCategoryIds,
+  }), [renderUserMentionItem, filterEmojiCategoryIds]);
+
+  const configurations = useMemo(() => ({
+    isReactionEnabled: resolvedIsReactionEnabled,
+    isMessageGroupingEnabled,
+    isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop: autoscrollMessageOverflowToTop ?? config.autoscrollMessageOverflowToTop ?? false,
+    replyType: resolvedReplyType,
+    threadReplySelectType: resolvedThreadReplySelectType,
+    showSearchIcon: showSearchIcon ?? config.groupChannelSettings.enableMessageSearch,
+    disableMarkAsRead,
+    scrollBehavior,
+  }), [
+    resolvedIsReactionEnabled,
+    isMessageGroupingEnabled,
+    isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop,
+    resolvedReplyType,
+    resolvedThreadReplySelectType,
+    showSearchIcon,
+    disableMarkAsRead,
+    scrollBehavior,
+    config.groupChannelSettings.enableMessageSearch,
+    config.autoscrollMessageOverflowToTop,
+  ]);
+
+  const scrollState = useMemo(() => ({
+    scrollRef,
+    scrollPubSub,
+    scrollDistanceFromBottomRef,
+    scrollPositionRef,
+    isScrollBottomReached,
+  }), [
+    scrollRef,
+    scrollPubSub,
+    scrollDistanceFromBottomRef,
+    scrollPositionRef,
+    isScrollBottomReached,
+  ]);
+
+  useDeepCompareEffect(() => {
+    updateState({
+      // Channel state
+      channelUrl,
+      currentChannel: state.currentChannel,
+
+      // Grouped states
+      ...configurations,
+      ...scrollState,
+      ...eventHandlers,
+      ...renderProps,
+
+      // Message data source & actions
+      ...messageDataSource,
+      markAsUnread,
+      markAsUnreadSourceRef,
+    });
+  }, [
+    channelUrl,
+    state.currentChannel?.serialize(),
+    configurations,
+    scrollState,
+    eventHandlers,
+    renderProps,
+    messageDataSource.initialized,
+    messageDataSource.loading,
+    messageDataSource.messages.map(it => it.serialize()),
+  ]);
+
+  return children;
+};
+
+const GroupChannelProvider: React.FC<GroupChannelProviderProps> = (props) => {
   return (
-    <GroupChannelContext.Provider
-      value={{
-        // # Props
-        channelUrl,
-        isReactionEnabled,
-        isMessageGroupingEnabled,
-        isMultipleFilesMessageEnabled,
-        showSearchIcon: showSearchIcon ?? config.showSearchIcon,
-        replyType,
-        threadReplySelectType,
-        disableMarkAsRead,
-        scrollBehavior,
-
-        // # Custom Props
-        messageListQueryParams,
-        // ## Message
-        onBeforeSendUserMessage,
-        onBeforeSendFileMessage,
-        onBeforeSendVoiceMessage,
-        onBeforeSendMultipleFilesMessage,
-        onBeforeUpdateUserMessage,
-        onBeforeDownloadFileMessage,
-        // ## Focusing
-        onMessageAnimated,
-        // ## Click
-        onBackClick,
-        onChatHeaderActionClick,
-        onReplyInThreadClick,
-        onSearchClick,
-        onQuoteMessageClick,
-        // ## Custom render
-        renderUserMentionItem,
-
-        // Internal Interface
-        currentChannel,
-        fetchChannelError,
-        nicknamesMap,
-
-        scrollRef,
-        scrollDistanceFromBottomRef,
-        scrollPubSub,
-        messageInputRef,
-
-        quoteMessage,
-        setQuoteMessage,
-        animatedMessageId,
-        setAnimatedMessageId,
-        isScrollBottomReached,
-        setIsScrollBottomReached,
-
-        scrollToBottom,
-        scrollToMessage,
-        toggleReaction,
-
-        ...messageDataSource,
-        ...messageActions,
-      }}
-    >
-      <UserProfileProvider
-        disableUserProfile={props?.disableUserProfile ?? config?.disableUserProfile}
-        renderUserProfile={props?.renderUserProfile ?? config?.renderUserProfile}
-        onUserProfileMessage={props?.onUserProfileMessage ?? config?.onUserProfileMessage}
-      >
-        {children}
-      </UserProfileProvider>
-    </GroupChannelContext.Provider>
+    <InternalGroupChannelProvider key={props.channelUrl} {...props}>
+      <GroupChannelManager {...props}>
+        <UserProfileProvider {...props}>
+          {props.children}
+        </UserProfileProvider>
+      </GroupChannelManager>
+    </InternalGroupChannelProvider>
   );
 };
 
-export const useGroupChannelContext = () => {
-  const context = useContext(GroupChannelContext);
-  if (!context) throw new Error('GroupChannelContext not found. Use within the GroupChannel module.');
-  return context;
+/**
+ * A specialized hook for GroupChannel state management
+ * @returns {ReturnType<typeof createStore<GroupChannelState>>}
+ */
+const useGroupChannelStore = () => {
+  return useStore(GroupChannelContext, state => state, initialState());
+};
+
+// Keep this function for backward compatibility.
+const useGroupChannelContext = () => {
+  const { state, actions } = useGroupChannel();
+  return { ...state, ...actions };
+};
+
+export {
+  GroupChannelProvider,
+  useGroupChannelContext,
+  GroupChannelManager,
 };
 
 function getCollectionCreator(groupChannel: GroupChannel, messageListQueryParams?: MessageListQueryParamsType) {
-  return (defaultParams: MessageListQueryParamsType) => {
+  return (defaultParams?: MessageListQueryParamsType) => {
     const params = { ...defaultParams, prevResultLimit: 30, nextResultLimit: 30, ...messageListQueryParams };
     return groupChannel.createMessageCollection({
       ...params,

@@ -4,6 +4,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
+import { BannedUserListQuery, RestrictedUser } from '@sendbird/chat';
 
 import Modal from '../../../../ui/Modal';
 import UserListItem from '../../../../ui/UserListItem';
@@ -14,7 +15,7 @@ import ContextMenu, { MenuItem, MenuItems } from '../../../../ui/ContextMenu';
 import { noop } from '../../../../utils/utils';
 import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettingsProvider';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 interface Props {
   onCancel(): void;
@@ -23,19 +24,19 @@ interface Props {
 export default function BannedUsersModal({
   onCancel,
 }: Props): ReactElement {
-  const [bannedUsers, setBannedUsers] = useState([]);
-  const [userListQuery, setUserListQuery] = useState(null);
+  const [bannedUsers, setBannedUsers] = useState<RestrictedUser[]>([]);
+  const [userListQuery, setUserListQuery] = useState<BannedUserListQuery | null>(null);
   const { channel } = useOpenChannelSettingsContext();
-  const state = useSendbirdStateContext();
+  const { state } = useSendbird();
   const { stringSet } = useContext(LocalizationContext);
   const currentUserId = state?.config?.userId;
 
   useEffect(() => {
     const bannedUserListQuery = channel?.createBannedUserListQuery();
-    bannedUserListQuery.next().then((users) => {
+    bannedUserListQuery?.next().then((users) => {
       setBannedUsers(users);
     });
-    setUserListQuery(bannedUserListQuery);
+    setUserListQuery(bannedUserListQuery ?? null);
   }, []);
   return (
     <div>
@@ -49,7 +50,7 @@ export default function BannedUsersModal({
         <div
           className="sendbird-more-members__popup-scroll"
           onScroll={(e) => {
-            const { hasNext } = userListQuery;
+            const hasNext = userListQuery?.hasNext;
             const target = e.target as HTMLTextAreaElement;
             const fetchMore = (
               target.clientHeight + target.scrollTop === target.scrollHeight
@@ -104,14 +105,14 @@ export default function BannedUsersModal({
                                   }));
                                 });
                               }}
-                              dataSbId="open_channel_setting_banned_user_context_menu_unban"
+                              testID="open_channel_setting_banned_user_context_menu_unban"
                             >
                               {stringSet.OPEN_CHANNEL_SETTING__MODERATION__UNBAN}
                             </MenuItem>
                           </MenuItems>
                         )}
                       />
-                    ) : null
+                    ) : <></>
                 )
                 }
               />

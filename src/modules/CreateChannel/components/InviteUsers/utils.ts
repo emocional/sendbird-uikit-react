@@ -1,7 +1,7 @@
 import type { ApplicationUserListQuery } from '@sendbird/chat';
 import type { GroupChannelCreateParams } from '@sendbird/chat/groupChannel';
 import { CHANNEL_TYPE } from '../../types';
-import { SdkStore } from '../../../../lib/types';
+import type { SdkStore } from '../../../../lib/Sendbird/types';
 
 export const filterUser = (idsToFilter: string[]) => (currentId: string): boolean => idsToFilter?.includes(currentId);
 
@@ -28,13 +28,12 @@ type CreateDefaultUserListQueryType = {
 export const createDefaultUserListQuery = (
   { sdk, userFilledApplicationUserListQuery }: CreateDefaultUserListQueryType,
 ): ApplicationUserListQuery => {
-  if (sdk?.createApplicationUserListQuery) {
-    const params = sdk?.createApplicationUserListQuery();
-    if (userFilledApplicationUserListQuery) {
-      Object.keys(userFilledApplicationUserListQuery).forEach((key) => {
-        params[key] = userFilledApplicationUserListQuery[key];
-      });
-    }
-    return params;
+  const params = sdk.createApplicationUserListQuery();
+  if (userFilledApplicationUserListQuery) {
+    Object.keys(userFilledApplicationUserListQuery).forEach((key) => {
+      // @ts-ignore
+      params[key] = userFilledApplicationUserListQuery[key];
+    });
   }
+  return params;
 };

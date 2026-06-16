@@ -10,10 +10,10 @@ export default {
   App: 'src/modules/App/index.tsx',
 
   // SendbirdProvider
-  SendbirdProvider: 'src/lib/Sendbird.tsx',
+  SendbirdProvider: 'src/lib/Sendbird/index.tsx',
   sendbirdSelectors: 'src/lib/selectors.ts',
-  useSendbirdStateContext: 'src/hooks/useSendbirdStateContext.tsx',
-  withSendbird: 'src/lib/SendbirdSdkContext.tsx',
+  useSendbirdStateContext: 'src/lib/Sendbird/context/hooks/useSendbirdStateContext.tsx',
+  withSendbird: 'src/lib/Sendbird/withSendbird.tsx',
 
   // Voice message
   'VoiceRecorder/context': 'src/hooks/VoiceRecorder/index.tsx',
@@ -32,6 +32,8 @@ export default {
   'pubSub/topics': 'src/lib/pubSub/topics.ts',
   // hooks
   'hooks/useModal': 'src/hooks/useModal/index.tsx',
+  'hooks/useLocalization': 'src/hooks/useLocalization.ts',
+  'hooks/useConnectionState': 'src/hooks/useConnectionState.ts',
   // utils
   'utils/message/getOutgoingMessageState': 'src/utils/exports/getOutgoingMessageState.ts',
   'utils/message/isVoiceMessage': 'src/utils/isVoiceMessage.ts',
@@ -47,7 +49,7 @@ export default {
 
   // GroupChannelList
   GroupChannelList: 'src/modules/GroupChannelList/index.tsx',
-  'GroupChannelList/context': 'src/modules/GroupChannelList/context/GroupChannelListProvider.tsx',
+  'GroupChannelList/context': 'src/modules/GroupChannelList/context/index.tsx',
   'GroupChannelList/components/AddGroupChannel': 'src/modules/GroupChannelList/components/AddGroupChannel/index.tsx',
   'GroupChannelList/components/GroupChannelListUI': 'src/modules/GroupChannelList/components/GroupChannelListUI/index.tsx',
   'GroupChannelList/components/GroupChannelListHeader': 'src/modules/GroupChannelList/components/GroupChannelListHeader/index.tsx',
@@ -56,15 +58,19 @@ export default {
 
   // ChannelSettings
   ChannelSettings: 'src/modules/ChannelSettings/index.tsx',
-  'ChannelSettings/context': 'src/modules/ChannelSettings/context/ChannelSettingsProvider.tsx',
-  'ChannelSettings/components/ModerationPanel': 'src/modules/ChannelSettings/components/ModerationPanel/index.tsx',
+  'ChannelSettings/context': 'src/modules/ChannelSettings/context/index.tsx',
+  'ChannelSettings/hooks/useMenuList': 'src/modules/ChannelSettings/components/ChannelSettingsUI/hooks/useMenuItems.tsx',
   'ChannelSettings/components/ChannelProfile': 'src/modules/ChannelSettings/components/ChannelProfile/index.tsx',
   'ChannelSettings/components/ChannelSettingsUI': 'src/modules/ChannelSettings/components/ChannelSettingsUI/index.tsx',
   'ChannelSettings/components/ChannelSettingsHeader': 'src/modules/ChannelSettings/components/ChannelSettingsUI/ChannelSettingsHeader.tsx',
+  'ChannelSettings/components/ChannelSettingMenuList': 'src/modules/ChannelSettings/components/ChannelSettingsUI/MenuListByRole.tsx',
+  'ChannelSettings/components/ChannelSettingsMenuItem': 'src/modules/ChannelSettings/components/ChannelSettingsUI/MenuItem.tsx',
   'ChannelSettings/components/EditDetailsModal': 'src/modules/ChannelSettings/components/EditDetailsModal/index.tsx',
   'ChannelSettings/components/LeaveChannel': 'src/modules/ChannelSettings/components/LeaveChannel/index.tsx',
   'ChannelSettings/components/UserListItem': 'src/modules/ChannelSettings/components/UserListItem/index.tsx',
+  // legacy - not using below internally
   'ChannelSettings/components/UserPanel': 'src/modules/ChannelSettings/components/UserPanel/index.tsx',
+  'ChannelSettings/components/ModerationPanel': 'src/modules/ChannelSettings/components/ModerationPanel/index.tsx',
 
   // Channel - legacy
   Channel: 'src/modules/Channel/index.tsx',
@@ -87,7 +93,7 @@ export default {
   'Channel/components/SuggestedMentionList': 'src/modules/Channel/components/SuggestedMentionList/index.tsx',
 
   GroupChannel: 'src/modules/GroupChannel/index.tsx',
-  'GroupChannel/context': 'src/modules/GroupChannel/context/GroupChannelProvider.tsx',
+  'GroupChannel/context': 'src/modules/GroupChannel/context/index.tsx',
   'GroupChannel/components/GroupChannelHeader': 'src/modules/GroupChannel/components/GroupChannelHeader/index.tsx',
   'GroupChannel/components/GroupChannelUI': 'src/modules/GroupChannel/components/GroupChannelUI/index.tsx',
   'GroupChannel/components/FileViewer': 'src/modules/GroupChannel/components/FileViewer/index.tsx',
@@ -133,7 +139,7 @@ export default {
 
   // MessageSearch
   MessageSearch: 'src/modules/MessageSearch/index.tsx',
-  'MessageSearch/context': 'src/modules/MessageSearch/context/MessageSearchProvider.tsx',
+  'MessageSearch/context': 'src/modules/MessageSearch/context/index.tsx',
   'MessageSearch/components/MessageSearchUI': 'src/modules/MessageSearch/components/MessageSearchUI/index.tsx',
 
   // Message
@@ -142,7 +148,7 @@ export default {
 
   // Thread
   Thread: 'src/modules/Thread/index.tsx',
-  'Thread/context': 'src/modules/Thread/context/ThreadProvider.tsx',
+  'Thread/context': 'src/modules/Thread/context/index.tsx',
   'Thread/context/types': 'src/modules/Thread/types.tsx',
   'Thread/components/ThreadUI': 'src/modules/Thread/components/ThreadUI/index.tsx',
   'Thread/components/ThreadHeader': 'src/modules/Thread/components/ThreadHeader/index.tsx',
@@ -154,7 +160,7 @@ export default {
 
   // CreateChannel
   CreateChannel: 'src/modules/CreateChannel/index.tsx',
-  'CreateChannel/context': 'src/modules/CreateChannel/context/CreateChannelProvider.tsx',
+  'CreateChannel/context': 'src/modules/CreateChannel/context/index.tsx',
   'CreateChannel/components/CreateChannelUI': 'src/modules/CreateChannel/components/CreateChannelUI/index.tsx',
   'CreateChannel/components/InviteUsers': 'src/modules/CreateChannel/components/InviteUsers/index.tsx',
   'CreateChannel/components/SelectChannelType': 'src/modules/CreateChannel/components/SelectChannelType.tsx',
@@ -182,6 +188,7 @@ export default {
   'ui/EmojiReactions': 'src/ui/EmojiReactions/index.tsx',
   'ui/FileMessageItemBody': 'src/ui/FileMessageItemBody/index.tsx',
   'ui/FileViewer': 'src/ui/FileViewer/index.tsx',
+  'ui/Header': 'src/ui/Header/index.tsx',
   'ui/Icon': 'src/ui/Icon/index.tsx',
   'ui/IconButton': 'src/ui/IconButton/index.tsx',
   'ui/ImageRenderer': 'src/ui/ImageRenderer/index.tsx',
@@ -197,6 +204,7 @@ export default {
   'ui/MessageInput/hooks/usePaste': 'src/ui/MessageInput/hooks/usePaste/index.ts',
   'ui/MessageItemMenu': 'src/ui/MessageItemMenu/index.tsx',
   'ui/MessageItemReactionMenu': 'src/ui/MessageItemReactionMenu/index.tsx',
+  'ui/MessageMenu': 'src/ui/MessageMenu/index.tsx',
   'ui/MessageSearchFileItem': 'src/ui/MessageSearchFileItem/index.tsx',
   'ui/MessageSearchItem': 'src/ui/MessageSearchItem/index.tsx',
   'ui/MessageStatus': 'src/ui/MessageStatus/index.tsx',
@@ -231,12 +239,14 @@ export default {
   'ui/TypingIndicatorBubble': 'src/ui/TypingIndicatorBubble/index.tsx',
   'ui/UnknownMessageItemBody': 'src/ui/UnknownMessageItemBody/index.tsx',
   'ui/UserListItem': 'src/ui/UserListItem/index.tsx',
+  'ui/UserListItemMenu': 'src/ui/UserListItemMenu/index.tsx',
   'ui/UserProfile': 'src/ui/UserProfile/index.tsx',
   'ui/VoiceMessageInput': 'src/ui/VoiceMessageInput/index.tsx',
   'ui/VoiceMessageItemBody': 'src/ui/VoiceMessageItemBody/index.tsx',
   'ui/Word': 'src/ui/Word/index.tsx',
   'ui/FeedbackIconButton': 'src/ui/FeedbackIconButton/index.tsx',
   'ui/MobileFeedbackMenu': 'src/ui/MobileFeedbackMenu/index.tsx',
+  'ui/MobileMenu': 'src/ui/MobileMenu/index.tsx',
   'ui/MessageFeedbackModal': 'src/ui/MessageFeedbackModal/index.tsx',
   'ui/MessageFeedbackFailedModal': 'src/ui/MessageFeedbackFailedModal/index.tsx',
 };

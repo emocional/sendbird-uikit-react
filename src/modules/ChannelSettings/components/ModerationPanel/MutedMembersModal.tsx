@@ -1,45 +1,48 @@
 import React, {
   ReactElement,
+  ReactNode,
   useEffect,
   useState,
 } from 'react';
+import { Member, MemberListQuery, MemberListQueryParams } from '@sendbird/chat/groupChannel';
 
-import Modal from '../../../../ui/Modal';
-import UserListItem from '../../../../ui/UserListItem';
-import IconButton from '../../../../ui/IconButton';
-import Icon, { IconTypes, IconColors } from '../../../../ui/Icon';
-import ContextMenu, { MenuItem, MenuItems } from '../../../../ui/ContextMenu';
-import { noop } from '../../../../utils/utils';
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
+import useChannelSettings from '../../context/useChannelSettings';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { useOnScrollPositionChangeDetector } from '../../../../hooks/useOnScrollReachedEndDetector';
 
-interface Props {
+import Modal from '../../../../ui/Modal';
+import UserListItem, { UserListItemProps } from '../../../../ui/UserListItem';
+import { noop } from '../../../../utils/utils';
+import { UserListItemMenu } from '../../../../ui/UserListItemMenu';
+
+export interface MutedMembersModalProps {
   onCancel(): void;
+  renderUserListItem?: (props: UserListItemProps) => ReactNode;
+  memberListQueryParams?: MemberListQueryParams;
 }
 
-export default function MutedMembersModal({
+export function MutedMembersModal({
   onCancel,
-}: Props): ReactElement {
-  const [members, setMembers] = useState([]);
-  const [memberQuery, setMemberQuery] = useState(null);
+  renderUserListItem = (props) => <UserListItem {...props} />,
+  memberListQueryParams = {},
+}: MutedMembersModalProps): ReactElement {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [memberQuery, setMemberQuery] = useState<MemberListQuery | null>(null);
 
-  const { channel } = useChannelSettingsContext();
-  const state = useSendbirdStateContext();
-  const currentUser = state?.config?.userId;
+  const { state: { channel } } = useChannelSettings();
   const { stringSet } = useLocalization();
 
   useEffect(() => {
     const memberUserListQuery = channel?.createMemberListQuery({
       limit: 20,
+      ...memberListQueryParams,
       // @ts-ignore
       mutedMemberFilter: 'muted',
     });
-    memberUserListQuery.next().then((members) => {
+    memberUserListQuery?.next().then((members) => {
       setMembers(members);
     });
-    setMemberQuery(memberUserListQuery);
+    setMemberQuery(memberUserListQuery ?? null);
   }, []);
   return (
     <div>
@@ -67,55 +70,30 @@ export default function MutedMembersModal({
           })}
         >
           {members.map((member) => (
-            <UserListItem
-              currentUser={currentUser}
-              user={member}
-              key={member.userId}
-              action={({ actionRef, parentRef }) => (
-                <ContextMenu
-                  menuTrigger={(toggleDropdown) => (
-                    <IconButton
-                      className="sendbird-user-message__more__menu"
-                      width="32px"
-                      height="32px"
-                      onClick={toggleDropdown}
-                    >
-                      <Icon
-                        width="24px"
-                        height="24px"
-                        type={IconTypes.MORE}
-                        fillColor={IconColors.CONTENT_INVERSE}
-                      />
-                    </IconButton>
-                  )}
-                  menuItems={(closeDropdown) => (
-                    <MenuItems
-                      parentContainRef={parentRef}
-                      parentRef={actionRef} // for catching location(x, y) of MenuItems
-                      closeDropdown={closeDropdown}
-                      openLeft
-                    >
-                      <MenuItem
-                        onClick={() => {
-                          channel?.unmuteUser(member).then(() => {
-                            closeDropdown();
-                            setMembers(members.filter(m => {
-                              return (m.userId !== member.userId);
-                            }));
-                          });
-                        }}
-                        dataSbId="channel_setting_muted_member_context_menu_unmute"
-                      >
-                        {stringSet.CHANNEL_SETTING__MODERATION__UNMUTE}
-                      </MenuItem>
-                    </MenuItems>
-                  )}
-                />
-              )}
-            />
+            <React.Fragment key={member.userId}>
+              {
+                renderUserListItem({
+                  user: member,
+                  channel,
+                  renderListItemMenu: (props) => (
+                    <UserListItemMenu
+                      {...props}
+                      onToggleMuteState={() => {
+                        setMembers(members.filter(m => {
+                          return (m.userId !== member.userId);
+                        }));
+                      }}
+                      renderMenuItems={({ items }) => (<items.MuteToggleMenuItem />)}
+                    />
+                  ),
+                })
+              }
+            </React.Fragment>
           ))}
         </div>
       </Modal>
     </div>
   );
 }
+
+export default MutedMembersModal;

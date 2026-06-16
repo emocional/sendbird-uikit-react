@@ -3,14 +3,13 @@ import type { FileMessage, UserMessage } from '@sendbird/chat/message';
 import './index.scss';
 
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
-import { useMessageSearchContext } from '../../context/MessageSearchProvider';
+import useMessageSearch from '../../context/hooks/useMessageSearch';
 
 import MessageSearchItem from '../../../../ui/MessageSearchItem';
 import PlaceHolder, { PlaceHolderTypes } from '../../../../ui/PlaceHolder';
 import MessageSearchFileItem from '../../../../ui/MessageSearchFileItem';
 import { ClientSentMessages } from '../../../../types';
-
-const COMPONENT_CLASS_NAME = 'sendbird-message-search';
+import { isDefaultChannelName } from '../../../../utils';
 
 export interface MessageSearchUIProps {
   renderPlaceHolderError?: (props: void) => React.ReactElement;
@@ -36,27 +35,26 @@ export const MessageSearchUI: React.FC<MessageSearchUIProps> = ({
   renderSearchItem,
 }: MessageSearchUIProps) => {
   const {
-    isInvalid,
-    searchString,
-    requestString,
-    currentChannel,
-    retryCount,
-    setRetryCount,
-    loading,
-    scrollRef,
-    hasMoreResult,
-    onScroll,
-    allMessages,
-    onResultClick,
-    selectedMessageId,
-    setSelectedMessageId,
-  } = useMessageSearchContext();
+    state: {
+      isInvalid,
+      searchString,
+      requestString,
+      currentChannel,
+      loading,
+      scrollRef,
+      hasMoreResult,
+      onScroll,
+      allMessages,
+      onResultClick,
+      selectedMessageId,
+    },
+    actions: {
+      setSelectedMessageId,
+      handleRetryToConnect,
+    },
+  } = useMessageSearch();
 
   const { stringSet } = useContext(LocalizationContext);
-
-  const handleRetryToConnect = () => {
-    setRetryCount(retryCount + 1);
-  };
 
   const handleOnScroll = (e) => {
     const scrollElement = e.target;
@@ -77,18 +75,18 @@ export const MessageSearchUI: React.FC<MessageSearchUIProps> = ({
   };
 
   const getChannelName = () => {
-    if (currentChannel && currentChannel?.name && currentChannel?.name !== 'Group Channel') {
-      return currentChannel?.name;
+    if (!currentChannel?.name && !currentChannel?.members) {
+      return stringSet.NO_TITLE;
     }
-    if (currentChannel && (currentChannel?.name === 'Group Channel' || !currentChannel?.name)) {
-      return currentChannel.members.map((member) => member.nickname || stringSet.NO_NAME).join(', ');
-    }
-    return stringSet.NO_TITLE;
+
+    if (isDefaultChannelName(currentChannel)) return currentChannel.members.map((member) => member.nickname || stringSet.NO_NAME).join(', ');
+
+    return currentChannel?.name;
   };
 
   if (isInvalid && searchString && requestString) {
     return renderPlaceHolderError?.() || (
-      <div className={COMPONENT_CLASS_NAME}>
+      <div className="sendbird-message-search">
         <PlaceHolder
           type={PlaceHolderTypes.WRONG}
           retryToConnect={handleRetryToConnect}
@@ -99,7 +97,7 @@ export const MessageSearchUI: React.FC<MessageSearchUIProps> = ({
 
   if (loading && searchString && requestString) {
     return renderPlaceHolderLoading?.() || (
-      <div className={COMPONENT_CLASS_NAME}>
+      <div className="sendbird-message-search">
         <PlaceHolder type={PlaceHolderTypes.SEARCHING} />
       </div>
     );
@@ -107,7 +105,7 @@ export const MessageSearchUI: React.FC<MessageSearchUIProps> = ({
 
   if (!searchString) {
     return renderPlaceHolderNoString?.() || (
-      <div className={COMPONENT_CLASS_NAME}>
+      <div className="sendbird-message-search">
         <PlaceHolder
           type={PlaceHolderTypes.SEARCH_IN}
           searchInString={getChannelName()}
@@ -118,7 +116,7 @@ export const MessageSearchUI: React.FC<MessageSearchUIProps> = ({
 
   return (
     <div
-      className={COMPONENT_CLASS_NAME}
+      className="sendbird-message-search"
       onScroll={handleOnScroll}
       ref={scrollRef}
     >
@@ -132,12 +130,12 @@ export const MessageSearchUI: React.FC<MessageSearchUIProps> = ({
               if (message.messageType === 'file') {
                 return (
                   <MessageSearchFileItem
-                    className={`${COMPONENT_CLASS_NAME}__message-search-item`}
+                    className="sendbird-message-search__message-search-item"
                     message={message as FileMessage}
                     key={message.messageId}
                     selected={(selectedMessageId === message.messageId)}
                     onClick={() => {
-                      onResultClick(message);
+                      onResultClick?.(message);
                       setSelectedMessageId(message.messageId);
                     }}
                   />
@@ -145,12 +143,12 @@ export const MessageSearchUI: React.FC<MessageSearchUIProps> = ({
               }
               return (
                 <MessageSearchItem
-                  className={`${COMPONENT_CLASS_NAME}__message-search-item`}
+                  className="sendbird-message-search__message-search-item"
                   message={message as UserMessage}
                   key={message.messageId}
                   selected={(selectedMessageId === message.messageId)}
                   onClick={() => {
-                    onResultClick(message);
+                    onResultClick?.(message);
                     setSelectedMessageId(message.messageId);
                   }}
                 />

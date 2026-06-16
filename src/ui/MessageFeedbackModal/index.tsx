@@ -10,6 +10,9 @@ import { CoreMessageType } from '../../utils';
 import { FeedbackRating } from '@sendbird/chat/message';
 import { useKeyDown } from '../../hooks/useKeyDown/useKeyDown';
 
+/**
+ * @deprecated This feature is deprecated and will be removed in May 2026.
+ */
 export interface MessageFeedbackModalProps {
   selectedFeedback: FeedbackRating | undefined;
   message: CoreMessageType;
@@ -19,6 +22,9 @@ export interface MessageFeedbackModalProps {
   onRemove?: () => void;
 }
 
+/**
+ * @deprecated This feature is deprecated and will be removed in May 2026.
+ */
 export default function MessageFeedbackModal(props: MessageFeedbackModalProps): ReactElement {
   const {
     selectedFeedback,
@@ -37,9 +43,9 @@ export default function MessageFeedbackModal(props: MessageFeedbackModalProps): 
 
   const onSubmitWrapper = () => {
     if (!selectedFeedback) return;
-    const comment = inputRef.current.value ?? '';
+    const comment = inputRef.current?.value ?? '';
     if (isEdit) {
-      if (comment !== message.myFeedback.comment) {
+      if (comment !== message.myFeedback?.comment) {
         onUpdate?.(selectedFeedback, comment);
       } else {
         onClose?.();
@@ -49,8 +55,8 @@ export default function MessageFeedbackModal(props: MessageFeedbackModalProps): 
     }
   };
 
-  const modalRef = useRef(null);
-  const inputRef = useRef(null);
+  const modalRef = useRef<HTMLDivElement>();
+  const inputRef = useRef<HTMLInputElement>();
 
   const onKeyDown = useKeyDown(modalRef, {
     Enter: () => onSubmitWrapper(),

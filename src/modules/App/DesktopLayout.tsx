@@ -3,15 +3,17 @@ import { GroupChannel as GroupChannelClass } from '@sendbird/chat/groupChannel';
 
 import type { DesktopLayoutProps } from './types';
 
-import GroupChannel from '../GroupChannel';
-import GroupChannelList from '../GroupChannelList';
+import GroupChannel, { GroupChannelProps } from '../GroupChannel';
+import GroupChannelList, { GroupChannelListProps } from '../GroupChannelList';
 
-import Channel from '../Channel';
-import ChannelList from '../ChannelList';
+import Channel, { ChannelProps } from '../Channel';
+import ChannelList, { ChannelListProps } from '../ChannelList';
 import ChannelSettings from '../ChannelSettings';
 import MessageSearchPannel from '../MessageSearch';
 import Thread from '../Thread';
 import { SendableMessageType } from '../../utils';
+import { classnames } from '../../utils/utils';
+import { APP_LAYOUT_ROOT } from './const';
 
 export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayoutProps) => {
   const {
@@ -19,6 +21,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     replyType,
     isMessageGroupingEnabled,
     isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop,
     allowProfileEdit,
     showSearchIcon,
     onProfileEditSuccess,
@@ -47,7 +50,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     if (channel) {
       setCurrentChannel(channel);
     } else {
-      setCurrentChannel(null);
+      setCurrentChannel(null ?? undefined);
     }
   };
 
@@ -61,7 +64,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     }
   };
 
-  const channelListProps = {
+  const channelListProps: GroupChannelListProps & ChannelListProps = {
     allowProfileEdit,
     activeChannelUrl: currentChannel?.url,
     onProfileEditSuccess: onProfileEditSuccess,
@@ -74,7 +77,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     userQuery,
   };
 
-  const channelProps = {
+  const channelProps: ChannelProps & GroupChannelProps = {
     channelUrl: currentChannel?.url || '',
     onChatHeaderActionClick: () => {
       setShowSearch(false);
@@ -84,7 +87,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     onSearchClick: () => {
       setShowSettings(false);
       setShowThread(false);
-      setShowSearch(!showSearch);
+      setShowSearch((prev: boolean) => { return !prev; });
     },
     onReplyInThread: onClickThreadReply,
     onQuoteMessageClick: ({ message }) => {
@@ -99,27 +102,28 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
     animatedMessage: highlightedMessage,
     onMessageAnimated: () => setHighlightedMessage?.(null),
     showSearchIcon: showSearchIcon,
-    startingPoint: startingPoint,
+    startingPoint: startingPoint ?? undefined,
     isReactionEnabled: isReactionEnabled,
     replyType: replyType,
     isMessageGroupingEnabled: isMessageGroupingEnabled,
     isMultipleFilesMessageEnabled: isMultipleFilesMessageEnabled,
+    autoscrollMessageOverflowToTop: autoscrollMessageOverflowToTop,
     // for GroupChannel
     animatedMessageId: highlightedMessage,
     onReplyInThreadClick: onClickThreadReply,
   };
 
   return (
-    <div className="sendbird-app__wrap">
+    <div className="sendbird-app__wrap" id={APP_LAYOUT_ROOT}>
       <div className="sendbird-app__channellist-wrap">
         {enableLegacyChannelModules ? <ChannelList {...channelListProps} /> : <GroupChannelList {...channelListProps} />}
       </div>
       <div
-        className={`
-          ${showSettings ? 'sendbird-app__conversation--settings-open' : ''}
-          ${showSearch ? 'sendbird-app__conversation--search-open' : ''}
-          sendbird-app__conversation-wrap
-        `}
+        className={classnames(
+          'sendbird-app__conversation-wrap',
+          showSettings && 'sendbird-app__conversation--settings-open',
+          showSearch && 'sendbird-app__conversation--search-open',
+        )}
       >
         {enableLegacyChannelModules ? <Channel {...channelProps} /> : <GroupChannel {...channelProps} />}
       </div>
@@ -167,9 +171,11 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = (props: DesktopLayout
             if (channel?.url !== currentChannel?.url) {
               setCurrentChannel(channel);
             }
-            if (message?.messageId !== highlightedMessage) {
-              setStartingPoint?.(message?.createdAt);
-            }
+            setTimeout(() => {
+              if (message?.messageId !== highlightedMessage) {
+                setStartingPoint?.(message?.createdAt);
+              }
+            }, 200);
             setTimeout(() => {
               setStartingPoint?.(null);
               setHighlightedMessage?.(message?.messageId);

@@ -3,7 +3,6 @@ import React, {
   useMemo,
   useState,
   useEffect,
-  useContext,
 } from 'react';
 import { FileMessage } from '@sendbird/chat/message';
 import format from 'date-fns/format';
@@ -19,7 +18,7 @@ import ImageRenderer from '../ImageRenderer';
 import Label, { LabelTypography, LabelColors } from '../Label';
 import Loader from '../Loader';
 import UserProfile from '../UserProfile';
-import { UserProfileContext } from '../../lib/UserProfileContext';
+import { useUserProfileContext } from '../../lib/UserProfileContext';
 import {
   checkIsSent,
   checkIsPending,
@@ -71,7 +70,7 @@ export default function OpenchannelThumbnailMessage({
   const status = message?.sendingStatus;
   const thumbnailUrl = (thumbnails && thumbnails.length > 0 && thumbnails[0].url) || null;
   const { stringSet, dateLocale } = useLocalization();
-  const { disableUserProfile, renderUserProfile } = useContext(UserProfileContext);
+  const { disableUserProfile, renderUserProfile } = useUserProfileContext();
   const [messageWidth, setMessageWidth] = useState(360);
   const [contextMenu, setContextMenu] = useState(false);
   const messageRef = useRef<HTMLDivElement>(null);
@@ -185,7 +184,7 @@ export default function OpenchannelThumbnailMessage({
                 >
                   {
                     message?.createdAt && (
-                      format(message.createdAt, 'p', {
+                      format(message.createdAt, stringSet.DATE_FORMAT__MESSAGE_CREATED_AT, {
                         locale: dateLocale,
                       })
                     )
@@ -260,7 +259,7 @@ export default function OpenchannelThumbnailMessage({
                       ? (
                         <ImageRenderer
                           className="sendbird-openchannel-thumbnail-message__right__body__wrap__image"
-                          url={thumbnailUrl || url || localUrl}
+                          url={thumbnailUrl || url || localUrl || ''}
                           alt="image"
                           width={messageWidth}
                           height="270px"
@@ -364,7 +363,7 @@ export default function OpenchannelThumbnailMessage({
                                 resendMessage(message);
                                 closeDropdown();
                               }}
-                              dataSbId="open_channel_thumbnail_message_menu_resend"
+                              testID="open_channel_thumbnail_message_menu_resend"
                             >
                               {stringSet.CONTEXT_MENU_DROPDOWN__RESEND}
                             </MenuItem>
@@ -380,7 +379,7 @@ export default function OpenchannelThumbnailMessage({
                                 showRemove(true);
                                 closeDropdown();
                               }}
-                              dataSbId="open_channel_thumbnail_message_menu_delete"
+                              testID="open_channel_thumbnail_message_menu_delete"
                             >
                               {stringSet.CONTEXT_MENU_DROPDOWN__DELETE}
                             </MenuItem>

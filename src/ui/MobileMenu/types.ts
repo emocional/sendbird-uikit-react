@@ -1,12 +1,16 @@
-import React, { MouseEvent } from 'react';
+import React, { MouseEvent, ReactNode } from 'react';
 import type { EmojiContainer } from '@sendbird/chat';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import type { OpenChannel } from '@sendbird/chat/openChannel';
 import { CoreMessageType, SendableMessageType } from '../../utils';
 import { ReplyType } from '../../types';
+import type { RenderMenuItemsParams } from '../MessageMenu/MessageMenu';
 
 // Fixme@v4 - deleteMessageOption type, rethink options
 export type DeleteMenuStates = 'DISABLE' | 'HIDE' | 'ACTIVE';
+type MobileRenderMenuItemsParams = {
+  items: Omit<RenderMenuItemsParams['items'], 'OpenInChannelMenuItem'>
+};
 
 export interface BaseMenuProps {
   channel: GroupChannel | OpenChannel;
@@ -15,6 +19,7 @@ export interface BaseMenuProps {
   hideMenu(): void;
   isByMe?: boolean;
   replyType?: ReplyType;
+  inThreadList?: boolean;
   disabled?: boolean;
   // This should take precedence over logic inside the component
   deleteMenuState?: DeleteMenuStates;
@@ -22,12 +27,14 @@ export interface BaseMenuProps {
   showRemove?: (bool: boolean) => void;
   resendMessage?: (message: SendableMessageType) => void;
   deleteMessage?: (message: CoreMessageType) => Promise<void>;
+  markAsUnread?: (message: SendableMessageType) => void;
   setQuoteMessage?: (message: SendableMessageType) => void;
   isReactionEnabled?: boolean;
   parentRef?: React.RefObject<HTMLElement>;
   onReplyInThread?: (props: { message: SendableMessageType }) => void;
   isOpenedFromThread?: boolean;
   onDownloadClick?: (e: MouseEvent) => Promise<void>;
+  renderMenuItems?: (params: MobileRenderMenuItemsParams) => ReactNode;
 }
 
 export interface MobileBottomSheetProps extends BaseMenuProps {

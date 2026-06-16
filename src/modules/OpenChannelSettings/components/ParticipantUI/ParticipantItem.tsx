@@ -5,10 +5,10 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import type { Participant } from '@sendbird/chat';
+import { Participant, type User } from '@sendbird/chat';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
 
-import { UserProfileContext } from '../../../../lib/UserProfileContext';
+import { useUserProfileContext } from '../../../../lib/UserProfileContext';
 import Button, { ButtonTypes, ButtonSizes } from '../../../../ui/Button';
 import Accordion from '../../../../ui/Accordion';
 import Icon, { IconTypes, IconColors } from '../../../../ui/Icon';
@@ -18,8 +18,8 @@ import ParticipantsModal from './ParticipantsModal';
 import UserProfile from '../../../../ui/UserProfile';
 import ContextMenu, { MenuItems } from '../../../../ui/ContextMenu';
 import { useOpenChannelSettingsContext } from '../../context/OpenChannelSettingsProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import MutedAvatarOverlay from '../../../../ui/Avatar/MutedAvatarOverlay';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 const SHOWN_MEMBER_MAX = 10;
 
@@ -27,7 +27,7 @@ interface ActionProps {
   actionRef: React.RefObject<HTMLInputElement>;
 }
 interface UserListItemProps {
-  user: Participant;
+  user: User | Participant;
   currentUser?: string;
   isOperator?: boolean;
   action?(props: ActionProps): ReactElement;
@@ -41,7 +41,7 @@ export const UserListItem: React.FC<UserListItemProps> = ({
 }: UserListItemProps) => {
   const avatarRef = useRef(null);
   const actionRef = useRef(null);
-  const { disableUserProfile, renderUserProfile } = useContext(UserProfileContext);
+  const { disableUserProfile, renderUserProfile } = useUserProfileContext();
   const { stringSet } = useContext(LocalizationContext);
   return (
     <div className="sendbird-participants-accordion__member">
@@ -61,14 +61,14 @@ export const UserListItem: React.FC<UserListItemProps> = ({
                 width={24}
                 height={24}
               />
-              {user?.isMuted ? (<MutedAvatarOverlay />) : ''}
+              {user instanceof Participant && user.isMuted ? (<MutedAvatarOverlay />) : ''}
             </>
           )}
           menuItems={(closeDropdown) => (
             renderUserProfile
               ? renderUserProfile({
                 user: user,
-                currentUserId: currentUser,
+                currentUserId: currentUser ?? '',
                 close: closeDropdown,
                 avatarRef,
               })
@@ -153,9 +153,9 @@ export interface ParticipantsAccordionProps {
 export default function ParticipantsAccordion(props: ParticipantsAccordionProps): ReactElement {
   const maxMembers = props?.maxMembers || SHOWN_MEMBER_MAX;
   const { channel } = useOpenChannelSettingsContext();
-  const globalState = useSendbirdStateContext();
-  const currentUserId = globalState?.config?.userId;
-  const [participants, setParticipants] = useState([]);
+  const { state } = useSendbird();
+  const currentUserId = state?.config?.userId;
+  const [participants, setParticipants] = useState<User[]>([]);
   const [showMoreModal, setShowMoreModal] = useState(false);
   const { stringSet } = useContext(LocalizationContext);
 

@@ -5,12 +5,11 @@ import { MessageListParams, ReplyType } from '@sendbird/chat/message';
 import * as utils from '../utils';
 import { PREV_RESULT_SIZE, NEXT_RESULT_SIZE } from '../const';
 import * as messageActionTypes from '../dux/actionTypes';
-import { Logger } from '../../../../lib/SendbirdState';
+import type { Logger, SdkStore } from '../../../../lib/Sendbird/types';
 import { MarkAsReadSchedulerType } from '../../../../lib/hooks/useMarkAsReadScheduler';
 import useReconnectOnIdle from './useReconnectOnIdle';
 import { ChannelActionTypes } from '../dux/actionTypes';
 import { CoreMessageType } from '../../../../utils';
-import { SdkStore } from '../../../../lib/types';
 import { SCROLL_BOTTOM_DELAY_FOR_FETCH } from '../../../../utils/consts';
 
 interface DynamicParams {
@@ -23,7 +22,7 @@ interface DynamicParams {
 interface StaticParams {
   logger: Logger;
   sdk: SdkStore['sdk'];
-  currentGroupChannel: GroupChannel;
+  currentGroupChannel: GroupChannel | null;
   scrollRef: React.RefObject<HTMLDivElement>;
   markAsReadScheduler: MarkAsReadSchedulerType;
   messagesDispatcher: React.Dispatch<ChannelActionTypes>;
@@ -65,6 +64,7 @@ function useHandleReconnect(
         }
         if (userFilledMessageListQuery) {
           Object.keys(userFilledMessageListQuery).forEach((key) => {
+            // @ts-ignore
             messageListParams[key] = userFilledMessageListQuery[key];
           });
         }
@@ -74,7 +74,7 @@ function useHandleReconnect(
           payload: null,
         });
 
-        sdk?.groupChannel?.getChannel(currentGroupChannel?.url)
+        sdk?.groupChannel?.getChannel(currentGroupChannel?.url ?? '')
           .then((groupChannel) => {
             const lastMessageTime = new Date().getTime();
 
@@ -86,7 +86,7 @@ function useHandleReconnect(
                 messagesDispatcher({
                   type: messageActionTypes.FETCH_INITIAL_MESSAGES_SUCCESS,
                   payload: {
-                    currentGroupChannel,
+                    currentGroupChannel: groupChannel,
                     messages: messages as CoreMessageType[],
                   },
                 });
@@ -96,11 +96,11 @@ function useHandleReconnect(
                 logger.error('Channel: Fetching messages failed', error);
                 messagesDispatcher({
                   type: messageActionTypes.FETCH_INITIAL_MESSAGES_FAILURE,
-                  payload: { currentGroupChannel },
+                  payload: { currentGroupChannel: groupChannel },
                 });
               });
             if (!disableMarkAsRead) {
-              markAsReadScheduler.push(currentGroupChannel);
+              markAsReadScheduler.push(groupChannel);
             }
           });
       }

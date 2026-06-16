@@ -3,10 +3,12 @@ import {
   isFileMessage,
   isUrl,
   isUserMessage,
-  isMultipleFilesMessage,
+  isMultipleFilesMessage, isDefaultChannelName, DEFAULT_GROUP_CHANNEL_NAME, DEFAULT_AI_CHATBOT_CHANNEL_NAME, arrayEqual,
 } from '../index';
 import { AdminMessage, FileMessage, MultipleFilesMessage, UserMessage } from '@sendbird/chat/message';
-import { deleteNullish, isMobileIOS } from '../utils';
+import { delay, deleteNullish } from '../utils';
+import { isMobileIOS } from '../browser';
+import { GroupChannel } from '@sendbird/chat/groupChannel';
 
 describe('Global-utils: verify message type util functions', () => {
   it('should return true for each message', () => {
@@ -68,7 +70,7 @@ describe('Global-utils: verify message type util functions', () => {
     expect(isAdminMessage({ isAdminMessage: () => true } as AdminMessage)).toBe(true);
     expect(isAdminMessage({ messageType: 'admin' } as AdminMessage)).toBe(true);
     expect(isMultipleFilesMessage({ isMultipleFilesMessage: () => true } as MultipleFilesMessage)).toBe(true);
-    expect(isMultipleFilesMessage({ messageType: 'file', fileInfoList: [] } as MultipleFilesMessage)).toBe(true);
+    expect(isMultipleFilesMessage({ messageType: 'file', fileInfoList: [] } as unknown as MultipleFilesMessage)).toBe(true);
   });
 
   it('should refer to the method first rather than messageType', () => {
@@ -231,5 +233,122 @@ describe('deleteNullish', () => {
     expect(component({ a: null, b: undefined })).toEqual({ a: 1, b: '2', c: 3 });
     expect(component({ a: null, c: 4 })).toEqual({ a: 1, b: '2', c: 4 });
     expect(component({ a: null, b: '3', c: 4 })).toEqual({ a: 1, b: '3', c: 4 });
+  });
+});
+
+describe('delay', () => {
+  const errorBound = 10;
+
+  it('should resolve after the specified time', async () => {
+    const start = Date.now();
+    const delayTime = 100;
+
+    await delay(delayTime);
+
+    const end = Date.now();
+    const elapsed = end - start;
+
+    // Check if the elapsed time is at least the delay time
+    expect(elapsed).toBeGreaterThanOrEqual(delayTime - errorBound);
+  });
+
+  it('should resolve immediately for 0 milliseconds', async () => {
+    const start = Date.now();
+
+    await delay(0);
+
+    const end = Date.now();
+    const elapsed = end - start;
+
+    // Check if the elapsed time is very small
+    expect(elapsed).toBeLessThan(errorBound);
+  });
+  it('should resolve immediately when no parameter is provided', async () => {
+    const start = Date.now();
+
+    await delay();
+
+    const end = Date.now();
+    const elapsed = end - start;
+
+    expect(elapsed).toBeLessThan(errorBound);
+  });
+});
+
+describe('isDefaultChannelName', () => {
+  it('return true if channel is undefined', () => {
+    const result = isDefaultChannelName(undefined);
+
+    expect(result).toBe(true);
+  });
+
+  it('return true if channel name is undefined', () => {
+    const channel = {
+      name: undefined,
+    } as GroupChannel;
+
+    const result = isDefaultChannelName(channel);
+
+    expect(result).toBe(true);
+  });
+
+  it('return true if channel name is the default group channel name', () => {
+    const channel = {
+      name: DEFAULT_GROUP_CHANNEL_NAME,
+    } as GroupChannel;
+
+    const result = isDefaultChannelName(channel);
+
+    expect(result).toBe(true);
+  });
+
+  it('return true if channel name is the default AI chatbot channel name', () => {
+    const channel = {
+      name: DEFAULT_AI_CHATBOT_CHANNEL_NAME,
+    } as GroupChannel;
+
+    const result = isDefaultChannelName(channel);
+
+    expect(result).toBe(true);
+  });
+
+  it('return false if channel name is not default', () => {
+    const channel = {
+      name: 'test-channel-name',
+    } as GroupChannel;
+
+    const result = isDefaultChannelName(channel);
+
+    expect(result).toBe(false);
+  });
+});
+
+describe('arrayEqual', () => {
+  it('return true if two arrays are equal', () => {
+    const arr1 = ['elem', 2, true];
+    const arr2 = ['elem', 2, true];
+
+    expect(arrayEqual(arr1, arr2)).toBe(true);
+  });
+
+  it('return false if two arrays are not equal', () => {
+    const arr1 = ['elem', 2, true];
+    const arr2 = ['elem', 42, false];
+
+    expect(arrayEqual(arr1, arr2)).toBe(false);
+  });
+
+  it('return false if two array doesn\'t have same length', () => {
+    const arr1 = ['elem', 2, true];
+    const arr2 = ['elem', 42];
+
+    expect(arrayEqual(arr1, arr2)).toBe(false);
+  });
+
+  it('return false if the one of parameter is not array', () => {
+    const arr1 = ['elem', 2, true];
+    const arr2 = {};
+
+    expect(arrayEqual(arr1, arr2)).toBe(false);
   });
 });

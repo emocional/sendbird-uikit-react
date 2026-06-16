@@ -83,12 +83,19 @@ const TypingIndicatorBubbleAvatar = (props: TypingIndicatorBubbleProps) => {
 const TypingIndicatorBubble = (props: TypingIndicatorBubbleProps) => {
   const { typingMembers, handleScroll } = props;
 
-  if (typingMembers.length === 0) return null;
-
   useLayoutEffect(() => {
     // Keep the scrollBottom value after fetching new message list
-    handleScroll?.(true);
-  }, []);
+    // Also adjust scroll when typing indicator appears (0 -> 1+)
+    if (typingMembers.length === 0) return;
+    const rafId = requestAnimationFrame(() => {
+      handleScroll?.(true);
+    });
+    return () => {
+      cancelAnimationFrame(rafId);
+    };
+  }, [handleScroll, typingMembers.length]);
+
+  if (typingMembers.length === 0) return null;
 
   return <div
     className='sendbird-message-content incoming'

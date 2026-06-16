@@ -6,11 +6,11 @@ import { scrollIntoLast } from '../utils';
 import uuidv4 from '../../../../utils/uuid';
 import compareIds from '../../../../utils/compareIds';
 import * as messageActions from '../dux/actionTypes';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { SendableMessageType } from '../../../../utils';
 import { ChannelActionTypes } from '../dux/actionTypes';
 import { LoggerInterface } from '../../../../lib/Logger';
-import { SdkStore } from '../../../../lib/types';
+import type { SdkStore } from '../../../../lib/Sendbird/types';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 /**
  * Handles ChannelEvents and send values to dispatcher using messagesDispatcher
@@ -23,14 +23,14 @@ import { SdkStore } from '../../../../lib/types';
 interface DynamicParams {
   sdkInit: boolean;
   currentUserId: string;
-  currentGroupChannel: GroupChannel;
+  currentGroupChannel: GroupChannel | null;
   disableMarkAsRead: boolean;
 }
 interface StaticParams {
   sdk: SdkStore['sdk'];
   logger: LoggerInterface;
   scrollRef: React.RefObject<HTMLDivElement>;
-  setQuoteMessage: React.Dispatch<React.SetStateAction<SendableMessageType>>;
+  setQuoteMessage: React.Dispatch<React.SetStateAction<SendableMessageType | null>>;
   messagesDispatcher: React.Dispatch<ChannelActionTypes>;
 }
 
@@ -47,7 +47,7 @@ function useHandleChannelEvents({
   setQuoteMessage,
   messagesDispatcher,
 }: StaticParams): void {
-  const store = useSendbirdStateContext();
+  const { state: store } = useSendbird();
   const {
     markAsReadScheduler,
     markAsDeliveredScheduler,
@@ -66,7 +66,9 @@ function useHandleChannelEvents({
             let scrollToEnd = false;
             try {
               const { current } = scrollRef;
-              scrollToEnd = current.offsetHeight + current.scrollTop >= current.scrollHeight - 10;
+              if (current) {
+                scrollToEnd = current.offsetHeight + current.scrollTop >= current.scrollHeight - 10;
+              }
               // 10 is a buffer
             } catch (error) {
               //
@@ -102,6 +104,30 @@ function useHandleChannelEvents({
             messagesDispatcher({
               type: messageActions.SET_CURRENT_CHANNEL,
               payload: channel,
+            });
+          }
+        },
+        onUserMarkedRead: (channel, userIds) => {
+          logger.info('Channel | useHandleChannelEvents: onUserMarkedAsRead', channel, userIds);
+          if (compareIds(channel?.url, channelUrl)) {
+            messagesDispatcher({
+              type: messageActions.MARK_AS_READ,
+              payload: {
+                channel,
+                userIds,
+              },
+            });
+          }
+        },
+        onUserMarkedUnread: (channel, userIds) => {
+          logger.info('Channel | useHandleChannelEvents: onUserMarkedUnread', channel, userIds);
+          if (compareIds(channel?.url, channelUrl)) {
+            messagesDispatcher({
+              type: messageActions.MARK_AS_UNREAD,
+              payload: {
+                channel,
+                userIds,
+              },
             });
           }
         },
@@ -142,11 +168,13 @@ function useHandleChannelEvents({
           });
         },
         onReactionUpdated: (channel, reactionEvent) => {
-          logger.info('Channel | useHandleChannelEvents: onReactionUpdated', { channel, reactionEvent });
-          messagesDispatcher({
-            type: messageActions.ON_REACTION_UPDATED,
-            payload: reactionEvent,
-          });
+          if (channel.isGroupChannel() && compareIds(channel?.url, channelUrl)) {
+            logger.info('Channel | useHandleChannelEvents: onReactionUpdated', { channel, reactionEvent });
+            messagesDispatcher({
+              type: messageActions.ON_REACTION_UPDATED,
+              payload: reactionEvent,
+            });
+          }
         },
         onChannelChanged: (channel) => {
           if (channel.isGroupChannel() && compareIds(channel?.url, channelUrl)) {
@@ -193,8 +221,8 @@ function useHandleChannelEvents({
             });
           }
         },
-        onUserBanned: (channel: GroupChannel, user) => {
-          if (compareIds(channel?.url, channelUrl)) {
+        onUserBanned: (channel, user) => {
+          if (compareIds(channel?.url, channelUrl) && channel.isGroupChannel()) {
             logger.info('Channel | useHandleChannelEvents: onUserBanned', { channel, user });
             const isByMe = user?.userId === sdk?.currentUser?.userId;
             messagesDispatcher({

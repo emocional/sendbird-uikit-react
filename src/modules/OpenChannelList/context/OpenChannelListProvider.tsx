@@ -1,12 +1,12 @@
-import React, { useContext, useReducer, useMemo, useEffect } from 'react';
+import React, { useContext, useReducer, useEffect } from 'react';
+import { OpenChannelHandler } from '@sendbird/chat/openChannel';
 
 import pubSubTopics from '../../../lib/pubSub/topics';
-import useSendbirdStateContext from '../../../hooks/useSendbirdStateContext';
+import uuidv4 from '../../../utils/uuid';
 
 import openChannelListReducer from './dux/reducer';
 import openChannelListInitialState, { OpenChannelListInitialInterface } from './dux/initialState';
 import {
-  OpenChannelListFetchingStatus,
   OpenChannelListProviderProps,
   OpenChannelListProviderInterface,
   OpenChannelListDispatcherType,
@@ -15,21 +15,13 @@ import useFetchNextCallback from './hooks/useFetchNextCallback';
 import useSetupOpenChannelList from './hooks/useSetupOpenChannelList';
 import useRefreshOpenChannelList from './hooks/useRefreshOpenChannelList';
 import OpenChannelListActionTypes from './dux/actionTypes';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
 
-const OpenChannelListContext = React.createContext<OpenChannelListProviderInterface | null>({
-  onChannelSelected: null,
-  currentChannel: null,
-  allChannels: [],
-  fetchingStatus: OpenChannelListFetchingStatus.EMPTY,
-  customOpenChannelListQuery: {},
-  fetchNextChannels: null,
-  refreshOpenChannelList: null,
-  openChannelListDispatcher: null,
-  logger: null,
-});
+const OpenChannelListContext = React.createContext<OpenChannelListProviderInterface | null>(null);
 
-export function useOpenChannelListContext(): OpenChannelListProviderInterface {
-  const context: OpenChannelListProviderInterface = useContext(OpenChannelListContext);
+export function useOpenChannelListContext() {
+  const context = useContext(OpenChannelListContext);
+  if (!context) throw new Error('OpenChannelListContext not found. Use within the OpenChannelList module.');
   return context;
 }
 
@@ -40,13 +32,11 @@ export const OpenChannelListProvider: React.FC<OpenChannelListProviderProps> = (
   onChannelSelected,
 }: OpenChannelListProviderProps): React.ReactElement => {
   // props
-  const { stores, config } = useSendbirdStateContext();
+  const { state: { stores, config } } = useSendbird();
   const { logger, pubSub } = config;
   const sdk = stores?.sdkStore?.sdk || null;
   const sdkInitialized = stores?.sdkStore?.initialized || false;
-  const customOpenChannelListQuery = useMemo(() => {
-    return queries?.openChannelListQuery || null;
-  }, [queries?.openChannelListQuery]);
+  const customOpenChannelListQuery = queries?.openChannelListQuery;
 
   // dux
   const [openChannelListStore, openChannelListDispatcher]: [OpenChannelListInitialInterface, OpenChannelListDispatcherType] = useReducer(
@@ -72,24 +62,45 @@ export const OpenChannelListProvider: React.FC<OpenChannelListProviderProps> = (
 
   // Events & PubSub
   useEffect(() => {
-    const subscriber = pubSub?.subscribe ? new Map() : null;
-    subscriber?.set(
-      pubSubTopics.UPDATE_OPEN_CHANNEL,
-      pubSub?.subscribe(pubSubTopics.UPDATE_OPEN_CHANNEL, (channel) => {
-        openChannelListDispatcher({
-          type: OpenChannelListActionTypes.UPDATE_OPEN_CHANNEL,
-          payload: channel,
-        });
-      }),
-    );
+    const subscriber = new Map<string, { remove:() => void }>();
+    if (pubSub?.subscribe) {
+      subscriber.set(
+        pubSubTopics.UPDATE_OPEN_CHANNEL,
+        pubSub.subscribe(pubSubTopics.UPDATE_OPEN_CHANNEL, (channel) => {
+          openChannelListDispatcher({
+            type: OpenChannelListActionTypes.UPDATE_OPEN_CHANNEL,
+            payload: channel,
+          });
+        }),
+      );
+    }
     return () => {
-      subscriber?.forEach((s) => {
-        try { s.remove(); } catch {
-          //
-        }
-      });
+      subscriber.forEach((it) => it?.remove());
     };
-  }, [sdkInitialized, pubSub]);
+  }, [sdkInitialized, pubSub?.subscribe]);
+
+  // Channel event handler for deletion
+  useEffect(() => {
+    const channelHandlerId = uuidv4();
+    if (sdkInitialized && sdk?.openChannel?.addOpenChannelHandler) {
+      const channelHandler = new OpenChannelHandler({
+        onChannelDeleted: (channelUrl) => {
+          logger.info('OpenChannelList: onChannelDeleted', channelUrl);
+          openChannelListDispatcher({
+            type: OpenChannelListActionTypes.DELETE_OPEN_CHANNEL,
+            payload: channelUrl,
+          });
+        },
+      });
+      sdk.openChannel.addOpenChannelHandler(channelHandlerId, channelHandler);
+      logger.info('OpenChannelList: Added channel handler', channelHandlerId);
+    }
+    return () => {
+      if (sdk?.openChannel?.removeOpenChannelHandler) {
+        sdk.openChannel.removeOpenChannelHandler(channelHandlerId);
+      }
+    };
+  }, [sdkInitialized]);
 
   // Fetch next channels by scroll event
   const fetchNextChannels = useFetchNextCallback({

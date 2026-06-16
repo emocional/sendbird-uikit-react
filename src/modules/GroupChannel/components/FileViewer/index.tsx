@@ -1,9 +1,9 @@
 import React from 'react';
 import type { FileMessage } from '@sendbird/chat/message';
 
+import { useGroupChannel } from '../../context/hooks/useGroupChannel';
 import { FileViewerView } from './FileViewerView';
-import { useGroupChannelContext } from '../../context/GroupChannelProvider';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface FileViewerProps {
   onCancel: () => void;
@@ -11,17 +11,18 @@ export interface FileViewerProps {
 }
 
 export const FileViewer = (props: FileViewerProps) => {
-  const { deleteMessage, onBeforeDownloadFileMessage } = useGroupChannelContext();
-  const { config } = useSendbirdStateContext();
-  const { logger } = config;
+  const {
+    state: { onBeforeDownloadFileMessage },
+    actions: { deleteMessage },
+  } = useGroupChannel();
+  const { state: { config: { logger } } } = useSendbird();
   return (
     <FileViewerView
       {...props}
       deleteMessage={deleteMessage}
       onDownloadClick={async (e) => {
-        if (!onBeforeDownloadFileMessage) {
-          return null;
-        }
+        if (!onBeforeDownloadFileMessage) return;
+
         try {
           const allowDownload = await onBeforeDownloadFileMessage({ message: props.message });
           if (!allowDownload) {

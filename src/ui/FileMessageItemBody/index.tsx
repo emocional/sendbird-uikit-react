@@ -8,9 +8,10 @@ import TextButton from '../TextButton';
 import { getClassName, getUIKitFileType, truncateString } from '../../utils';
 import { Colors } from '../../utils/color';
 import { useMediaQueryContext } from '../../lib/MediaQueryContext';
-import useSendbirdStateContext from '../../hooks/useSendbirdStateContext';
-import type { OnBeforeDownloadFileMessageType } from '../../modules/GroupChannel/context/GroupChannelProvider';
+import type { OnBeforeDownloadFileMessageType } from '../../modules/GroupChannel/context/types';
+import { LoggerInterface } from '../../lib/Logger';
 import { openURL } from '../../utils/utils';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 interface Props {
   className?: string | Array<string>;
@@ -23,22 +24,23 @@ interface Props {
 }
 
 export default function FileMessageItemBody({
-  className,
+  className = '',
   message,
   isByMe = false,
   mouseHover = false,
   isReactionEnabled = false,
-  truncateLimit = null,
-  onBeforeDownloadFileMessage = null,
+  truncateLimit,
+  onBeforeDownloadFileMessage,
 }: Props): ReactElement {
-  let logger = null;
+  let logger: LoggerInterface | null = null;
   try {
-    logger = useSendbirdStateContext()?.config?.logger;
+    const { state: { config: { logger: globalLogger } } } = useSendbird();
+    logger = globalLogger;
   } catch (err) {
     // TODO: Handle error
   }
   const { isMobile } = useMediaQueryContext();
-  const truncateMaxNum = truncateLimit || (isMobile ? 20 : null);
+  const truncateMaxNum = truncateLimit ?? (isMobile ? 20 : undefined);
 
   const downloadFileWithUrl = () => openURL(message?.url);
   const handleOnClickTextButton = onBeforeDownloadFileMessage
@@ -91,6 +93,7 @@ export default function FileMessageItemBody({
       >
         <Label
           className="sendbird-file-message-item-body__file-name__text"
+          testID="sendbird-file-message-item-body__file-name__text"
           type={LabelTypography.BODY_1}
           color={isByMe ? LabelColors.ONCONTENT_1 : LabelColors.ONBACKGROUND_1}
         >

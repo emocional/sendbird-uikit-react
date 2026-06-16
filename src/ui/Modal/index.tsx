@@ -1,9 +1,9 @@
-import React, { ReactElement, ReactNode, useContext, MouseEvent, SetStateAction, Dispatch } from 'react';
+import React, { ReactElement, ReactNode, useContext, MouseEvent, useState, useEffect, KeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 
 import './index.scss';
 
-import { noop } from '../../utils/utils';
+import { classnames, noop } from '../../utils/utils';
 import { MODAL_ROOT } from '../../hooks/useModal/ModalRoot';
 import { LocalizationContext } from '../../lib/LocalizationContext';
 import { useMediaQueryContext } from '../../lib/MediaQueryContext';
@@ -12,6 +12,8 @@ import IconButton from '../IconButton';
 import Button, { ButtonTypes } from '../Button';
 import Icon, { IconTypes, IconColors } from '../Icon';
 import Label, { LabelTypography, LabelColors } from '../Label';
+import uuidv4 from '../../utils/uuid';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface ModalHeaderProps {
   titleText: string;
@@ -28,14 +30,7 @@ export const ModalHeader = ({ titleText, setSearcher, onCloseClick }: ModalHeade
       <input placeholder="Buscar" onChange={(e) => setSearcher(e.target.value)} className="sendbird-modal__search" />
     )}
     <div className="sendbird-modal__close">
-      <IconButton
-        width="32px"
-        height="32px"
-        onClick={(e) => {
-          onCloseClick(e);
-          if (setSearcher) setSearcher('');
-        }}
-      >
+      <IconButton width="32px" height="32px" onClick={onCloseClick}>
         <Icon type={IconTypes.CLOSE} fillColor={IconColors.DEFAULT} width="24px" height="24px" />
       </IconButton>
     </div>
@@ -98,14 +93,12 @@ export interface ModalProps {
   disabled?: boolean;
   hideFooter?: boolean;
   type?: ButtonTypes;
-  /**
-   * Do not use this! We will deprecate onCancel in v4.
-   */
-  onCancel?: () => void;
-  onClose?: () => void;
+  onClose?: (e?: MouseEvent | KeyboardEvent) => void;
   onSubmit?: (...args: any[]) => void;
   renderHeader?: () => ReactElement;
   customFooter?: ReactNode;
+  /** @deprecated Please use `onClose` instead, we will remove `onCancel` in v4. * */
+  onCancel?: () => void;
 }
 export function Modal(props: ModalProps): ReactElement {
   const {
@@ -120,38 +113,34 @@ export function Modal(props: ModalProps): ReactElement {
     hideFooter = false,
     setSearcher,
     type = ButtonTypes.DANGER,
-    /**
-     * Do not use this! We will deprecate onCancel in v4.
-     */
-    onCancel = noop,
-    onClose,
-    onSubmit = noop,
     renderHeader,
+    onSubmit = noop,
+    onClose,
+    onCancel,
     customFooter,
   } = props;
-  const handleClose = onClose ?? onCancel;
+  const handleClose = onClose ?? onCancel ?? noop;
+  const { state: { eventHandlers } } = useSendbird();
+
+  const [id] = useState(() => `sbu-modal-${uuidv4()}`);
+
+  useEffect(() => {
+    return eventHandlers?.modal?.onMounted?.({ close: handleClose, id });
+  }, []);
 
   const { isMobile } = useMediaQueryContext();
   return createPortal(
-    <div
-      className={`
-      sendbird-modal ${className}
-      ${isFullScreenOnMobile && isMobile ? 'sendbird-modal--full-mobile' : ''}
-    `}
-    >
-      <div className={['sendbird-modal__content', ...(Array.isArray(contentClassName) ? contentClassName : [contentClassName])].join(' ')}>
-        {renderHeader?.() || <ModalHeader titleText={titleText ?? ''} onCloseClick={handleClose} setSearcher={setSearcher} />}
+    <div className={classnames('sendbird-modal', className, isFullScreenOnMobile && isMobile && 'sendbird-modal--full-mobile')}>
+      <div className={classnames('sendbird-modal__content', ...(Array.isArray(contentClassName) ? contentClassName : [contentClassName]))}>
+        {renderHeader?.() || <ModalHeader titleText={titleText ?? ''} onCloseClick={handleClose} />}
         <ModalBody>{children}</ModalBody>
-        {!hideFooter &&
-          (customFooter ?? (
+        {!hideFooter
+          && (customFooter ?? (
             <ModalFooter disabled={disabled} onCancel={handleClose} onSubmit={onSubmit} submitText={submitText ?? ''} type={type} />
           ))}
       </div>
       <div
-        className={`
-          sendbird-modal__backdrop
-          ${isCloseOnClickOutside && 'sendbird-modal__backdrop--clickoutside'}
-        `}
+        className={classnames('sendbird-modal__backdrop', isCloseOnClickOutside && 'sendbird-modal__backdrop--clickoutside')}
         onClick={(e) => {
           e?.stopPropagation();
           if (isCloseOnClickOutside) {
@@ -160,7 +149,7 @@ export function Modal(props: ModalProps): ReactElement {
         }}
       />
     </div>,
-    document.getElementById(MODAL_ROOT) as HTMLElement
+    document.getElementById(MODAL_ROOT) as HTMLElement,
   );
 }
 export default Modal;

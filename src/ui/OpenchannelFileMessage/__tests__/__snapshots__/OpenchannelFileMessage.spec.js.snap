@@ -10,7 +10,6 @@ exports[`ui/OpenchannelFileMessage should do a snapshot test of the OpenchannelF
     >
       <div
         class="sendbird-context-menu"
-        style="display: inline;"
       >
         <div
           class="sendbird-openchannel-file-message__left__avatar sendbird-avatar"
@@ -69,7 +68,7 @@ exports[`ui/OpenchannelFileMessage should do a snapshot test of the OpenchannelF
           tabindex="0"
         >
           <span
-            class="sendbird-label sendbird-label--body-1 sendbird-label--color-onbackground-1"
+            class="sendbird-openchannel-file-message__right__body__file-name__label sendbird-label sendbird-label--body-1 sendbird-label--color-onbackground-1"
           >
             72b35fef-acda-4e32-...4-37e1226b0615.pdf
           </span>
@@ -81,7 +80,6 @@ exports[`ui/OpenchannelFileMessage should do a snapshot test of the OpenchannelF
     >
       <div
         class="sendbird-context-menu"
-        style="display: inline;"
       >
         <button
           class="sendbird-openchannel-file-message__context-menu__icon sendbird-iconbutton "

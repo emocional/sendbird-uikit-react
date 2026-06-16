@@ -13,6 +13,7 @@ import {
 import { getLastMessageCreatedAt } from '../../modules/ChannelList/components/ChannelPreview/utils';
 import { useLocalization } from '../../lib/LocalizationContext';
 import { Nullable } from '../../types';
+import { classnames } from '../../utils/utils';
 
 export const MessageStatusTypes = OutgoingMessageStates;
 
@@ -23,6 +24,23 @@ interface MessageStatusProps {
   isDateSeparatorConsidered?: boolean;
 }
 
+const iconType = {
+  [OutgoingMessageStates.SENT]: IconTypes.DONE,
+  [OutgoingMessageStates.DELIVERED]: IconTypes.DONE_ALL,
+  [OutgoingMessageStates.READ]: IconTypes.DONE_ALL,
+  [OutgoingMessageStates.FAILED]: IconTypes.ERROR,
+  [OutgoingMessageStates.PENDING]: undefined,
+  [OutgoingMessageStates.NONE]: undefined,
+};
+const iconColor = {
+  [OutgoingMessageStates.SENT]: IconColors.SENT,
+  [OutgoingMessageStates.DELIVERED]: IconColors.SENT,
+  [OutgoingMessageStates.READ]: IconColors.READ,
+  [OutgoingMessageStates.FAILED]: IconColors.ERROR,
+  [OutgoingMessageStates.PENDING]: undefined,
+  [OutgoingMessageStates.NONE]: undefined,
+};
+
 export default function MessageStatus({
   className,
   message,
@@ -32,21 +50,9 @@ export default function MessageStatus({
   const { stringSet, dateLocale } = useLocalization();
   const status = getOutgoingMessageState(channel, message);
   const hideMessageStatusIcon = channel?.isGroupChannel?.() && (
-    (channel.isSuper || channel.isPublic || channel.isBroadcast)
+    (channel.isSuper || channel.isBroadcast)
     && !(status === OutgoingMessageStates.PENDING || status === OutgoingMessageStates.FAILED)
   );
-  const iconType = {
-    [OutgoingMessageStates.SENT]: IconTypes.DONE,
-    [OutgoingMessageStates.DELIVERED]: IconTypes.DONE_ALL,
-    [OutgoingMessageStates.READ]: IconTypes.DONE_ALL,
-    [OutgoingMessageStates.FAILED]: IconTypes.ERROR,
-  };
-  const iconColor = {
-    [OutgoingMessageStates.SENT]: IconColors.SENT,
-    [OutgoingMessageStates.DELIVERED]: IconColors.SENT,
-    [OutgoingMessageStates.READ]: IconColors.READ,
-    [OutgoingMessageStates.FAILED]: IconColors.ERROR,
-  };
 
   return (
     <div
@@ -58,6 +64,7 @@ export default function MessageStatus({
       {(status === OutgoingMessageStates.PENDING) ? (
         <Loader
           className="sendbird-message-status__icon"
+          testID="sendbird-message-status-icon"
           width="16px"
           height="16px"
         >
@@ -70,8 +77,8 @@ export default function MessageStatus({
         </Loader>
       ) : (
         <Icon
-          className={`sendbird-message-status__icon ${hideMessageStatusIcon ? 'hide-icon' : ''} ${status === OutgoingMessageStates.FAILED ? '' : 'sendbird-message-status--sent'
-          }`}
+          className={classnames('sendbird-message-status__icon', hideMessageStatusIcon && 'hide-icon', status !== OutgoingMessageStates.FAILED && 'sendbird-message-status--sent')}
+          testID="sendbird-message-status-icon"
           type={iconType[status] || IconTypes.ERROR}
           fillColor={iconColor[status]}
           width="16px"
@@ -81,12 +88,13 @@ export default function MessageStatus({
       {isSentStatus(status) && (
         <Label
           className="sendbird-message-status__text"
+          testID="sendbird-message-status-text"
           type={LabelTypography.CAPTION_3}
           color={LabelColors.ONBACKGROUND_2}
         >
           {
             isDateSeparatorConsidered
-              ? format(message?.createdAt || 0, 'p', { locale: dateLocale })
+              ? format(message?.createdAt || 0, stringSet.DATE_FORMAT__MESSAGE_CREATED_AT, { locale: dateLocale })
               : getLastMessageCreatedAt({ channel, locale: dateLocale, stringSet })
           }
         </Label>

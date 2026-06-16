@@ -4,10 +4,10 @@ import React, {
 } from 'react';
 import { OpenChannel, OpenChannelHandler, OpenChannelUpdateParams } from '@sendbird/chat/openChannel';
 
-import useSendbirdStateContext from '../../../hooks/useSendbirdStateContext';
 import { UserProfileProvider } from '../../../lib/UserProfileContext';
 import { RenderUserProfileProps } from '../../../types';
 import uuidv4 from '../../../utils/uuid';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
 
 export interface OpenChannelSettingsContextProps {
   channelUrl: string;
@@ -22,16 +22,16 @@ export interface OpenChannelSettingsContextProps {
 
 interface OpenChannelSettingsContextType {
   channelUrl: string;
-  channel?: OpenChannel;
+  channel?: OpenChannel | null;
   isChannelInitialized: boolean;
-  setChannel?: React.Dispatch<React.SetStateAction<OpenChannel>>;
+  setChannel?: React.Dispatch<React.SetStateAction<OpenChannel | null>>;
   onCloseClick?(): void;
   onBeforeUpdateChannel?(currentTitle: string, currentImg: File, data: string): OpenChannelUpdateParams;
   onChannelModified?(channel: OpenChannel): void;
   onDeleteChannel?(channel: OpenChannel): void;
 }
 
-const OpenChannelSettingsContext = React.createContext<OpenChannelSettingsContextType | null>(undefined);
+const OpenChannelSettingsContext = React.createContext<OpenChannelSettingsContextType | null>(null);
 
 const OpenChannelSettingsProvider: React.FC<OpenChannelSettingsContextProps> = (props: OpenChannelSettingsContextProps) => {
   const {
@@ -44,11 +44,11 @@ const OpenChannelSettingsProvider: React.FC<OpenChannelSettingsContextProps> = (
   } = props;
 
   // fetch store from <SendbirdProvider />
-  const globalStore = useSendbirdStateContext();
-  const sdk = globalStore?.stores?.sdkStore?.sdk;
-  const isSDKInitialized = globalStore?.stores?.sdkStore?.initialized;
+  const { state: { stores, config } } = useSendbird();
+  const sdk = stores?.sdkStore?.sdk;
+  const isSDKInitialized = stores?.sdkStore?.initialized;
 
-  const logger = globalStore?.config?.logger;
+  const logger = config?.logger;
   const currentUserId = sdk?.currentUser?.userId;
 
   const [currentChannel, setChannel] = useState<OpenChannel | null>(null);
@@ -155,7 +155,7 @@ const OpenChannelSettingsProvider: React.FC<OpenChannelSettingsContextProps> = (
       <UserProfileProvider
         isOpenChannel
         renderUserProfile={props?.renderUserProfile}
-        disableUserProfile={props?.disableUserProfile ?? globalStore?.config?.disableUserProfile}
+        disableUserProfile={props?.disableUserProfile ?? config?.disableUserProfile}
       >
         {children}
       </UserProfileProvider>
@@ -163,8 +163,11 @@ const OpenChannelSettingsProvider: React.FC<OpenChannelSettingsContextProps> = (
   );
 };
 
-type useOpenChannelSettingsType = () => OpenChannelSettingsContextType;
-const useOpenChannelSettingsContext: useOpenChannelSettingsType = () => React.useContext(OpenChannelSettingsContext);
+const useOpenChannelSettingsContext = () => {
+  const context = React.useContext(OpenChannelSettingsContext);
+  if (!context) throw new Error('OpenChannelSettingsContext not found. Use within the OpenChannelSettings module.');
+  return context;
+};
 
 export {
   OpenChannelSettingsProvider,

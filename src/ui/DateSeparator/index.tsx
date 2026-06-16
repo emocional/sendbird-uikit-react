@@ -11,7 +11,13 @@ export interface DateSeparatorProps {
   className?: string | Array<string>;
   separatorColor?: Colors;
 }
-const DateSeparator = ({ children = null, className = '', separatorColor = Colors.EMOCIONAL_BORDER }: DateSeparatorProps): ReactElement => {
+
+const DateSeparator = ({
+  children = undefined,
+  className = '',
+  separatorColor = Colors.ONBACKGROUND_4,
+}: DateSeparatorProps): ReactElement => {
+
   return (
     <div className={[...(Array.isArray(className) ? className : [className]), 'sendbird-separator'].join(' ')}>
       <div className={['sendbird-separator__left', `${changeColorToClassName(separatorColor)}--background-color`].join(' ')} />

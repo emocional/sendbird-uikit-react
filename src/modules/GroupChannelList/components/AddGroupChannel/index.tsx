@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import AddGroupChannelView from './AddGroupChannelView';
-import { useGroupChannelListContext } from '../../context/GroupChannelListProvider';
-import { UserListQuery } from '../../../../types';
+import { useGroupChannelList } from '../../context/useGroupChannelList';
 
 export interface AddGroupChannelProps {
   userQuery?(): UserListQuery;
@@ -10,7 +9,13 @@ export interface AddGroupChannelProps {
 export const AddGroupChannel = (props: AddGroupChannelProps) => {
   const { userQuery } = props;
   const [createChannelVisible, setCreateChannelVisible] = useState(false);
-  const { onChannelCreated, onBeforeCreateChannel, onCreateChannelClick } = useGroupChannelListContext();
+  const {
+    state: {
+      onChannelCreated,
+      onBeforeCreateChannel,
+      onCreateChannelClick,
+    },
+  } = useGroupChannelList();
 
   return (
     <AddGroupChannelView

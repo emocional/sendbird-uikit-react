@@ -1,9 +1,8 @@
 import './channel-profile.scss';
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useMemo } from 'react';
 
+import useChannelSettings from '../../context/useChannelSettings';
 import { LocalizationContext } from '../../../../lib/LocalizationContext';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
-import { useChannelSettingsContext } from '../../context/ChannelSettingsProvider';
 
 import ChannelAvatar from '../../../../ui/ChannelAvatar';
 import TextButton from '../../../../ui/TextButton';
@@ -11,12 +10,13 @@ import Label, {
   LabelTypography,
   LabelColors,
 } from '../../../../ui/Label';
-
 import EditDetailsModal from '../EditDetailsModal';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { isDefaultChannelName } from '../../../../utils';
 
 const ChannelProfile: React.FC = () => {
-  const state = useSendbirdStateContext();
-  const channelSettingStore = useChannelSettingsContext();
+  const { state } = useSendbird();
+  const { state: { channel } } = useChannelSettings();
   const { stringSet } = useContext(LocalizationContext);
   const [showModal, setShowModal] = useState(false);
 
@@ -25,18 +25,13 @@ const ChannelProfile: React.FC = () => {
   const isOnline = state?.config?.isOnline;
   const disabled = !isOnline;
 
-  const { channel } = channelSettingStore;
+  const channelName = useMemo(() => {
+    if (!channel?.name && !channel?.members) return stringSet.NO_TITLE;
 
-  const getChannelName = () => {
-    if (channel?.name && channel?.name !== 'Group Channel') {
-      return channel.name;
-    }
-    if (channel?.name === 'Group Channel' || !channel?.name) {
-      return (channel?.members || []).map((member) => member.nickname || stringSet.NO_NAME).join(', ');
-    }
+    if (isDefaultChannelName(channel)) return (channel?.members || []).map((member) => member.nickname || stringSet.NO_NAME).join(', ');
 
-    return stringSet.NO_TITLE;
-  };
+    return channel.name;
+  }, [channel?.name, channel?.joinedMemberCount]);
 
   return (
     <div className="sendbird-channel-profile">
@@ -55,7 +50,7 @@ const ChannelProfile: React.FC = () => {
           type={LabelTypography.SUBTITLE_2}
           color={LabelColors.ONBACKGROUND_1}
         >
-          {getChannelName()}
+          {channelName}
         </Label>
         <TextButton
           disabled={disabled}

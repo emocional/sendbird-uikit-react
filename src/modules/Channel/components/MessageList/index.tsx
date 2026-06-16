@@ -13,7 +13,6 @@ import { isAboutSame } from '../../context/utils';
 import UnreadCount from '../UnreadCount';
 import FrozenNotification from '../FrozenNotification';
 import { SCROLL_BUFFER } from '../../../../utils/consts';
-import useSendbirdStateContext from '../../../../hooks/useSendbirdStateContext';
 import { MessageProvider } from '../../../Message/context/MessageProvider';
 import { useHandleOnScrollCallback } from '../../../../hooks/useHandleOnScrollCallback';
 import { useSetScrollToBottom } from './hooks/useSetScrollToBottom';
@@ -25,6 +24,9 @@ import { getMessagePartsInfo } from '../../../GroupChannel/components/MessageLis
 import { GroupChannelMessageListProps } from '../../../GroupChannel/components/MessageList';
 import { GroupChannelUIBasicProps } from '../../../GroupChannel/components/GroupChannelUI/GroupChannelUIView';
 import { deleteNullish } from '../../../../utils/utils';
+import { getHTMLTextDirection } from '../../../../utils';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { useLocalization } from '../../../../lib/LocalizationContext';
 
 const SCROLL_BOTTOM_PADDING = 50;
 
@@ -34,6 +36,13 @@ export interface MessageListProps extends GroupChannelMessageListProps {
    * */
   renderMessage?: GroupChannelUIBasicProps['renderMessage'];
 }
+
+/**
+ * @deprecated This component is deprecated and will be removed in the next major update.
+ * Please use the `GroupChannel` component from '@sendbird/uikit-react/GroupChannel' instead.
+ * For more information, please refer to the migration guide:
+ * https://docs.sendbird.com/docs/chat/uikit/v3/react/introduction/group-channel-migration-guide
+ */
 export const MessageList = (props: MessageListProps) => {
   const { className = '' } = props;
   const {
@@ -71,8 +80,9 @@ export const MessageList = (props: MessageListProps) => {
     typingMembers,
   } = useChannelContext();
 
-  const store = useSendbirdStateContext();
-  const allMessagesFiltered = typeof filterMessageList === 'function' ? allMessages.filter(filterMessageList as (message: EveryMessage) => boolean) : allMessages;
+  const { state: store } = useSendbird();
+  const { stringSet } = useLocalization();
+  const allMessagesFiltered = typeof filterMessageList === 'function' ? allMessages.filter(filterMessageList) : allMessages;
   const markAsReadScheduler = store.config.markAsReadScheduler;
 
   const [isScrollBottom, setIsScrollBottom] = useState(false);
@@ -111,8 +121,8 @@ export const MessageList = (props: MessageListProps) => {
     setInitialTimeStamp?.(null);
     setAnimatedMessageId?.(null);
     setHighLightedMessageId?.(null);
-    if (scrollRef?.current?.scrollTop > -1) {
-      scrollRef.current.scrollTop = (scrollRef?.current?.scrollHeight ?? 0) - (scrollRef?.current?.offsetHeight ?? 0);
+    if (scrollRef.current && scrollRef.current.scrollTop > -1) {
+      scrollRef.current.scrollTop = (scrollRef.current.scrollHeight ?? 0) - (scrollRef.current.offsetHeight ?? 0);
     }
   };
 
@@ -175,11 +185,18 @@ export const MessageList = (props: MessageListProps) => {
   return (
     <>
       {!isScrolled && <PlaceHolder type={PlaceHolderTypes.LOADING} />}
-      <div className={`sendbird-conversation__messages ${className}`}>
+      <div
+        className={`sendbird-conversation__messages ${className}`}
+        dir={getHTMLTextDirection(
+          store?.config?.htmlTextDirection,
+          store?.config?.forceLeftToRightMessageLayout,
+        )}
+      >
         <div className="sendbird-conversation__scroll-container">
           <div className="sendbird-conversation__padding" />
           <div
             className="sendbird-conversation__messages-padding"
+            data-testid="sendbird-message-list-container"
             ref={scrollRef}
             onScroll={(e) => {
               handleOnScroll();
@@ -190,6 +207,7 @@ export const MessageList = (props: MessageListProps) => {
             {allMessagesFiltered.map((m, idx) => {
               const { chainTop, chainBottom, hasSeparator } = getMessagePartsInfo({
                 allMessages: allMessagesFiltered,
+                stringSet,
                 replyType,
                 isMessageGroupingEnabled,
                 currentIndex: idx,
@@ -217,6 +235,7 @@ export const MessageList = (props: MessageListProps) => {
             {localMessages.map((m, idx) => {
               const { chainTop, chainBottom } = getMessagePartsInfo({
                 allMessages: allMessagesFiltered,
+                stringSet,
                 replyType,
                 isMessageGroupingEnabled,
                 currentIndex: idx,

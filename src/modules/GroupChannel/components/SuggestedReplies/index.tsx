@@ -1,14 +1,36 @@
 import './index.scss';
 import React, { useState } from 'react';
-import { BaseMessage } from '@sendbird/chat/message';
 
 export interface SuggestedRepliesProps {
   replyOptions: string[];
   onSendMessage: ({ message }: { message: string }) => void;
-  message: BaseMessage;
+  type?: 'vertical' | 'horizontal';
+  gap?: number;
 }
 
-const SuggestedReplies = ({ replyOptions, onSendMessage }: SuggestedRepliesProps) => {
+export interface ReplyItemProps {
+  value: string;
+  onClickReply: (event: React.MouseEvent<HTMLDivElement>, option: string) => void;
+  type?: 'vertical' | 'horizontal';
+}
+
+export const ReplyItem = ({
+  value,
+  onClickReply,
+  type = 'vertical',
+}: ReplyItemProps) => {
+  return (
+    <div
+      className={`sendbird-suggested-replies__option ${type}`}
+      id={value}
+      onClick={(e) => onClickReply(e, value)}
+    >
+      {value}
+    </div>
+  );
+};
+
+const SuggestedReplies = ({ replyOptions, onSendMessage, type = 'vertical' }: SuggestedRepliesProps) => {
   const [replied, setReplied] = useState<boolean>(false);
 
   const onClickReply = (
@@ -24,22 +46,13 @@ const SuggestedReplies = ({ replyOptions, onSendMessage }: SuggestedRepliesProps
     return null;
   }
 
-  return (
-    <div className="sendbird-suggested-replies">
-      {replyOptions.map((option: string, index: number) => {
-        return (
-          <div
-            className="sendbird-suggested-replies__option"
-            id={option}
-            key={index + option}
-            onClick={(e) => onClickReply(e, option)}
-          >
-            {option}
-          </div>
-        );
-      })}
-    </div>
-  );
+  const children = replyOptions.map((option: string, index: number) => {
+    return (
+      <ReplyItem key={index} value={option} onClickReply={onClickReply} type={type} />
+    );
+  });
+
+  return <div className={`sendbird-suggested-replies ${type}`}>{children}</div>;
 };
 
 export default SuggestedReplies;

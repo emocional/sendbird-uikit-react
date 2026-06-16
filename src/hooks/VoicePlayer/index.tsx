@@ -15,12 +15,12 @@ import {
   SET_CURRENT_PLAYER,
 } from './dux/actionTypes';
 import {
-  VOICE_MESSAGE_FILE_NAME,
   VOICE_MESSAGE_MIME_TYPE,
   VOICE_PLAYER_AUDIO_ID,
   VOICE_PLAYER_ROOT_ID,
 } from '../../utils/consts';
-import useSendbirdStateContext from '../useSendbirdStateContext';
+import { getParsedVoiceAudioFileInfo } from './utils';
+import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
 
 // VoicePlayerProvider interface
 export interface VoicePlayerProps {
@@ -30,11 +30,13 @@ export interface VoicePlayerPlayProps {
   groupKey: string;
   audioFile?: File;
   audioFileUrl?: string;
+  audioFileMimeType?: string;
 }
 export interface VoicePlayerContext {
   play: (props: VoicePlayerPlayProps) => void;
   pause: (groupKey?: string) => void;
   stop: (text?: string) => void;
+  reset: (groupKey: string) => void;
   voicePlayerStore: VoicePlayerInitialState;
 }
 
@@ -51,6 +53,7 @@ const Context = createContext<VoicePlayerContext>({
   play: noop,
   pause: noop,
   stop: noop,
+  reset: noop,
   voicePlayerStore: VoicePlayerStoreDefaultValue,
 });
 
@@ -63,7 +66,8 @@ export const VoicePlayerProvider = ({
     currentPlayer,
     audioStorage,
   } = voicePlayerStore;
-  const { config } = useSendbirdStateContext();
+  const { state } = useSendbird();
+  const { config } = state;
   const { logger } = config;
 
   const stop = (text = '') => {
@@ -73,21 +77,35 @@ export const VoicePlayerProvider = ({
     }
   };
 
-  const pause = (groupKey: string | null) => {
-    if (currentGroupKey === groupKey && currentPlayer !== null) {
-      logger.info('VoicePlayer: Pause playing(by group key).');
-      currentPlayer?.pause();
+  const reset = (groupKey: string) => {
+    if (groupKey === currentGroupKey && currentPlayer) {
+      currentPlayer.pause();
     }
-    if (groupKey === ALL) {
-      logger.info('VoicePlayer: Pause playing(all).');
-      currentPlayer?.pause();
+    voicePlayerDispatcher({
+      type: RESET_AUDIO_UNIT,
+      payload: { groupKey },
+    });
+  };
+
+  const pause = (groupKey?: string) => {
+    if (currentPlayer) {
+      if (groupKey === currentGroupKey) {
+        logger.info('VoicePlayer: Pause playing(by group key).');
+        currentPlayer.pause();
+      } else if (groupKey === ALL) {
+        logger.info('VoicePlayer: Pause playing(all).');
+        currentPlayer.pause();
+      }
+    } else {
+      logger.warning('VoicePlayer: No currentPlayer to pause.');
     }
   };
 
   const play = ({
     groupKey,
-    audioFile = null,
+    audioFile,
     audioFileUrl = '',
+    audioFileMimeType = VOICE_MESSAGE_MIME_TYPE,
   }: VoicePlayerPlayProps): void => {
     if (groupKey !== currentGroupKey) {
       pause(currentGroupKey);
@@ -96,7 +114,7 @@ export const VoicePlayerProvider = ({
     // Clear the previous AudioPlayer element
     const voicePlayerRoot = document.getElementById(VOICE_PLAYER_ROOT_ID);
     const voicePlayerAudioElement = document.getElementById(VOICE_PLAYER_AUDIO_ID);
-    if (voicePlayerAudioElement) {
+    if (voicePlayerRoot && voicePlayerAudioElement) {
       voicePlayerRoot.removeChild(voicePlayerAudioElement);
     }
 
@@ -123,9 +141,9 @@ export const VoicePlayerProvider = ({
       fetch(audioFileUrl)
         .then((res) => res.blob())
         .then((blob) => {
-          const audioFile = new File([blob], VOICE_MESSAGE_FILE_NAME, {
+          const audioFile = new File([blob], getParsedVoiceAudioFileInfo(audioFileMimeType).name, {
             lastModified: new Date().getTime(),
-            type: VOICE_MESSAGE_MIME_TYPE,
+            type: getParsedVoiceAudioFileInfo(audioFileMimeType).mimeType,
           });
           resolve(audioFile);
           logger.info('VoicePlayer: Get the audioFile from URL.');
@@ -204,9 +222,16 @@ export const VoicePlayerProvider = ({
       play,
       pause,
       stop,
+      reset,
       voicePlayerStore,
     }}>
+      {/**
+       * This empty div is also used for finding the root div element
+       * within SendbirdProvider to set the 'dir' attribute ('rtl' | 'ltr').
+       * See hooks/useHTMLTextDirection.tsx for more details.
+       */}
       <div id={VOICE_PLAYER_ROOT_ID} style={{ display: 'none' }} />
+
       {children}
     </Context.Provider>
   );

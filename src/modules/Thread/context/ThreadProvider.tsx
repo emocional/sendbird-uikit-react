@@ -1,40 +1,32 @@
-import React, { useReducer, useMemo, useEffect, ReactElement } from 'react';
-import { User } from '@sendbird/chat';
-import { GroupChannel } from '@sendbird/chat/groupChannel';
+import React, { useMemo, useEffect, useRef } from 'react';
+import { type EmojiCategory, EmojiContainer } from '@sendbird/chat';
+import { GroupChannel, Member } from '@sendbird/chat/groupChannel';
 import type {
-  BaseMessage, FileMessage,
-  FileMessageCreateParams, MultipleFilesMessage,
+  FileMessageCreateParams,
   MultipleFilesMessageCreateParams,
   UserMessageCreateParams,
 } from '@sendbird/chat/message';
 
 import { getNicknamesMapFromMembers, getParentMessageFrom } from './utils';
-import { UserProfileProvider } from '../../../lib/UserProfileContext';
-import { CustomUseReducerDispatcher } from '../../../lib/SendbirdState';
-import useSendbirdStateContext from '../../../hooks/useSendbirdStateContext';
+import { UserProfileProvider, UserProfileProviderProps } from '../../../lib/UserProfileContext';
 
-import threadReducer from './dux/reducer';
-import { ThreadContextActionTypes } from './dux/actionTypes';
-import threadInitialState, { ThreadContextInitialState } from './dux/initialState';
-
+import type { OnBeforeDownloadFileMessageType } from '../../GroupChannel/context/types';
 import useGetChannel from './hooks/useGetChannel';
 import useGetAllEmoji from './hooks/useGetAllEmoji';
 import useGetParentMessage from './hooks/useGetParentMessage';
 import useHandleThreadPubsubEvents from './hooks/useHandleThreadPubsubEvents';
 import useHandleChannelEvents from './hooks/useHandleChannelEvents';
-import useSendFileMessageCallback from './hooks/useSendFileMessage';
-import useUpdateMessageCallback from './hooks/useUpdateMessageCallback';
-import useDeleteMessageCallback from './hooks/useDeleteMessageCallback';
-import useToggleReactionCallback from './hooks/useToggleReactionsCallback';
-import useSendUserMessageCallback, { SendMessageParams } from './hooks/useSendUserMessageCallback';
-import useResendMessageCallback from './hooks/useResendMessageCallback';
-import useSendVoiceMessageCallback from './hooks/useSendVoiceMessageCallback';
-import { PublishingModuleType, useSendMultipleFilesMessage } from './hooks/useSendMultipleFilesMessage';
-import { SendableMessageType } from '../../../utils';
-import { useThreadFetchers } from './hooks/useThreadFetchers';
-import type { OnBeforeDownloadFileMessageType } from '../../GroupChannel/context/GroupChannelProvider';
+import { CoreMessageType, SendableMessageType } from '../../../utils';
+import { createStore } from '../../../utils/storeManager';
+import { ChannelStateTypes, ParentMessageStateTypes, ThreadListStateTypes } from '../types';
+import { useStore } from '../../../hooks/useStore';
+import useSetCurrentUserId from './hooks/useSetCurrentUserId';
+import useThread from './useThread';
+import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
+import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
 
-export type ThreadProviderProps = {
+export interface ThreadProviderProps extends
+  Pick<UserProfileProviderProps, 'disableUserProfile' | 'renderUserProfile'> {
   children?: React.ReactElement;
   channelUrl: string;
   message: SendableMessageType | null;
@@ -45,30 +37,93 @@ export type ThreadProviderProps = {
   onBeforeSendVoiceMessage?: (file: File, quotedMessage?: SendableMessageType) => FileMessageCreateParams;
   onBeforeSendMultipleFilesMessage?: (files: Array<File>, quotedMessage?: SendableMessageType) => MultipleFilesMessageCreateParams;
   onBeforeDownloadFileMessage?: OnBeforeDownloadFileMessageType;
-  // User Profile
-  disableUserProfile?: boolean;
-  renderUserProfile?: (props: { user: User, close: () => void }) => ReactElement;
   isMultipleFilesMessageEnabled?: boolean;
-};
-export interface ThreadProviderInterface extends ThreadProviderProps, ThreadContextInitialState {
-  // hooks for fetching threads
-  fetchPrevThreads: (callback?: (messages?: Array<BaseMessage>) => void) => void;
-  fetchNextThreads: (callback?: (messages?: Array<BaseMessage>) => void) => void;
-  toggleReaction: (message, key, isReacted) => void;
-  sendMessage: (props: SendMessageParams) => void;
-  sendFileMessage: (file: File, quoteMessage?: SendableMessageType) => Promise<FileMessage>;
-  sendVoiceMessage: (file: File, duration: number, quoteMessage?: SendableMessageType) => void;
-  sendMultipleFilesMessage: (files: Array<File>, quoteMessage?: SendableMessageType) => Promise<MultipleFilesMessage>,
-  resendMessage: (failedMessage: SendableMessageType) => void;
-  updateMessage: (props, callback?: () => void) => void;
-  deleteMessage: (message: SendableMessageType) => Promise<void>;
+  filterEmojiCategoryIds?: (message: SendableMessageType) => EmojiCategory['id'][];
+}
+
+export interface ThreadState extends ThreadProviderProps {
+  currentChannel: GroupChannel;
+  allThreadMessages: Array<CoreMessageType>;
+  localThreadMessages: Array<CoreMessageType>;
+  parentMessage: SendableMessageType;
+  channelState: ChannelStateTypes;
+  parentMessageState: ParentMessageStateTypes;
+  threadListState: ThreadListStateTypes;
+  hasMorePrev: boolean;
+  hasMoreNext: boolean;
+  emojiContainer: EmojiContainer;
+  isMuted: boolean;
+  isChannelFrozen: boolean;
+  currentUserId: string;
+  typingMembers: Member[];
   nicknamesMap: Map<string, string>;
 }
-const ThreadContext = React.createContext<ThreadProviderInterface | null>(null);
 
-export const ThreadProvider = (props: ThreadProviderProps) => {
+const initialState = () => ({
+  channelUrl: '',
+  message: null,
+  onHeaderActionClick: undefined,
+  onMoveToParentMessage: undefined,
+  onBeforeSendUserMessage: undefined,
+  onBeforeSendFileMessage: undefined,
+  onBeforeSendVoiceMessage: undefined,
+  onBeforeSendMultipleFilesMessage: undefined,
+  onBeforeDownloadFileMessage: undefined,
+  isMultipleFilesMessageEnabled: undefined,
+  filterEmojiCategoryIds: undefined,
+  currentChannel: null,
+  allThreadMessages: [],
+  localThreadMessages: [],
+  parentMessage: null,
+  channelState: ChannelStateTypes.NIL,
+  parentMessageState: ParentMessageStateTypes.NIL,
+  threadListState: ThreadListStateTypes.NIL,
+  hasMorePrev: false,
+  hasMoreNext: false,
+  emojiContainer: {} as EmojiContainer,
+  isMuted: false,
+  isChannelFrozen: false,
+  currentUserId: '',
+  typingMembers: [],
+  nicknamesMap: null,
+} as ThreadState);
+
+export const ThreadContext = React.createContext<ReturnType<typeof createStore<ThreadState>> | null>(null);
+
+const createThreadStore = (props?: Partial<ThreadState>) => createStore({
+  ...initialState(),
+  ...props,
+});
+
+export const InternalThreadProvider: React.FC<React.PropsWithChildren<unknown>> = (props: ThreadProviderProps) => {
+  const { children } = props;
+
+  const defaultProps: Partial<ThreadState> = {
+    channelUrl: props?.channelUrl,
+    message: props?.message,
+    onHeaderActionClick: props?.onHeaderActionClick,
+    onMoveToParentMessage: props?.onMoveToParentMessage,
+    onBeforeSendUserMessage: props?.onBeforeSendUserMessage,
+    onBeforeSendFileMessage: props?.onBeforeSendFileMessage,
+    onBeforeSendVoiceMessage: props?.onBeforeSendVoiceMessage,
+    onBeforeSendMultipleFilesMessage: props?.onBeforeSendMultipleFilesMessage,
+    onBeforeDownloadFileMessage: props?.onBeforeDownloadFileMessage,
+    isMultipleFilesMessageEnabled: props?.isMultipleFilesMessageEnabled,
+    filterEmojiCategoryIds: props?.filterEmojiCategoryIds,
+  };
+
+  const storeRef = useRef(createThreadStore(defaultProps));
+
+  return (
+    <ThreadContext.Provider value={storeRef.current}>
+      {children}
+    </ThreadContext.Provider>
+  );
+};
+
+export const ThreadManager: React.FC<React.PropsWithChildren<ThreadProviderProps>> = (props) => {
   const {
-    children,
+    message,
     channelUrl,
     onHeaderActionClick,
     onMoveToParentMessage,
@@ -78,206 +133,120 @@ export const ThreadProvider = (props: ThreadProviderProps) => {
     onBeforeSendMultipleFilesMessage,
     onBeforeDownloadFileMessage,
     isMultipleFilesMessageEnabled,
-    // User Profile
-    disableUserProfile,
-    renderUserProfile,
+    filterEmojiCategoryIds,
   } = props;
-  const propsMessage = props?.message;
-  const propsParentMessage = getParentMessageFrom(propsMessage);
+
+  const {
+    state: {
+      currentChannel,
+      parentMessage,
+    },
+    actions: {
+      initializeThreadFetcher,
+    },
+  } = useThread();
+  const { updateState } = useThreadStore();
+
+  const propsParentMessage = getParentMessageFrom(message);
   // Context from SendbirdProvider
-  const globalStore = useSendbirdStateContext();
-  const { stores, config } = globalStore;
+  const { state: { stores, config } } = useSendbird();
   // // stores
   const { sdkStore, userStore } = stores;
   const { sdk } = sdkStore;
   const { user } = userStore;
   const sdkInit = sdkStore?.initialized;
   // // config
-  const {
-    logger,
-    pubSub,
-    replyType,
-    isMentionEnabled,
-    isReactionEnabled,
-    onUserProfileMessage,
-  } = config;
-
-  // dux of Thread
-  const [threadStore, threadDispatcher] = useReducer(
-    threadReducer,
-    threadInitialState,
-  ) as [ThreadContextInitialState, CustomUseReducerDispatcher];
-  const {
-    currentChannel,
-    allThreadMessages,
-    localThreadMessages,
-    parentMessage,
-    channelState,
-    threadListState,
-    parentMessageState,
-    hasMorePrev,
-    hasMoreNext,
-    emojiContainer,
-    isMuted,
-    isChannelFrozen,
-    currentUserId,
-    typingMembers,
-  }: ThreadContextInitialState = threadStore;
+  const { logger, pubSub } = config;
 
   // Initialization
-  useEffect(() => {
-    threadDispatcher({
-      type: ThreadContextActionTypes.INIT_USER_ID,
-      payload: user?.userId,
-    });
-  }, [user]);
+  useSetCurrentUserId({ user });
   useGetChannel({
     channelUrl,
     sdkInit,
-    message: propsMessage,
-  }, { sdk, logger, threadDispatcher });
+    message,
+  }, { sdk, logger });
   useGetParentMessage({
     channelUrl,
     sdkInit,
     parentMessage: propsParentMessage,
-  }, { sdk, logger, threadDispatcher });
-  useGetAllEmoji({ sdk }, { logger, threadDispatcher });
+  }, { sdk, logger });
+  useGetAllEmoji({ sdk }, { logger });
   // Handle channel events
   useHandleChannelEvents({
     sdk,
     currentChannel,
-  }, { logger, threadDispatcher });
+  }, { logger });
   useHandleThreadPubsubEvents({
     sdkInit,
     currentChannel,
     parentMessage,
-  }, { logger, pubSub, threadDispatcher });
-
-  const { initialize, loadPrevious, loadNext } = useThreadFetchers({
-    parentMessage,
-    // anchorMessage should be null when parentMessage doesn't exist
-    anchorMessage: propsMessage?.messageId !== propsParentMessage?.messageId ? propsMessage : undefined,
-    logger,
-    isReactionEnabled,
-    threadDispatcher,
-    threadListState,
-    oldestMessageTimeStamp: allThreadMessages[0]?.createdAt || 0,
-    latestMessageTimeStamp: allThreadMessages[allThreadMessages.length - 1]?.createdAt || 0,
-  });
+  }, { logger, pubSub });
 
   useEffect(() => {
     if (stores.sdkStore.initialized && config.isOnline) {
-      initialize();
+      initializeThreadFetcher();
     }
-  }, [stores.sdkStore.initialized, config.isOnline, initialize]);
-
-  const toggleReaction = useToggleReactionCallback({ currentChannel }, { logger });
-
-  // Send Message Hooks
-  const sendMessage = useSendUserMessageCallback({
-    isMentionEnabled,
-    currentChannel,
-    onBeforeSendUserMessage,
-  }, {
-    logger,
-    pubSub,
-    threadDispatcher,
-  });
-  const sendFileMessage = useSendFileMessageCallback({
-    currentChannel,
-    onBeforeSendFileMessage,
-  }, {
-    logger,
-    pubSub,
-    threadDispatcher,
-  });
-  const sendVoiceMessage = useSendVoiceMessageCallback({
-    currentChannel,
-    onBeforeSendVoiceMessage,
-  }, {
-    logger,
-    pubSub,
-    threadDispatcher,
-  });
-  const [sendMultipleFilesMessage] = useSendMultipleFilesMessage({
-    currentChannel,
-    onBeforeSendMultipleFilesMessage,
-    publishingModules: [PublishingModuleType.THREAD],
-  }, {
-    logger,
-    pubSub,
-  });
-
-  const resendMessage = useResendMessageCallback({
-    currentChannel,
-  }, { logger, pubSub, threadDispatcher });
-  const updateMessage = useUpdateMessageCallback({
-    currentChannel,
-    isMentionEnabled,
-  }, { logger, pubSub, threadDispatcher });
-  const deleteMessage = useDeleteMessageCallback(
-    { currentChannel, threadDispatcher },
-    { logger },
-  );
+  }, [stores.sdkStore.initialized, config.isOnline, initializeThreadFetcher]);
 
   // memo
   const nicknamesMap: Map<string, string> = useMemo(() => (
-    (replyType && currentChannel)
+    (config.groupChannel.replyType !== 'none' && currentChannel)
       ? getNicknamesMapFromMembers(currentChannel?.members)
       : new Map()
   ), [currentChannel?.members]);
 
+  useDeepCompareEffect(() => {
+    updateState({
+      channelUrl,
+      message,
+      onHeaderActionClick,
+      onMoveToParentMessage,
+      onBeforeSendUserMessage,
+      onBeforeSendFileMessage,
+      onBeforeSendVoiceMessage,
+      onBeforeSendMultipleFilesMessage,
+      onBeforeDownloadFileMessage,
+      isMultipleFilesMessageEnabled,
+      filterEmojiCategoryIds,
+      nicknamesMap,
+    });
+  }, [
+    channelUrl,
+    message,
+    onHeaderActionClick,
+    onMoveToParentMessage,
+    onBeforeSendUserMessage,
+    onBeforeSendFileMessage,
+    onBeforeSendVoiceMessage,
+    onBeforeSendMultipleFilesMessage,
+    onBeforeDownloadFileMessage,
+    isMultipleFilesMessageEnabled,
+    filterEmojiCategoryIds,
+    nicknamesMap,
+  ]);
+
+  return null;
+};
+
+export const ThreadProvider = (props: ThreadProviderProps) => {
+  const { children } = props;
+
   return (
-    <ThreadContext.Provider
-      value={{
-        // ThreadProviderProps
-        channelUrl,
-        message: propsMessage,
-        onHeaderActionClick,
-        onMoveToParentMessage,
-        isMultipleFilesMessageEnabled,
-        onBeforeDownloadFileMessage,
-        // ThreadContextInitialState
-        currentChannel,
-        allThreadMessages,
-        localThreadMessages,
-        parentMessage,
-        channelState,
-        threadListState,
-        parentMessageState,
-        hasMorePrev,
-        hasMoreNext,
-        emojiContainer,
-        // hooks
-        fetchPrevThreads: loadPrevious,
-        fetchNextThreads: loadNext,
-        toggleReaction,
-        sendMessage,
-        sendFileMessage,
-        sendVoiceMessage,
-        sendMultipleFilesMessage,
-        resendMessage,
-        updateMessage,
-        deleteMessage,
-        // context
-        nicknamesMap,
-        isMuted,
-        isChannelFrozen,
-        currentUserId,
-        typingMembers,
-      }}
-    >
-      {/* UserProfileProvider */}
-      <UserProfileProvider
-        disableUserProfile={disableUserProfile ?? config.disableUserProfile}
-        renderUserProfile={renderUserProfile}
-        onUserProfileMessage={onUserProfileMessage}
-      >
-        {children}
-      </UserProfileProvider>
-    </ThreadContext.Provider>
+    <InternalThreadProvider {...props}>
+      <ThreadManager {...props} />
+        {/* UserProfileProvider */}
+        <UserProfileProvider {...props}>
+          {children}
+        </UserProfileProvider>
+    </InternalThreadProvider>
   );
 };
 
-export type UseThreadContextType = () => ThreadProviderInterface;
-export const useThreadContext: UseThreadContextType = () => React.useContext(ThreadContext);
+export const useThreadContext = () => {
+  const { state, actions } = useThread();
+  return { ...state, ...actions };
+};
+
+const useThreadStore = () => {
+  return useStore(ThreadContext, state => state, initialState());
+};

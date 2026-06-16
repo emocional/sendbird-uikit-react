@@ -24,7 +24,10 @@ export const VOICE_PLAYER_AUDIO_ID = 'sendbird-global-audio-player-id';
 
 // voice message file
 export const VOICE_MESSAGE_FILE_NAME = 'Voice_message.mp3';
+export const VOICE_MESSAGE_FILE_NAME__XM4A = 'Voice_message.m4a';
+
 export const VOICE_MESSAGE_MIME_TYPE = 'audio/mp3;sbu_type=voice';
+export const VOICE_MESSAGE_MIME_TYPE__XM4A = 'audio/x-m4a;sbu_type=voice';
 
 // meta array
 export const META_ARRAY_VOICE_DURATION_KEY = 'KEY_VOICE_MESSAGE_DURATION';
@@ -39,9 +42,12 @@ export const SLIDER_BUTTON_ICON_SIDE_LENGTH = '32px';
 
 // multiple files message file info count limit
 export const DEFAULT_MULTIPLE_FILES_MESSAGE_LIMIT = 10;
+export const DEFAULT_UPLOAD_SIZE_LIMIT = 25 * 1024 * 1024;
 
 // Local storage item key for sdk templates token
 export const CACHED_MESSAGE_TEMPLATES_TOKEN_KEY = 'sendbird_message_templates_token_key';
 
 // Local storage item key for templates in JSON string form
 export const CACHED_MESSAGE_TEMPLATES_KEY = 'sendbird_message_templates_key';
+
+export const MESSAGE_TEMPLATE_KEY = 'message_template';

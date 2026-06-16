@@ -5,29 +5,56 @@
 @import '../../../../styles/variables';
 
 .sendbird-suggested-replies {
+  position: relative;
+  display: flex;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  &.vertical {
+    justify-content: flex-end;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    flex-direction: column;
+    .sendbird-suggested-replies__option:not(:first-child) {
+      margin-top: 8px;
+    }
+  }
+
+  &.horizontal {
+    display: flex;
+    flex-direction: row;
+    overflow-x: scroll;
+
+    margin-left: -$messages-padding;
+    margin-right: -$messages-padding;
+    padding-left: $messages-padding;
+    padding-right: $messages-padding;
+    @include mobile() {
+      margin-left: -$messages-padding-mobile;
+      margin-right: -$messages-padding-mobile;
+      padding-left: calc(40px + $messages-padding-mobile);
+      padding-right: $messages-padding-mobile;
+    }
+    .sendbird-suggested-replies__option:not(:last-child) {
+      margin-right: 8px;
+    }
+  }
+  &::-webkit-scrollbar {
+    display: none;
+  }
   @include themed() {
     font-family: var(--sendbird-font-family-default);
   }
-  position: relative;
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  column-gap: 10px;
-  row-gap: 8px;
-  margin-top: 16px;
-  flex-direction: column;
 }
 
 .sendbird-suggested-replies__option {
-  white-space: nowrap;
-  height: 32px;
+  white-space: pre-wrap;
   font-size: 12px;
-  padding: 0 14px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   border-radius: 18px;
   cursor: pointer;
+  word-break: break-word;
   @include themed() {
     color: t(primary--3-2);
     border: 1px solid t(primary--3-2);
@@ -43,5 +70,12 @@
       background-color: t(primary--3-2);
       color: t(bg-0);
     }
+  }
+  &.horizontal {
+    white-space: nowrap;
+  }
+  &.vertical {
+    white-space: pre-wrap;
+    max-width: calc(100% - 70px);
   }
 }
