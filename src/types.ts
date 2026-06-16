@@ -10,6 +10,8 @@ import type {
 } from '@sendbird/chat/message';
 import { CoreMessageType } from './utils';
 import { MessageProps } from './modules/GroupChannel/components/Message/MessageView';
+// @emo-integration — re-export para consumidores (emo-front)
+export type { EmocionalUserListQuery } from './emo/types';
 
 export type ReplyType = 'NONE' | 'QUOTE_REPLY' | 'THREAD';
 export type Nullable<T> = T | null;
@@ -23,7 +25,6 @@ export type SpaceFromTriggerType = {
 };
 
 export interface UserListQuery {
-  filterFn?: (user: User) => boolean;
   hasNext?: boolean;
   next(): Promise<Array<User>>;
   get isLoading(): boolean;

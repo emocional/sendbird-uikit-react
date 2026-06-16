@@ -4,6 +4,8 @@ import {
   DEFAULT_UPLOAD_SIZE_LIMIT,
 } from '../../../utils/consts';
 import { User } from '@sendbird/chat';
+// @emo-integration
+import { EMOCIONAL_CONFIG_DEFAULTS } from '../../../emo/types';
 
 /**
  * Config
@@ -45,7 +47,7 @@ const config: SendbirdStateConfig = {
   onStartDirectMessage: undefined,
   setCurrentTheme: undefined,
   userListQuery: undefined,
-  enableAutoChat: false,
+  ...EMOCIONAL_CONFIG_DEFAULTS,
   // Utils
   pubSub: undefined,
   logger: undefined,

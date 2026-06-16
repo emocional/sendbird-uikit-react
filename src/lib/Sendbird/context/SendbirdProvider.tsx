@@ -10,6 +10,12 @@ import {
   SendbirdState,
   SendbirdStateConfig,
 } from '../types';
+// @emo-integration
+import {
+  emocionalConfigFromProviderProps,
+  resolveEmocionalProviderProps,
+  toEmocionalConfigState,
+} from '../../../emo/integration/provider';
 
 /* Providers */
 import VoiceMessageProvider from '../../VoiceMessageProvider';
@@ -73,11 +79,12 @@ const SendbirdContextManager = ({
   customExtensionParams,
   isMultipleFilesMessageEnabled = false,
   autoscrollMessageOverflowToTop = false,
-  enableAutoChat = false,
-  eventHandlers,
   htmlTextDirection = 'ltr',
   forceLeftToRightMessageLayout = false,
+  eventHandlers,
+  ...emocionalProviderProps
 }: SendbirdProviderProps & { logger: Logger }): ReactElement => {
+  const emocionalConfig = resolveEmocionalProviderProps(emocionalProviderProps);
   const onStartDirectMessage = _onStartDirectMessage ?? _onUserProfileMessage;
   const { userMention = {}, isREMUnitEnabled = false, pubSub: customPubSub } = config;
   const { isMobile } = useMediaQueryContext();
@@ -301,7 +308,7 @@ const SendbirdContextManager = ({
       logger,
       pubSub,
       userListQuery,
-      enableAutoChat,
+      ...toEmocionalConfigState(emocionalConfig),
       htmlTextDirection,
       forceLeftToRightMessageLayout,
       markAsReadScheduler,
@@ -331,7 +338,7 @@ const SendbirdContextManager = ({
     logger,
     pubSub,
     userListQuery,
-    enableAutoChat,
+    emocionalConfig.enableAutoChat,
     htmlTextDirection,
     forceLeftToRightMessageLayout,
     markAsReadScheduler,
@@ -392,7 +399,7 @@ const InternalSendbirdProvider = (props: SendbirdProviderProps & { logger: Logge
       pubSub: props?.config?.pubSub,
       logger: props?.logger,
       userListQuery: props?.userListQuery,
-      enableAutoChat: props?.enableAutoChat,
+      ...emocionalConfigFromProviderProps(props),
       voiceRecord: {
         maxRecordingTime: props?.voiceRecord?.maxRecordingTime ?? VOICE_RECORDER_DEFAULT_MAX,
         minRecordingTime: props?.voiceRecord?.minRecordingTime ?? VOICE_RECORDER_DEFAULT_MIN,

@@ -1,14 +1,14 @@
 import React from 'react';
 import { render, waitFor } from '@testing-library/react';
 
-import AutoCreateGroupChannels from '../index';
-import useSendbird from '../../../../../lib/Sendbird/context/hooks/useSendbird';
-import { useGroupChannelList } from '../../../context/useGroupChannelList';
-import { getCreateGroupChannel } from '../../../../../lib/selectors';
+import AutoCreateGroupChannels from '../AutoCreateGroupChannels';
+import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+import { useGroupChannelList } from '../../../../modules/GroupChannelList/context/useGroupChannelList';
+import { getCreateGroupChannel } from '../../../../lib/selectors';
 
-jest.mock('../../../../../lib/Sendbird/context/hooks/useSendbird');
-jest.mock('../../../context/useGroupChannelList');
-jest.mock('../../../../../lib/selectors', () => ({
+jest.mock('../../../../lib/Sendbird/context/hooks/useSendbird');
+jest.mock('../../../../modules/GroupChannelList/context/useGroupChannelList');
+jest.mock('../../../../lib/selectors', () => ({
   getCreateGroupChannel: jest.fn(),
 }));
 

@@ -6,7 +6,8 @@ import { GroupChannelListUIView } from './GroupChannelListUIView';
 import GroupChannelPreviewAction from '../GroupChannelPreviewAction';
 import { GroupChannelListItem } from '../GroupChannelListItem';
 import AddGroupChannel from '../AddGroupChannel';
-import AutoCreateGroupChannels from '../AutoCreateGroupChannels';
+// @emo-integration
+import EmocionalGroupChannelListAddons from '../../../../emo/integration/group-channel-list';
 import { GroupChannelListItemBasicProps } from '../GroupChannelListItem/GroupChannelListItemView';
 import { noop } from '../../../../utils/utils';
 import { useGroupChannelList } from '../../context/useGroupChannelList';
@@ -40,7 +41,7 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
     },
   } = useGroupChannelList();
 
-  const { state: { stores, config: { logger, isOnline, enableAutoChat } } } = useSendbird();
+  const { state: { stores, config: { logger, isOnline } } } = useSendbird();
   const sdk = stores.sdkStore.sdk;
 
   const renderListItem = (renderProps: { item: GroupChannel; index: number }) => {
@@ -80,7 +81,8 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
 
   return (
     <>
-      {enableAutoChat && <AutoCreateGroupChannels />}
+      {/* @emo-integration */}
+      <EmocionalGroupChannelListAddons />
       <GroupChannelListUIView
       renderHeader={renderHeader}
       renderChannel={renderListItem}

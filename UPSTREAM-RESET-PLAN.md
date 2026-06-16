@@ -9,6 +9,7 @@ Estrategia para traer **Sendbird UIKit 3.18.0** (última publicada) sin perder e
 3. **Fase 1 = upstream puro** (sin parches Emocional).
 4. **Fase 2 = evaluación visual** (con adaptación mínima del front).
 5. **Fase 3 = reaplicar cambios** uno a uno desde `FORK-FEATURES.md`, con commits pequeños.
+6. **Código Emocional en `src/emo/`** — features, tipos e integración; upstream solo enganches marcados `// @emo-integration` (ver `src/emo/PATCHES.md`).
 
 ---
 

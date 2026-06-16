@@ -38,6 +38,11 @@ import { MarkAsDeliveredSchedulerType } from '../hooks/useMarkAsDeliveredSchedul
 import { SBUGlobalPubSub } from '../pubSub/topics';
 import { EmojiManager } from '../emojiManager';
 import { StringSet } from '../../ui/Label/stringSet';
+// @emo-integration
+import type {
+  EmocionalProviderProps,
+  EmocionalStateConfigFields,
+} from '../../emo/types';
 
 /* -------------------------------------------------------------------------- */
 /*                               Legacy                                       */
@@ -86,7 +91,6 @@ export interface RenderUserProfileProps {
 }
 
 export interface UserListQuery {
-  filterFn?: (user: User) => boolean;
   hasNext?: boolean;
   next(): Promise<Array<User>>;
   get isLoading(): boolean;
@@ -192,7 +196,8 @@ export type UIKitOptions = PartialDeep<{
   openChannel: SBUConfig['openChannel']['channel'];
 }>;
 
-export interface SendbirdProviderProps extends CommonUIKitConfigProps, React.PropsWithChildren<unknown> {
+// @emo-integration — EmocionalProviderProps (enableAutoChat, …)
+export interface SendbirdProviderProps extends CommonUIKitConfigProps, EmocionalProviderProps, React.PropsWithChildren<unknown> {
   appId: string;
   userId: string;
   accessToken?: string;
@@ -230,15 +235,10 @@ export interface SendbirdProviderProps extends CommonUIKitConfigProps, React.Pro
 
   // Customer provided callbacks
   eventHandlers?: SBUEventHandlers;
-
-  /**
-   * When true, creates distinct 1:1 channels for each user from `userListQuery`
-   * without opening the invite modal (onboarding / deep-link flows).
-   */
-  enableAutoChat?: boolean;
 }
 
-export interface SendbirdStateConfig {
+// @emo-integration — EmocionalStateConfigFields
+export interface SendbirdStateConfig extends EmocionalStateConfigFields {
   renderUserProfile?: (props: RenderUserProfileProps) => React.ReactElement;
   onStartDirectMessage?: (props: GroupChannel) => void;
   allowProfileEdit: boolean;
@@ -253,7 +253,6 @@ export interface SendbirdStateConfig {
   logger: Logger;
   setCurrentTheme: (theme: 'light' | 'dark') => void;
   userListQuery?: () => UserListQuery;
-  enableAutoChat?: boolean;
   uikitUploadSizeLimit: number;
   uikitMultipleFilesMessageLimit: number;
   voiceRecord: {
