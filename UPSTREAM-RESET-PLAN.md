@@ -212,6 +212,8 @@ Los más conflictivos (evitar cherry-pick directo):
 
 ## Fase 4 — Cierre (solo si el experimento convence)
 
+**Estado:** en curso — `main` sustituido por `experiment/upstream-3.18.0-vanilla` (validación en staging, sin preview local).
+
 1. Renombrar o sustituir `experiment/upstream-3.18.0-vanilla` → `main` (vía PR, **no** force-push sin acuerdo).
 2. Versión del paquete: alinear semver (p. ej. `3.18.0-emo.1` o saltar a `4.0.0-emo` si se quiere dejar claro el corte).
 3. Publicar a GitHub Packages y actualizar `emo-front` (mantenedor).
