@@ -2,7 +2,6 @@ import React from 'react';
 
 import './index.scss';
 import Header, { HeaderCustomProps } from '../../../../ui/Header';
-import { classnames } from '../../../../utils/utils';
 // @emo-integration
 import EmocionalGroupChannelListHeaderTitle from '../../../../emo/integration/group-channel-list-header';
 
@@ -17,8 +16,6 @@ export interface GroupChannelListHeaderProps extends HeaderCustomProps {
 export const GroupChannelListHeader = ({
   renderTitle,
   renderIconButton,
-  onEdit,
-  allowProfileEdit,
   // Header custom props
   renderLeft,
   renderMiddle,
@@ -28,7 +25,7 @@ export const GroupChannelListHeader = ({
 
   return (
     <Header
-      className={classnames('sendbird-channel-header', allowProfileEdit && 'sendbird-channel-header--allow-edit')}
+      className="sendbird-channel-header"
       renderLeft={renderLeft}
       renderMiddle={() => (
         renderProfile?.() ?? <EmocionalGroupChannelListHeaderTitle />

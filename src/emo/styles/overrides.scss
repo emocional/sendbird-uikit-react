@@ -20,6 +20,16 @@
   height: 48px;
   padding: 8px;
   box-sizing: border-box;
+  cursor: default;
+  border-radius: 0;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background: transparent;
+    border: none;
+    outline: none;
+  }
 
   .sendbird-channel-header__title__right__user-id {
     display: none;
@@ -31,6 +41,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: default;
   }
 }
 
