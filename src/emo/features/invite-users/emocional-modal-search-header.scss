@@ -1,8 +1,68 @@
-.emo-modal-search-header__input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 16px;
-  background: transparent;
-  color: inherit;
+@import '../../../styles/variables';
+
+$emo-input-border: #dee1e580;
+$emo-input-bg: #ffffff;
+$emo-input-placeholder: #bcc1ca;
+$emo-input-text: #323842;
+$emo-input-radius: 9999px;
+$emo-input-min-height: 48px;
+$emo-input-font-size: 14px;
+$emo-input-line-height: 22px;
+$emo-input-padding-x: 20px;
+
+.sendbird-modal__header.emo-modal-search-header {
+  display: flex;
+  align-items: center;
+  min-height: $emo-input-min-height;
+  margin-bottom: 16px;
+  padding-right: 40px;
+  box-sizing: border-box;
+
+  .emo-modal-search-header__input {
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: $emo-input-min-height;
+    padding: 12px $emo-input-padding-x;
+    border: 1px solid $emo-input-border;
+    border-radius: $emo-input-radius;
+    background-color: $emo-input-bg;
+    font-size: $emo-input-font-size;
+    line-height: $emo-input-line-height;
+    font-weight: 400;
+    color: $emo-input-text;
+    box-sizing: border-box;
+    outline: none;
+    box-shadow: none;
+    caret-color: $emo-input-text;
+    appearance: none;
+
+    @include themed() {
+      color: $emo-input-text;
+      border: 1px solid $emo-input-border;
+      background-color: $emo-input-bg;
+      caret-color: $emo-input-text;
+    }
+
+    &::placeholder {
+      color: $emo-input-placeholder;
+
+      @include themed() {
+        color: $emo-input-placeholder;
+      }
+    }
+
+    &:focus,
+    &:active {
+      outline: none;
+      box-shadow: none;
+      border: 1px solid $emo-input-border;
+
+      @include themed() {
+        color: $emo-input-text;
+        border: 1px solid $emo-input-border;
+        box-shadow: none;
+      }
+    }
+  }
 }
