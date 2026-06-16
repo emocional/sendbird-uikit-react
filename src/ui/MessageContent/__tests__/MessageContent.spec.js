@@ -169,7 +169,7 @@ describe('ui/MessageContent', () => {
     ).toBeNull();
   });
 
-  it('should render components when isByMe is true', () => {
+  it('should render as incoming when isByMe would be true (Emocional layout)', () => {
     const message = createMockMessage();
     const { container } = render(
       <MessageContent
@@ -181,22 +181,22 @@ describe('ui/MessageContent', () => {
     );
     expect(
       container.querySelector('.sendbird-message-content.outgoing')
-    ).toBeTruthy();
+    ).toBeNull();
     expect(
       container.querySelector('.sendbird-message-content__left.outgoing')
-    ).toBeTruthy();
+    ).toBeNull();
     expect(
       container.querySelector('.sendbird-message-content-menu.outgoing')
-    ).toBeTruthy();
+    ).toBeNull();
     expect(
       container.querySelector('.sendbird-message-content.incoming')
-    ).toBeNull();
+    ).toBeTruthy();
     expect(
       container.querySelector('.sendbird-message-content__left.incoming')
-    ).toBeNull();
+    ).toBeTruthy();
     expect(
       container.querySelector('.sendbird-message-content-menu.incoming')
-    ).toBeNull();
+    ).toBeTruthy();
   });
   it('should render components when isByMe is false', () => {
     const message = createMockMessage();

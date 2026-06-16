@@ -3,7 +3,7 @@
 exports[`ui/ThumbnailMessageItemBody should do a snapshot test of the ThumbnailMessageItemBody DOM 1`] = `
 <DocumentFragment>
   <div
-    class="classname-for-snapshot sendbird-thumbnail-message-item-body outgoing mouse-hover "
+    class="classname-for-snapshot sendbird-thumbnail-message-item-body incoming mouse-hover "
   >
     <div
       class="sendbird-thumbnail-message-item-body__thumbnail sendbird-image-renderer"

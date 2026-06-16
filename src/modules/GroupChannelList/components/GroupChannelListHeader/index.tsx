@@ -1,12 +1,10 @@
 import React from 'react';
 
 import './index.scss';
-import { useLocalization } from '../../../../lib/LocalizationContext';
-import Avatar from '../../../../ui/Avatar';
-import Label, { LabelColors, LabelTypography } from '../../../../ui/Label';
 import Header, { HeaderCustomProps } from '../../../../ui/Header';
 import { classnames } from '../../../../utils/utils';
-import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import EmocionalGroupChannelListHeaderTitle from '../../../../emo/integration/group-channel-list-header';
 
 export interface GroupChannelListHeaderProps extends HeaderCustomProps {
   /** @deprecated Use the props `renderMiddle` instead */
@@ -26,9 +24,6 @@ export const GroupChannelListHeader = ({
   renderMiddle,
   renderRight,
 }: GroupChannelListHeaderProps) => {
-  const { state: { stores: { userStore: { user } } } } = useSendbird();
-
-  const { stringSet } = useLocalization();
   const renderProfile = renderMiddle ?? renderTitle;
 
   return (
@@ -36,44 +31,7 @@ export const GroupChannelListHeader = ({
       className={classnames('sendbird-channel-header', allowProfileEdit && 'sendbird-channel-header--allow-edit')}
       renderLeft={renderLeft}
       renderMiddle={() => (
-        renderProfile?.() ?? (
-          <div
-            className="sendbird-channel-header__title"
-            role="button"
-            onClick={() => {
-              onEdit?.();
-            }}
-            onKeyDown={() => {
-              onEdit?.();
-            }}
-            tabIndex={0}
-          >
-            <div className="sendbird-channel-header__title__left">
-              <Avatar
-                width="32px"
-                height="32px"
-                src={user.profileUrl}
-                alt={user.nickname}
-              />
-            </div>
-            <div className="sendbird-channel-header__title__right">
-              <Label
-                className="sendbird-channel-header__title__right__name"
-                type={LabelTypography.SUBTITLE_2}
-                color={LabelColors.ONBACKGROUND_1}
-              >
-                {user.nickname || stringSet.NO_NAME}
-              </Label>
-              <Label
-                className="sendbird-channel-header__title__right__user-id"
-                type={LabelTypography.BODY_2}
-                color={LabelColors.ONBACKGROUND_2}
-              >
-                {user.userId}
-              </Label>
-            </div>
-          </div>
-        )
+        renderProfile?.() ?? <EmocionalGroupChannelListHeaderTitle />
       )}
       renderRight={renderRight ?? renderIconButton}
     />

@@ -12,6 +12,8 @@ import type { OnBeforeDownloadFileMessageType } from '../../modules/GroupChannel
 import { LoggerInterface } from '../../lib/Logger';
 import { openURL } from '../../utils/utils';
 import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 interface Props {
   className?: string | Array<string>;
@@ -26,12 +28,13 @@ interface Props {
 export default function FileMessageItemBody({
   className = '',
   message,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   mouseHover = false,
   isReactionEnabled = false,
   truncateLimit,
   onBeforeDownloadFileMessage,
 }: Props): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   let logger: LoggerInterface | null = null;
   try {
     const { state: { config: { logger: globalLogger } } } = useSendbird();

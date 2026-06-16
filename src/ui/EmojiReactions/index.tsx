@@ -24,6 +24,8 @@ import { AddReactionBadgeItem } from './AddReactionBadgeItem';
 import { MobileEmojisBottomSheet } from '../MobileMenu/MobileEmojisBottomSheet';
 import { getIsReactionEnabled } from '../../utils/getIsReactionEnabled';
 import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 export interface EmojiReactionsProps {
   className?: string | Array<string>;
@@ -47,11 +49,12 @@ const EmojiReactions = ({
   emojiContainer,
   memberNicknamesMap,
   spaceFromTrigger = { x: 0, y: 0 },
-  isByMe = false,
+  isByMe: isByMeProp = false,
   toggleReaction,
   onPressUserProfile,
   filterEmojiCategoryIds,
 }: EmojiReactionsProps): ReactElement => {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   let showTheReactedMembers = false;
   try {
     const { state: { config } } = useSendbird();

@@ -8,6 +8,8 @@ import { LocalizationContext } from '../../lib/LocalizationContext';
 import { tokenizeMessage } from '../../modules/Message/utils/tokens/tokenize';
 import TextFragment from '../../modules/Message/components/TextFragment';
 import { TEXT_MESSAGE_BODY_CLASSNAME } from './consts';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 interface Props {
   className?: string | Array<string>;
@@ -22,12 +24,13 @@ interface Props {
 export default function TextMessageItemBody({
   className = '',
   message,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   mouseHover = false,
   isMentionEnabled = false,
   isReactionEnabled = false,
   isMarkdownEnabled = false,
 }: Props): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   const { stringSet } = useContext(LocalizationContext);
   const isMessageMentioned = isMentionEnabled
     && message?.mentionedMessageTemplate

@@ -22,6 +22,8 @@ import type { RenderMessageProps } from '../../../../types';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { CoreMessageType, SendableMessageType } from '../../../../utils';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../../../emo/integration/message-layout';
 
 export type OpenChannelMessageProps = {
   renderMessage?: (props: RenderMessageProps) => React.ReactElement;
@@ -60,16 +62,18 @@ export default function OpenChannelMessage(
   const [showFileViewer, setShowFileViewer] = useState(false);
   const editMessageInputRef = useRef(null);
 
-  let isByMe = false;
+  let computedIsByMe = false;
 
   if (sender && message?.messageType !== 'admin') {
     // pending and failed messages are by me
-    isByMe = currentUserId === sender.userId
+    computedIsByMe = currentUserId === sender.userId
       || (message as SendableMessageType)?.sendingStatus
         === SendingMessageStatus.PENDING
       || (message as SendableMessageType)?.sendingStatus
         === SendingMessageStatus.FAILED;
   }
+  // @emo-integration
+  const isByMe = resolveEmocionalIsByMe(computedIsByMe);
 
   if (renderMessage) {
     return (

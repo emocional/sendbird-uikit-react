@@ -20,6 +20,8 @@ import { LocalizationContext } from '../../lib/LocalizationContext';
 import { Role } from '../../lib/Sendbird/types';
 import { ReplyType } from '../../types';
 import { deleteNullish } from '../../utils/utils';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 export interface MessageMenuRenderMenuItemProps extends Omit<MenuItemProps, 'children' | 'className'> {
   className?: string;
@@ -49,7 +51,7 @@ export function MessageMenu(props: MessageMenuProps): ReactElement | null {
     className,
     message,
     channel,
-    isByMe = false,
+    isByMe: isByMeProp = false,
     disabled = false,
     replyType,
     disableDeleteMessage = null,
@@ -62,6 +64,8 @@ export function MessageMenu(props: MessageMenuProps): ReactElement | null {
     onReplyInThread,
     onMoveToParentMessage = null,
   } = props;
+
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
 
   const { renderMenuItem = (props: MessageMenuRenderMenuItemProps) => <MenuItem {...props}>{props.text}</MenuItem> } = deleteNullish(props);
 

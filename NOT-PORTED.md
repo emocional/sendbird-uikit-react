@@ -19,10 +19,10 @@ Para lo que **sí** se reimplementó, ver [`src/emo/README.md`](./src/emo/README
 |-----------|--------|
 | API de producto (`enableAutoChat`, `searcherFilter`, `filterFn`, tags, online, ES) | **Portado** en `src/emo/` |
 | Infraestructura (CI, release-it, Renovate) | **Restaurada** en rama experimental — solo se ejecuta en `main` (ver §1) |
-| Estilos / UX masivos (mensajes, listas, modales genéricos) | **Mayoría no portada** |
-| `isByMe = false` global | **Descartado** a propósito |
+| Estilos / UX masivos (mensajes, listas, modales genéricos) | **Parcial** — `src/emo/styles/overrides.scss` + componentes typing/header |
+| `isByMe = false` global | **Portado** — `resolveEmocionalIsByMe` |
 | APIs redundantes con 3.18 (`userQuery` por App, `showCreateChannel`, `Modal.setSearcher`) | **No portadas** — sustituidas o innecesarias |
-| Traducciones ES completas vs 3.18 | **Parcial** — claves nuevas en inglés |
+| Traducciones ES completas vs 3.18 | **Completas** en `es-string-set-overrides.ts` |
 
 ---
 

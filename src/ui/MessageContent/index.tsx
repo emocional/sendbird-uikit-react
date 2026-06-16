@@ -7,6 +7,8 @@ import { MessageMenu, type MessageMenuProps } from '../MessageMenu';
 import { MessageEmojiMenu, MessageEmojiMenuProps } from '../MessageItemReactionMenu';
 import Label, { LabelColors, LabelTypography } from '../Label';
 import EmojiReactions, { EmojiReactionsProps } from '../EmojiReactions';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 import AdminMessage from '../AdminMessage';
 import QuoteMessage from '../QuoteMessage';
@@ -163,9 +165,11 @@ export function MessageContent(props: MessageContentProps): ReactElement {
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [feedbackFailedText, setFeedbackFailedText] = useState('');
 
-  const isByMe = (userId === (message as SendableMessageType)?.sender?.userId)
+  const computedIsByMe = (userId === (message as SendableMessageType)?.sender?.userId)
     || ((message as SendableMessageType)?.sendingStatus === 'pending')
     || ((message as SendableMessageType)?.sendingStatus === 'failed');
+  // @emo-integration
+  const isByMe = resolveEmocionalIsByMe(computedIsByMe);
   const isByMeClassName = isByMe ? 'outgoing' : 'incoming';
   const chainTopClassName = chainTop ? 'chain-top' : '';
   const isReactionEnabledInChannel = isReactionEnabled && !channel?.isEphemeral;

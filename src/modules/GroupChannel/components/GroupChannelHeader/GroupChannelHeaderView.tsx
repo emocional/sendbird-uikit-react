@@ -27,7 +27,7 @@ export const GroupChannelHeaderView = ({
   showSearchIcon,
   onBackClick,
   onSearchClick,
-  onChatHeaderActionClick,
+  onChatHeaderActionClick: _onChatHeaderActionClick,
   // Header custom props
   renderLeft,
   renderMiddle,
@@ -77,13 +77,6 @@ export const GroupChannelHeaderView = ({
               renderIcon={(props) => <Header.Icon {...props} width="24px" height="24px" />}
             />
           )}
-          <Header.IconButton
-            className="sendbird-chat-header__right__info"
-            onClick={onChatHeaderActionClick}
-            type={IconTypes.INFO}
-            color={iconColor}
-            renderIcon={(props) => <Header.Icon {...props} width="24px" height="24px" />}
-          />
         </>
       ))}
     />

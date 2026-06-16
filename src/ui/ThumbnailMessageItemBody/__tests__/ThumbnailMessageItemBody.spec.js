@@ -70,7 +70,7 @@ describe('ui/ThumbnailMessageItemBody', () => {
     ).toHaveLength(0);
   });
 
-  it('should have class name when isByMe is true', () => {
+  it('should render as incoming when isByMe would be true (Emocional layout)', () => {
     const { container } = render(
       <ThumbnailMessageItemBody
         message={createMockMessage()}
@@ -79,10 +79,10 @@ describe('ui/ThumbnailMessageItemBody', () => {
     );
     expect(
       container.querySelectorAll('.sendbird-thumbnail-message-item-body.outgoing')
-    ).toHaveLength(1);
+    ).toHaveLength(0);
     expect(
       container.querySelectorAll('.sendbird-thumbnail-message-item-body.incoming')
-    ).toHaveLength(0);
+    ).toHaveLength(1);
   });
   it('should have class name when isByMe is false', () => {
     const { container } = render(

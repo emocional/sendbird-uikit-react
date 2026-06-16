@@ -53,7 +53,7 @@ describe('ui/TextMessageItemBody', () => {
     ).toHaveLength(0);
   });
 
-  it('should have class name by isByMe is true', () => {
+  it('should render as incoming when isByMe would be true (Emocional layout)', () => {
     const message = createMockMessage();
     const { container } = render(
       <MessageProvider message={message}>
@@ -65,10 +65,10 @@ describe('ui/TextMessageItemBody', () => {
     );
     expect(
       container.querySelectorAll('.sendbird-text-message-item-body.outgoing')
-    ).toHaveLength(1);
+    ).toHaveLength(0);
     expect(
       container.querySelectorAll('.sendbird-text-message-item-body.incoming')
-    ).toHaveLength(0);
+    ).toHaveLength(1);
   });
   it('should have class name by isByMe is false', () => {
     const message = createMockMessage();

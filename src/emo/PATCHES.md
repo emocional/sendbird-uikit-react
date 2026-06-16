@@ -11,8 +11,14 @@ El resto del código Emocional está en `src/emo/`.
 | `src/modules/GroupChannelList/components/GroupChannelListUI/index.tsx` | `<EmocionalGroupChannelListAddons />` | `@emo-integration` |
 | `src/modules/CreateChannel/components/CreateChannelUI/index.tsx` | Flujo invite directo 1:1 | `@emo-integration` |
 | `src/modules/GroupChannelList/components/AddGroupChannel/AddGroupChannelView.tsx` | Icono `+` de marca | `@emo-integration` |
-| `src/modules/GroupChannel/components/GroupChannelHeader/GroupChannelHeaderView.tsx` | Avatar online + badge empresa | `@emo-integration` |
+| `src/modules/GroupChannel/components/GroupChannelHeader/GroupChannelHeaderView.tsx` | Avatar online, badge empresa, sin botón info | `@emo-integration` |
 | `src/modules/GroupChannelList/components/GroupChannelListItem/index.tsx` | Tag de canal | `@emo-integration` |
+| `src/modules/GroupChannelList/components/GroupChannelListHeader/index.tsx` | Cabecera lista simplificada | `@emo-integration` |
+| `src/modules/GroupChannel/components/TypingIndicator.tsx` | Texto typing Emocional | `@emo-integration` |
+| `src/modules/Message/context/MessageProvider.tsx` | `isByMe` → layout entrante | `@emo-integration` |
+| `src/ui/MessageContent/index.tsx` | `isByMe` → layout entrante | `@emo-integration` |
+| `src/ui/*MessageItemBody*` / `QuoteMessage` / `EmojiReactions` / etc. | `isByMe` → layout entrante | `@emo-integration` |
+| `src/modules/OpenChannel/components/OpenChannelMessage/index.tsx` | `isByMe` → layout entrante | `@emo-integration` |
 | `src/modules/GroupChannelList/components/GroupChannelListItem/GroupChannelListItemView.tsx` | Render tag + avatar online | `@emo-integration` |
 | `src/ui/Icon/colors.ts` + `src/ui/Icon/utils.ts` | Color `EMOCIONAL` | `@emo-integration` |
 | `src/types.ts` | Re-export de `EmocionalUserListQuery` | `@emo-integration` |
@@ -31,7 +37,7 @@ Inventario completo: [`NOT-PORTED.md`](../../NOT-PORTED.md) (raíz del repo).
 |--------------|------------------|
 | `userQuery` propagado por `App` | **No necesario**: `emo-front` usa `userListQuery` en `SendbirdProvider` (upstream ya lo propaga) |
 | `showCreateChannel` | **No necesario**: upstream monta `CreateChannel` solo cuando el modal está visible |
-| `isByMe = false` global | **Descartado**: upstream 3.18 tiene layout estándar entrante/saliente; forzar todo a la izquierda rompe UX de chat |
+| `isByMe = false` global | **Implementado** vía `resolveEmocionalIsByMe` + overrides SCSS |
 | Parche masivo `MessageContent` / modales | **Reducido**: solo overrides SCSS en `src/emo/styles/` |
 | `Modal.setSearcher` | **Evitado**: búsqueda vía `renderHeader` + `EmocionalModalSearchHeader` (sin parchear `Modal`) |
 

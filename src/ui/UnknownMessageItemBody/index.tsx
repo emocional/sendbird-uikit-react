@@ -5,6 +5,8 @@ import Label, { LabelTypography, LabelColors } from '../Label';
 import { getClassName } from '../../utils';
 import { LocalizationContext } from '../../lib/LocalizationContext';
 import { BaseMessage } from '@sendbird/chat/message';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 interface Props {
   className?: string | Array<string>;
@@ -17,10 +19,11 @@ interface Props {
 export default function UnknownMessageItemBody({
   className,
   message,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   mouseHover = false,
   isReactionEnabled = false,
 }: Props): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   const { stringSet } = useContext(LocalizationContext);
   return (
     <div className={getClassName([

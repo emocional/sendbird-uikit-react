@@ -23,6 +23,8 @@ import {
   UIKitMessageTypes,
 } from '../../utils';
 import { getMessageFirstFileName, getMessageFirstFileType, getMessageFirstFileUrl } from './utils';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 interface Props {
   className?: string | Array<string>;
@@ -36,11 +38,12 @@ interface Props {
 export default function QuoteMessage({
   message,
   userId = '',
-  isByMe = false,
+  isByMe: isByMeProp = false,
   className = '',
   isUnavailable = false,
   onClick,
 }: Props): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   const { stringSet } = useContext(LocalizationContext);
 
   const { parentMessage } = message as BaseMessage;

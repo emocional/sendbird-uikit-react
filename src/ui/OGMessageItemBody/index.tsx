@@ -12,6 +12,8 @@ import { tokenizeMessage } from '../../modules/Message/utils/tokens/tokenize';
 import { OG_MESSAGE_BODY_CLASSNAME } from './consts';
 import { useMediaQueryContext } from '../../lib/MediaQueryContext';
 import { classnames, openURL } from '../../utils/utils';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 interface Props {
   className?: string | Array<string>;
@@ -27,7 +29,7 @@ interface Props {
 export default function OGMessageItemBody({
   className,
   message,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   mouseHover = false,
   isMentionEnabled = false,
   isReactionEnabled = false,
@@ -36,6 +38,7 @@ export default function OGMessageItemBody({
     /* noop */
   },
 }: Props): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   const { stringSet } = useContext(LocalizationContext);
 
   const isMessageMentioned = isMentionEnabled && message?.mentionedMessageTemplate?.length > 0 && message?.mentionedUsers && message?.mentionedUsers?.length > 0;

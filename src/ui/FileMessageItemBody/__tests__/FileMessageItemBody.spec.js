@@ -60,7 +60,7 @@ describe('ui/FileMessageItemBody', () => {
     ).toContain('sendbird-file-message-item-body__file-name__text');
   });
 
-  it('should have class name by isByMe is true', () => {
+  it('should render as incoming when isByMe would be true (Emocional layout)', () => {
     const { container } = render(
       <FileMessageItemBody
         message={createMockMessage()}
@@ -69,10 +69,10 @@ describe('ui/FileMessageItemBody', () => {
     );
     expect(
       container.getElementsByClassName('sendbird-file-message-item-body')[0].className
-    ).toContain('outgoing');
+    ).not.toContain('outgoing');
     expect(
       container.getElementsByClassName('sendbird-file-message-item-body')[0].className
-    ).not.toContain('incoming');
+    ).toContain('incoming');
   });
 
   it('should have class name when isByMe is false', () => {

@@ -10,6 +10,8 @@ import { LabelColors, LabelTypography } from '../Label';
 import LinkLabel from '../LinkLabel';
 import { convertWordToStringObj, StringObjType, StringObj } from '../../utils';
 import MentionLabel from '../MentionLabel';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 interface WordProps {
   word: string;
@@ -24,10 +26,11 @@ export default function Word(props: WordProps): JSX.Element | null {
   const {
     word,
     message,
-    isByMe = false,
+    isByMe: isByMeProp = false,
     mentionTemplate = '@',
     renderString = null,
   } = props;
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   if (word === '') {
     return null;
   }

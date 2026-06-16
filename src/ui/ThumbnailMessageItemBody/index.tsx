@@ -9,6 +9,8 @@ import { noop } from '../../utils/utils';
 import useLongPress from '../../hooks/useLongPress';
 import { MultipleFilesMessage } from '@sendbird/chat/message';
 import { getMessageFirstFileType, getMessageFirstFileUrl, getMessageFirstFileThumbnailUrl } from '../QuoteMessage/utils';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 interface Props {
   className?: string | Array<string>;
@@ -23,12 +25,13 @@ interface Props {
 export default function ThumbnailMessageItemBody({
   className = '',
   message,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   mouseHover = false,
   isReactionEnabled = false,
   showFileViewer = noop,
   style = {},
 }: Props): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   const thumbnailUrl: string = getMessageFirstFileThumbnailUrl(message);
   const [imageRendered, setImageRendered] = useState(false);
 

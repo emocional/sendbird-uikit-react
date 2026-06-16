@@ -1,36 +1,20 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Member } from '@sendbird/chat/groupChannel';
 import { GroupChannelHandler } from '@sendbird/chat/groupChannel';
 
 import Label, { LabelTypography, LabelColors } from '../../../ui/Label';
-import { LocalizationContext } from '../../../lib/LocalizationContext';
 import { uuidv4 } from '../../../utils/uuid';
 import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import EmocionalTypingIndicatorText from '../../../emo/features/typing-indicator/EmocionalTypingIndicatorText';
 
 export interface TypingIndicatorTextProps {
   members: Member[];
 }
 
-export const TypingIndicatorText = ({ members }: TypingIndicatorTextProps) => {
-  function getText() {
-    const { stringSet } = useContext(LocalizationContext);
-    if (!members || members.length === 0) {
-      return '';
-    }
-
-    if (members && members.length === 1) {
-      return `${members[0].nickname} ${stringSet.TYPING_INDICATOR__IS_TYPING}`;
-    }
-
-    if (members && members.length === 2) {
-      return `${members[0].nickname} ${stringSet.TYPING_INDICATOR__AND} ${members[1].nickname} ${stringSet.TYPING_INDICATOR__ARE_TYPING}`;
-    }
-
-    return stringSet.TYPING_INDICATOR__MULTIPLE_TYPING;
-  }
-
-  return <>{getText()}</>;
-};
+export const TypingIndicatorText = ({ members }: TypingIndicatorTextProps) => (
+  <EmocionalTypingIndicatorText members={members} />
+);
 
 export interface TypingIndicatorProps {
   channelUrl: string;

@@ -11,6 +11,8 @@ import Icon, { IconTypes, IconColors } from '../Icon';
 import { LabelTypography, LabelColors } from '../Label';
 import { VOICE_PLAYER_STATUS } from '../../hooks/VoicePlayer/dux/initialState';
 import { classnames } from '../../utils/utils';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 export interface VoiceMessageItemBodyProps {
   className?: string;
@@ -24,9 +26,10 @@ export const VoiceMessageItemBody = ({
   className,
   message,
   channelUrl,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   isReactionEnabled = false,
 }: VoiceMessageItemBodyProps): React.ReactElement => {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   const [usingReaction, setUsingReaction] = useState(false);
   const {
     play,

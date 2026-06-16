@@ -57,4 +57,6 @@ Contrato documentado en `src/emo/product/emo-front-usage.ts`.
 | Invite directo 1:1 + búsqueda | `features/invite-users/` | `searcherFilter`, `skipChannelTypeSelection` |
 | Tags metadata | `features/metadata/` | `metaData.professional`, `team`, `company_name` |
 | Online en avatar | `features/connection-status/` | automático en header y lista |
+| Layout mensajes entrantes | `integration/message-layout.ts` | todos los mensajes alineados como recibidos |
+| Typing indicator / cabecera lista | `features/typing-indicator/`, `integration/group-channel-list-header.tsx` | estilo fork §8 |
 | Tokens / estilos | `styles/` | icono `EMOCIONAL`, overrides SCSS |

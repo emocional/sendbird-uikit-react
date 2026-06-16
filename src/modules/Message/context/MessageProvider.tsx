@@ -3,6 +3,8 @@
 // packages/react-uikit-message-template-view/src/context/MessageContextProvider.tsx
 import React from 'react';
 import { BaseMessage } from '@sendbird/chat/message';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../../emo/integration/message-layout';
 
 export type MessageProviderProps = {
   children: React.ReactNode;
@@ -23,8 +25,9 @@ const MessageProvider: React.FC<MessageProviderProps> = (props) => {
   const {
     children,
     message,
-    isByMe = false,
+    isByMe: isByMeFromProps = false,
   } = props;
+  const isByMe = resolveEmocionalIsByMe(isByMeFromProps);
 
   return (
     <MessageContext.Provider value={{

@@ -19,6 +19,8 @@ import MessageTemplateErrorBoundary from '../MessageTemplate/messageTemplateErro
 import { MESSAGE_TEMPLATE_KEY } from '../../utils/consts';
 import flattenObject from './utils/flattenObject';
 import useSendbird from '../../lib/Sendbird/context/hooks/useSendbird';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 const TEMPLATE_FETCH_RETRY_BUFFER_TIME_IN_MILLIES = 500; // It takes about 450ms for isError update
 
@@ -70,9 +72,10 @@ export const replaceVariablesInTemplateString = ({
 export function TemplateMessageItemBody({
   className = '',
   message,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   theme = 'light',
 }: TemplateMessageItemBodyProps): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   const templateData: MessageTemplateData | undefined = message.extendedMessagePayload?.[MESSAGE_TEMPLATE_KEY] as MessageTemplateData;
 
   const getFailedBody = () => {

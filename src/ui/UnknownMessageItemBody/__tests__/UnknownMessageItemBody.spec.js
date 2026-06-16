@@ -51,7 +51,7 @@ describe('ui/UnknownMessageItemBody', () => {
     ).toHaveLength(0);
   });
 
-  it('should have class name when isByMe is true', () => {
+  it('should render as incoming when isByMe would be true (Emocional layout)', () => {
     const { container } = render(
       <UnknownMessageItemBody
         message={createMockMessage()}
@@ -60,10 +60,10 @@ describe('ui/UnknownMessageItemBody', () => {
     );
     expect(
       container.querySelectorAll('.sendbird-unknown-message-item-body.outgoing')
-    ).toHaveLength(1);
+    ).toHaveLength(0);
     expect(
       container.querySelectorAll('.sendbird-unknown-message-item-body.incoming')
-    ).toHaveLength(0);
+    ).toHaveLength(1);
   });
   it('should have class name when isByMe is false', () => {
     const { container } = render(

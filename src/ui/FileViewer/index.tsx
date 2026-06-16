@@ -17,6 +17,8 @@ import { Slider } from './Slider';
 import { useKeyDown } from '../../hooks/useKeyDown/useKeyDown';
 import { UploadedFileInfoWithUpload } from '../../types';
 import Modal from '../Modal';
+// @emo-integration
+import { resolveEmocionalIsByMe } from '../../emo/integration/message-layout';
 
 export const FileViewerComponent = (props: FileViewerComponentProps): ReactElement => {
   const {
@@ -162,13 +164,14 @@ export default function FileViewer({
   message,
   statefulFileInfoList = [],
   onClose,
-  isByMe = false,
+  isByMe: isByMeProp = false,
   onDelete,
   currentIndex,
   onClickLeft,
   onClickRight,
   onDownloadClick,
 }: FileViewerProps): ReactElement {
+  const isByMe = resolveEmocionalIsByMe(isByMeProp);
   if (isMultipleFilesMessage(message)) {
     const castedMessage = message as MultipleFilesMessage;
     return (
