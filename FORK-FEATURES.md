@@ -343,4 +343,4 @@ Para que las features de tags funcionen, los usuarios en Sendbird deben tener en
 
 `upstream/main` tiene **402 commits** posteriores al punto de divergencia que **no están** en el fork de Emocional (Sendbird siguió evolucionando hasta al menos junio 2026). Este documento describe solo lo añadido por Emocional, no lo que falta por integrar del original.
 
-**Reset a upstream 3.18:** lo del fork que **no** se reimplementó en `experiment/upstream-3.18.0-vanilla` está en [`NOT-PORTED.md`](./NOT-PORTED.md).
+**Reset a upstream 3.18:** lo del fork que **no** se reimplementó o quedó **a medias** (sobre todo estilos §8) está en [`NOT-PORTED.md`](./NOT-PORTED.md). Staging validó funcionalidad; paridad visual con 3.26.0 sigue pendiente.

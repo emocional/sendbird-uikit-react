@@ -38,7 +38,7 @@ Inventario completo: [`NOT-PORTED.md`](../../NOT-PORTED.md) (raíz del repo).
 | `userQuery` propagado por `App` | **No necesario**: `emo-front` usa `userListQuery` en `SendbirdProvider` (upstream ya lo propaga) |
 | `showCreateChannel` | **No necesario**: upstream monta `CreateChannel` solo cuando el modal está visible |
 | `isByMe = false` global | **Implementado** vía `resolveEmocionalIsByMe` + overrides SCSS |
-| Parche masivo `MessageContent` / modales | **Reducido**: solo overrides SCSS en `src/emo/styles/` |
+| Parche masivo `MessageContent` / modales upstream | **Pendiente** — overrides parciales en `src/emo/styles/`; ver [`NOT-PORTED.md`](../../NOT-PORTED.md) §3 |
 | `Modal.setSearcher` | **Evitado**: búsqueda vía `renderHeader` + `EmocionalModalSearchHeader` (sin parchear `Modal`) |
 
 ## Qué no tocar en upstream salvo enganche

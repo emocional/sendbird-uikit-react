@@ -210,14 +210,19 @@ Los más conflictivos (evitar cherry-pick directo):
 
 ---
 
-## Fase 4 — Cierre (solo si el experimento convence)
+## Fase 4 — Cierre
 
-**Estado:** en curso — `main` sustituido por `experiment/upstream-3.18.0-vanilla` (validación en staging, sin preview local).
+**Estado:** **hecha** — `main` sustituye al fork 3.26.0; paquete publicado en GH Packages (p. ej. 3.29.x).
 
-1. Renombrar o sustituir `experiment/upstream-3.18.0-vanilla` → `main` (vía PR, **no** force-push sin acuerdo).
-2. Versión del paquete: alinear semver (p. ej. `3.18.0-emo.1` o saltar a `4.0.0-emo` si se quiere dejar claro el corte).
-3. Publicar a GitHub Packages y actualizar `emo-front` (mantenedor).
-4. Mantener `preserve/emo-fork-3.26.0` y tag `emo/fork-3.26.0-baseline` **indefinidamente**.
+## Fase estilos — paridad visual §8
+
+**Estado:** **en curso** — staging confirma funcionalidad OK pero diferencias visuales vs fork. Inventario y prioridades en [`NOT-PORTED.md`](./NOT-PORTED.md) §3–§5.
+
+1. ~~Renombrar o sustituir `experiment/upstream-3.18.0-vanilla` → `main`~~
+2. ~~Versión del paquete y publicación~~
+3. ~~Actualizar `emo-front` (mantenedor)~~
+4. Portar SCSS pendiente del fork a `src/emo/styles/` (sin re-parchear upstream masivamente)
+5. Mantener `preserve/emo-fork-3.26.0` y tag `emo/fork-3.26.0-baseline` **indefinidamente**
 
 ---
 
