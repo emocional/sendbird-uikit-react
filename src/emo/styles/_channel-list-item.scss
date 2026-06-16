@@ -1,6 +1,7 @@
 @import '../../styles/variables';
 
 $emo-channel-list-row-height: 70px;
+$emo-channel-preview-meta-width: 76px;
 
 /* GroupChannelListItem — misma altura que cabecera; avatar | nombre+rol | fecha */
 
@@ -71,24 +72,27 @@ $emo-channel-list-row-height: 70px;
   }
 
   .emo-channel-preview__meta {
-    position: relative;
-    flex-shrink: 0;
-    align-self: stretch;
     display: flex;
-    align-items: flex-end;
-    justify-content: center;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex: 0 0 $emo-channel-preview-meta-width;
+    width: $emo-channel-preview-meta-width;
+    min-width: $emo-channel-preview-meta-width;
+    align-self: stretch;
     margin-left: 8px;
-    min-width: 28px;
   }
 
   .emo-channel-preview__timestamp {
-    position: absolute;
-    top: 12px;
-    right: 0;
     white-space: nowrap;
     margin: 0;
-    min-height: 16px;
-    line-height: 16px;
+    line-height: 1;
+    text-align: right;
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .emo-channel-preview__unread {
@@ -97,12 +101,18 @@ $emo-channel-list-row-height: 70px;
     align-items: center;
     justify-content: flex-end;
     gap: 4px;
+    flex-shrink: 0;
   }
 
   .emo-channel-preview__badge.sendbird-badge {
     height: 24px;
     min-width: 24px;
+    padding: 0 6px;
+    box-sizing: border-box;
     border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background-color: rgb(222, 59, 64);
 
     @include themed() {
@@ -110,11 +120,20 @@ $emo-channel-list-row-height: 70px;
     }
 
     .sendbird-badge__text {
-      margin: 0 7px;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
 
-      .sendbird-label--caption-2 {
+      .sendbird-label {
+        display: block;
+        margin: 0;
+        padding: 0;
+        line-height: 1;
         font-size: 12px;
-        line-height: 16px;
+        font-weight: 600;
       }
     }
   }
