@@ -14,8 +14,18 @@ export const EmocionalUserListItem = ({ user, onSelect }: EmocionalUserListItemP
   const professionalTag = getUserProfessionalTag(user);
 
   return (
-    <div className="emo-invite-user-list-item">
-      <UserListItem user={user} onClick={() => onSelect(user.userId)} />
+    <div
+      className="emo-invite-user-list-item"
+      onClick={() => onSelect(user.userId)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          onSelect(user.userId);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+    >
+      <UserListItem user={user} />
       {professionalTag && (
         <Label
           className="emo-invite-user-list-item__tag"

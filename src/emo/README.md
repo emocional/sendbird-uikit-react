@@ -32,8 +32,20 @@ src/emo/
 1. Mergear o rebasar `upstream/main` sobre la rama experimental.
 2. Resolver conflictos en los archivos de `PATCHES.md` (suelen ser pocos).
 3. Revisar que los enganches `// @emo-integration` siguen siendo válidos.
-4. Ejecutar tests de `src/emo/` y build.
+4. Ejecutar **`yarn test:emo`** (suite de producto Emocional) y, si hace falta, `yarn jest src/emo`.
 5. Revisar `FORK-FEATURES.md` por features nuevas de upstream que sustituyan las nuestras.
+
+## Test de producto (`yarn test:emo`)
+
+Suite única en `src/emo/__tests__/emo-product.spec.tsx`. Valida **solo** customizaciones Emocional según el contrato de **emo-front** (`emo-chat.tsx`, `emo-chat.utils.ts`):
+
+- Props de `SendbirdProvider` (`enableAutoChat`, `searcherFilter`, `userListQuery` + `filterFn`)
+- Onboarding / `?msgto=` (`enableAutoChat` + canales distinct)
+- Búsqueda en modal de invitación
+- Tags `metaData` (`company`, `professional`, `company_name`, `team`)
+- Online en avatar, localización ES, icono `+`, enganches `@emo-integration`
+
+Contrato documentado en `src/emo/product/emo-front-usage.ts`.
 
 ## Features implementadas
 

@@ -11,6 +11,8 @@ import { SendbirdContextProvider } from './context/SendbirdProvider';
 import useSendbird from './context/hooks/useSendbird';
 
 export type { SendbirdProviderProps } from './types';
+export type { UserListQuery as UserListQueryType } from './types';
+export type { EmocionalUserListQuery } from '../../types';
 
 // For Exportation
 export const SendbirdProvider = (props: SendbirdProviderProps) => {

@@ -35,6 +35,7 @@
   "scripts": {
     "dev": "yarn start:apps:testing",
     "test": "jest",
+    "test:emo": "jest src/emo/__tests__/emo-product.spec.tsx",
     "test-update-snapshot": "jest -u",
     "test:coverage": "yarn test --coverage",
     "test:visual": "npx playwright test",
