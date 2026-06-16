@@ -11,10 +11,12 @@ import { useLocalization } from '../../lib/LocalizationContext';
 export function EmocionalMessageHeader(props: MessageHeaderProps) {
   const { channel, message } = props;
   const { dateLocale, stringSet } = useLocalization();
+  const sendableMessage = message as SendableMessageType;
+  const senderUserId = sendableMessage.sender?.userId;
 
   const senderName = channel?.members?.find((member: Member) => (
-    member?.userId === message?.sender?.userId
-  ))?.nickname || getSenderName(message as SendableMessageType);
+    member?.userId === senderUserId
+  ))?.nickname || getSenderName(sendableMessage);
 
   return (
     <div className="emo-message-header">
