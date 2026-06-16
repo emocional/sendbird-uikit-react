@@ -1,0 +1,97 @@
+@import '../../styles/variables';
+
+/* MessageContent — fork §8 / NOT-PORTED §3.1 */
+
+.sendbird-message-content {
+  padding-left: 16px;
+  padding-right: 16px;
+
+  .sendbird-message-content__middle {
+    max-width: none;
+
+    @include mobile() {
+      width: auto;
+      max-width: none;
+    }
+  }
+
+  &.mouse-hover,
+  &:hover {
+    &.incoming {
+      @include themed() {
+        background-color: #fafafbff;
+      }
+    }
+  }
+}
+
+.sendbird-message-content.incoming {
+  .sendbird-message-content__left {
+    .sendbird-message-content__left__avatar {
+      position: static;
+      bottom: auto;
+      left: auto;
+      margin-top: 10px;
+    }
+  }
+
+  .sendbird-message-content__middle {
+    justify-content: center;
+
+    .sendbird-message-content__middle__sender-name {
+      font-weight: bold;
+    }
+  }
+
+  .sendbird-message-content__right {
+    position: absolute;
+    z-index: 10;
+    right: 8px;
+    top: -10px;
+    display: inline-flex;
+    margin-left: 0;
+    padding-top: 0;
+    width: auto;
+
+    &.use-reactions {
+      width: auto;
+    }
+
+    .sendbird-message-content-menu {
+      background-color: white;
+      border: 1px solid #fafafaff;
+      border-radius: 8px;
+      height: min-content;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      flex-direction: row;
+      justify-content: space-between;
+      min-width: 80px;
+      position: relative;
+    }
+  }
+}
+
+/* Mensajes entrantes forzados: alinear todo a la izquierda */
+.sendbird-message-content.incoming,
+.sendbird-message-content__left.incoming,
+.sendbird-message-content__middle.incoming,
+.sendbird-message-content__right.incoming {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.sendbird-message-content.outgoing,
+.sendbird-message-content__left.outgoing,
+.sendbird-message-content__middle.outgoing {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.sendbird-message-content.incoming .sendbird-message-content__left,
+.sendbird-message-content.outgoing .sendbird-message-content__left {
+  display: flex;
+}
+
+.sendbird-message-content-reactions {
+  border-radius: 0 0 16px 16px;
+}

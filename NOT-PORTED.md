@@ -47,9 +47,11 @@ Para lo implementado en código, ver [`src/emo/README.md`](./src/emo/README.md) 
 | Header lista: avatar + nombre, sin userId/onEdit | `group-channel-list-header.tsx` + `overrides.scss` |
 | Typing: nickname morado, sin “2 usuarios” | `EmocionalTypingIndicatorText` |
 | Avatares 6px | `overrides.scss` |
-| Input: borde redondeado y fondo | `overrides.scss` (parcial vs fork) |
-| Alineación mensajes a la izquierda | `message-layout.ts` + `overrides.scss` |
-| Reacciones: radio contenedor | `overrides.scss` (solo contenedor) |
+| Input: borde redondeado y fondo | `_composer.scss` |
+| Alineación mensajes a la izquierda | `message-layout.ts` + `_messages.scss` |
+| Burbujas sin color / hover fila | `_text-message-body.scss`, `_messages.scss` |
+| Contenedor conversación sin borde/padding lateral | `_conversation.scss` |
+| Reacciones: radio contenedor | `_messages.scss` |
 | Botones primarios morados | `overrides.scss` (selector genérico) |
 | Modal invite: `hideFooter`, scroll móvil, búsqueda en header | `EmocionalInviteUsers` + `emocional-modal-search-header.scss` |
 
@@ -77,11 +79,11 @@ Referencias de diff: `git diff 742e337b..emo/fork-3.26.0-baseline -- <archivo>`
 
 | Área | Archivos fork con diff | Qué falta respecto al fork |
 |------|------------------------|----------------------------|
-| **Burbujas y layout de mensajes** | `src/ui/MessageContent/index.scss` (~78 líneas) | Padding horizontal 16px, hover fondo `#fafafb`, posición avatar/menú flotante, sombra y borde del menú contextual, ancho máximo middle, estilos quote |
-| **Cuerpo texto** | `src/ui/TextMessageItemBody/index.scss` | Colores de burbuja, padding, tipografía (fork acortó diff pero iba ligado a `isByMe`) |
-| **Composer** | `src/ui/MessageInput/index.scss` | Padding `18px 64px`, altura 56px, caret, fondos themed completos — hoy solo borde/radio/fondo básico en `overrides.scss` |
-| **Lista de mensajes / contenedor** | `src/modules/GroupChannel/components/GroupChannelUI/index.scss`, `MessageList/index.scss` | Espaciado y fondo del hilo de conversación |
-| **Labels en mensajes** | `src/ui/Label/index.scss`, `Label/types` (`EMOCIONAL_BORDER`) | Colores de texto en bodies; token no cableado en componentes |
+| **Burbujas y layout de mensajes** | `src/ui/MessageContent/index.scss` (~78 líneas) | **Portado** → `src/emo/styles/_messages.scss` |
+| **Cuerpo texto** | `src/ui/TextMessageItemBody/index.scss` | **Portado** → `src/emo/styles/_text-message-body.scss` |
+| **Composer** | `src/ui/MessageInput/index.scss` | **Portado** → `src/emo/styles/_composer.scss` |
+| **Lista de mensajes / contenedor** | `src/modules/GroupChannel/components/GroupChannelUI/index.scss`, `MessageList/index.scss` | **Portado** → `src/emo/styles/_conversation.scss` |
+| **Labels en mensajes** | `src/ui/Label/index.scss`, `Label/types` (`EMOCIONAL_BORDER`) | SCSS listo en `tokens.scss`; **falta** cablear `LabelColors` + `MessageView` (locale `es` en separador) |
 
 ### 3.2 Prioridad media
 

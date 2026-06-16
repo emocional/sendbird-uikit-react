@@ -18,6 +18,12 @@
   }
 }
 
+.sendbird-label--color-emocional_border {
+  @include themed() {
+    color: #c2c7ccff;
+  }
+}
+
 .emo-invite-user-list-item {
   cursor: pointer;
   position: relative;

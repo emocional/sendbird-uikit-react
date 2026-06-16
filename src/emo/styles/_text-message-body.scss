@@ -1,0 +1,37 @@
+@import '../../styles/variables';
+
+/* TextMessageItemBody — sin burbujas de color (fork + isByMe entrante) */
+
+.sendbird-text-message-item-body {
+  padding: 0 0 0 12px;
+  border-radius: 0;
+
+  &.incoming,
+  &.outgoing {
+    @include themed() {
+      background-color: transparent;
+    }
+  }
+
+  &.mouse-hover,
+  &:hover {
+    &.incoming,
+    &.outgoing {
+      @include themed() {
+        background-color: transparent;
+      }
+    }
+  }
+
+  &.disable-hover {
+    &.mouse-hover,
+    &:hover {
+      &.incoming,
+      &.outgoing {
+        @include themed() {
+          background-color: transparent;
+        }
+      }
+    }
+  }
+}

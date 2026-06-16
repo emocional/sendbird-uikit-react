@@ -1,4 +1,8 @@
 @import './tokens.scss';
+@import './messages.scss';
+@import './text-message-body.scss';
+@import './composer.scss';
+@import './conversation.scss';
 
 /* Overrides visuales Emocional — import único desde integration/root */
 
@@ -42,43 +46,6 @@
 .emo-typing-indicator__nickname {
   color: #4a1ca6;
   font-weight: 600;
-}
-
-/* Composer de mensajes */
-.sendbird-message-input .sendbird-message-input--textarea {
-  border-radius: 32px;
-  border: solid 1px #dee1e580;
-  background-color: #fafafb;
-
-  &:focus {
-    border: solid 1px #dee1e580;
-  }
-}
-
-/* Mensajes entrantes forzados: alinear todo a la izquierda */
-.sendbird-message-content.incoming,
-.sendbird-message-content__left.incoming,
-.sendbird-message-content__middle.incoming,
-.sendbird-message-content__right.incoming {
-  margin-left: 0;
-  margin-right: auto;
-}
-
-.sendbird-message-content.outgoing,
-.sendbird-message-content__left.outgoing,
-.sendbird-message-content__middle.outgoing {
-  margin-left: 0;
-  margin-right: auto;
-}
-
-.sendbird-message-content.incoming .sendbird-message-content__left,
-.sendbird-message-content.outgoing .sendbird-message-content__left {
-  display: flex;
-}
-
-/* Reacciones */
-.sendbird-message-content-reactions {
-  border-radius: 0 0 16px 16px;
 }
 
 /* Botones primarios de marca */

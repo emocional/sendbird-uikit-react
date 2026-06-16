@@ -1,0 +1,36 @@
+@import '../../styles/variables';
+
+/* GroupChannelUI + MessageList — fork §8 / NOT-PORTED §3.1 */
+
+.sendbird-conversation {
+  border-radius: 0;
+  border: none;
+
+  @include themed() {
+    border: none;
+  }
+}
+
+.sendbird-conversation__messages .sendbird-conversation__messages-padding {
+  padding-left: 0;
+  padding-right: 0;
+
+  @include mobile() {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* DateSeparator — color borde Emocional sin parchear Label/types */
+.sendbird-separator__left,
+.sendbird-separator__right {
+  @include themed() {
+    background-color: #dee1e580;
+  }
+}
+
+.sendbird-separator .sendbird-label--color-onbackground-2 {
+  @include themed() {
+    color: #c2c7ccff;
+  }
+}
