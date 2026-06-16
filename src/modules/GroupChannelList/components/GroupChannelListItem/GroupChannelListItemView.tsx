@@ -59,6 +59,7 @@ export const GroupChannelListItemView = ({
   const showUnread = (!isSelected || config.groupChannel.enableMarkAsUnread)
     && !channel.isEphemeral
     && (unreadCount > 0 || (isMentionEnabled && channel.unreadMentionCount > 0));
+  const showBadge = showUnread && unreadCount > 0;
 
   const [showMobileLeave, setShowMobileLeave] = useState(false);
   const onLongPress = useLongPress(
@@ -122,7 +123,7 @@ export const GroupChannelListItemView = ({
           )}
         </div>
         <div className="emo-channel-preview__meta">
-          {!channel.isEphemeral && isMessageStatusEnabled && (
+          {!showBadge && !channel.isEphemeral && isMessageStatusEnabled && (
             <MessageStatus
               className="emo-channel-preview__timestamp"
               channel={channel}
@@ -130,7 +131,7 @@ export const GroupChannelListItemView = ({
               isDateSeparatorConsidered={false}
             />
           )}
-          {!channel.isEphemeral && !isMessageStatusEnabled && (
+          {!showBadge && !channel.isEphemeral && !isMessageStatusEnabled && (
             <Label
               className="emo-channel-preview__timestamp"
               type={LabelTypography.CAPTION_3}
@@ -159,7 +160,7 @@ export const GroupChannelListItemView = ({
             </div>
           )}
         </div>
-        {!isMobile && (
+        {!isMobile && !showBadge && (
           <div className="sendbird-channel-preview__action">
             {renderChannelAction({ channel })}
           </div>

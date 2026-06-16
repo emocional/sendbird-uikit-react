@@ -161,6 +161,10 @@ $emo-channel-preview-meta-width: 76px;
     top: 50%;
     right: 12px;
     transform: translateY(-50%);
+
+    .sendbird-iconbutton {
+      display: none;
+    }
   }
 
   &:hover {
@@ -170,6 +174,10 @@ $emo-channel-preview-meta-width: 76px;
 
     .emo-channel-preview__timestamp {
       visibility: hidden;
+    }
+
+    .sendbird-channel-preview__action .sendbird-iconbutton {
+      display: inline-block;
     }
   }
 }

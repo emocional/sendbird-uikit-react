@@ -1,14 +1,15 @@
 import React from 'react';
 
-import type { SendableMessageType } from '../../../../utils';
-
 import * as utils from './utils';
 import { useLocalization } from '../../../../lib/LocalizationContext';
 import { GroupChannelListItemBasicProps, GroupChannelListItemView } from './GroupChannelListItemView';
 import { useGroupChannelList } from '../../context/useGroupChannelList';
 import useSendbird from '../../../../lib/Sendbird/context/hooks/useSendbird';
 // @emo-integration
-import { resolveEmocionalChannelListTag } from '../../../../emo/integration/group-channel-list-item';
+import {
+  resolveEmocionalChannelListMessageStatusEnabled,
+  resolveEmocionalChannelListTag,
+} from '../../../../emo/integration/group-channel-list-item';
 
 export interface GroupChannelListItemProps extends GroupChannelListItemBasicProps {}
 
@@ -26,14 +27,11 @@ export const GroupChannelListItem = ({
   const {
     state: {
       isTypingIndicatorEnabled,
-      isMessageReceiptStatusEnabled,
     },
   } = useGroupChannelList();
 
   const userId = config.userId;
-  const isMessageStatusEnabled = isMessageReceiptStatusEnabled
-      && (!channel.lastMessage?.isAdminMessage())
-      && (channel.lastMessage as SendableMessageType)?.sender?.userId === userId;
+  const isMessageStatusEnabled = resolveEmocionalChannelListMessageStatusEnabled(channel, userId);
 
   return (
     <GroupChannelListItemView
