@@ -73,7 +73,7 @@ git checkout -b experiment/upstream-3.18.0-vanilla upstream/v3.18.0
 | Código fuente | **Upstream tal cual** — no mergear `main` |
 | `package.json` → `name` | Mantener `@emocional/sendbird-uikit-react` (para no romper imports del front) **o** usar `@sendbird/uikit-react` solo si se cambia también el front |
 | `package.json` → `version` | `3.18.0-emo-vanilla.0` (pre-release semver, distinto del 3.26.0 del fork) |
-| CI / release-it / Renovate | **Desactivar o no usar** en esta rama (evitar publicar por accidente) |
+| CI / release-it / Renovate | Restaurados en rama experimental — **solo `main`** (ver `NOT-PORTED.md` §1) |
 | `.npmrc` / `publishConfig` | Opcional en fase experimental; solo hace falta si se publica a GH Packages |
 
 ### Build local

@@ -1,0 +1,39 @@
+name: CI
+
+# Emocional: CI y publicación solo en `main` (PRs hacia `main` ejecutan test, sin publish).
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions: write-all
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install
+        run: yarn install --immutable
+
+      - name: Build
+        run: yarn build
+
+      - name: Emocional product tests
+        run: yarn test:emo
+
+  publish:
+    needs: [test]
+    uses: ./.github/workflows/publish.yml
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && !contains(github.event.head_commit.message, 'Release ')
+    secrets: inherit

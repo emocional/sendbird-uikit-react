@@ -18,7 +18,7 @@ Para lo que **sí** se reimplementó, ver [`src/emo/README.md`](./src/emo/README
 | Categoría | Estado |
 |-----------|--------|
 | API de producto (`enableAutoChat`, `searcherFilter`, `filterFn`, tags, online, ES) | **Portado** en `src/emo/` |
-| Infraestructura (CI, release-it, Renovate) | **Pendiente** — Fase 4 del plan |
+| Infraestructura (CI, release-it, Renovate) | **Restaurada** en rama experimental — solo se ejecuta en `main` (ver §1) |
 | Estilos / UX masivos (mensajes, listas, modales genéricos) | **Mayoría no portada** |
 | `isByMe = false` global | **Descartado** a propósito |
 | APIs redundantes con 3.18 (`userQuery` por App, `showCreateChannel`, `Modal.setSearcher`) | **No portadas** — sustituidas o innecesarias |
@@ -28,19 +28,19 @@ Para lo que **sí** se reimplementó, ver [`src/emo/README.md`](./src/emo/README
 
 ## 1. Infraestructura y publicación (§1–§2 de FORK-FEATURES)
 
-No rehecho en la rama experimental **por diseño** (evitar publicar vanilla por accidente). Corresponde a la **Fase 4** de [`UPSTREAM-RESET-PLAN.md`](./UPSTREAM-RESET-PLAN.md).
+Restaurada en la rama experimental (`.github/workflows/CI.yml`, `publish.yml`, `auto-approve.yml`, `pr-title.yml`, `.release-it.json`, `.npmrc`, Renovate, `build.sh`). **Solo se ejecuta automáticamente en `main`** (push y PRs hacia `main` para CI; publish solo en push a `main`).
 
-| Elemento del fork | Estado |
-|-------------------|--------|
-| GitHub Actions — CI (`.github/workflows/CI.yml`) | No portado |
-| GitHub Actions — publicación (`publish.yml` + `release-it`) | No portado |
-| GitHub Actions — auto-approve, PR title | No portado |
-| `.release-it.json` y script `release` | No portado |
-| Renovate (`.github/renovate.json`) | No portado |
-| `build.sh` para enlace local con `emo-front` | No revisado/portado en esta rama |
-| README mínimo de Emocional | No sustituido (sigue README upstream en experimental) |
+| Elemento | Estado |
+|----------|--------|
+| `CI.yml` — test + publish en `main` | Restaurado (`yarn build`, `yarn test:emo`; publish vía `release-it`) |
+| `publish.yml` — GitHub Packages | Restaurado |
+| `auto-approve.yml`, `pr-title.yml` | Restaurados (PRs hacia `main`) |
+| `.release-it.json`, script `release`, `publishConfig` | Restaurados |
+| Renovate | Restaurado |
+| `build.sh` | Restaurado (enlace local con `emo-front`) |
+| Workflows Sendbird upstream en `main` | `build-and-test` sin push a `main`; `deploy-github-pages` solo manual |
 
-**Nota:** el rename del paquete a `@emocional/sendbird-uikit-react` en `scripts/package.template.json` **sí** está para el artefacto de build; la cadena de release completa no.
+**Pendiente de Fase 4:** merge a `main` del repo y primera publicación con la nueva base 3.18 + `src/emo/`.
 
 ---
 
@@ -189,7 +189,7 @@ Para completar paridad lingüística con el fork sobre 3.18, habría que auditar
 | Baja (salvo petición UX) | Estilos mensajes / `isByMe` | Decisión de producto; si aplica, preferir SCSS en `src/emo/styles/` antes que parchear `MessageContent` |
 | Media | `TypingIndicator`, avatares 6px, `GroupChannelListHeader` | Overrides SCSS o wrappers en `src/emo/integration/` |
 | Media | Traducciones ES claves 3.18 | Ampliar `es-string-set-overrides.ts` |
-| Alta (release) | CI / release-it / publish | Fase 4 — copiar/adaptar desde `preserve/emo-fork-3.26.0` |
+| Alta (release) | Primera publicación 3.18+emo en `main` | Merge experimental → `main`; CI publicará con `release-it` |
 | — | `userQuery` / `showCreateChannel` / `Modal.setSearcher` | **No recuperar** salvo nuevo consumidor que no use `SendbirdProvider` |
 
 **Referencia de diff histórico** (fork vs punto de divergencia Sendbird):

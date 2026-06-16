@@ -53,6 +53,7 @@
     "stylelint": "stylelint 'src/**'",
     "generate-component": "plop",
     "inspect": "yarn test; yarn lint;",
+    "release": "yarn test:emo && dotenv release-it",
     "storybook": "storybook dev -p 6006",
     "start:storybook": "yarn storybook",
     "start:apps:testing": "yarn workspace @uikit-app/testing dev",
@@ -63,6 +64,9 @@
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/emocional/sendbird-uikit-react.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
   },
   "author": "SendBird <support@sendbird.com>",
   "license": "SEE LICENSE IN LICENSE.md",
@@ -92,6 +96,7 @@
     "@babel/preset-react": "^7.22.15",
     "@babel/preset-typescript": "^7.23.2",
     "@playwright/test": "^1.55.1",
+    "@release-it/conventional-changelog": "latest",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-eslint": "^9.0.5",
@@ -115,6 +120,7 @@
     "babel-plugin-react-compiler": "^19.0.0-beta-27714ef-20250124",
     "browserslist": "^4.14.5",
     "caniuse-lite": "^1.0.30001148",
+    "dotenv-cli": "latest",
     "eslint": "^8.40.0",
     "eslint-config-airbnb": "^19.0.4",
     "eslint-config-airbnb-base": "^15.0.0",
@@ -136,6 +142,7 @@
     "postcss-rtlcss": "^5.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "release-it": "latest",
     "rollup": "^4.59.0",
     "rollup-plugin-analyzer": "^4.0.0",
     "rollup-plugin-copy": "^3.5.0",

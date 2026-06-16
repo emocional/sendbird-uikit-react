@@ -4,9 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize]
 
-  push:
-    branches:
-      - main
+  # Emocional CI (`.github/workflows/CI.yml`) cubre `main`; este workflow queda para PRs.
+  workflow_dispatch:
 concurrency:
   group: build-and-test-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true

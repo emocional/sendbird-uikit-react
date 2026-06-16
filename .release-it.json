@@ -1,0 +1,21 @@
+{
+  "npm": {
+    "publish": true,
+    "publishPath": "./dist"
+  },
+  "git": {
+    "commitMessage": "chore(release): emo-sendbird-uikit-react ${version}",
+    "requireBranch": "main",
+    "requireCommits": true,
+    "tagName": "sendbird-uikit-react@${version}"
+  },
+  "github": {
+    "release": true,
+    "releaseName": "Release emo-sendbird-uikit-react@${version}"
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": "angular"
+    }
+  }
+}
