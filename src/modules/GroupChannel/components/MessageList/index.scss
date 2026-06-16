@@ -10,12 +10,12 @@
     position: relative;
     height: 100%;
     overflow-x: hidden;
-    padding: 0; // @emo-integration
+    padding: 0 16px; // @emo-integration
   }
   .sendbird-separator,
   .sendbird-admin-message {
-    padding-top: 0;
-    padding-bottom: 0;
+    padding-top: 8px;
+    padding-bottom: 8px;
   }
 }
 
