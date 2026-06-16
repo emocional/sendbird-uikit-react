@@ -45,6 +45,7 @@ const config: SendbirdStateConfig = {
   onStartDirectMessage: undefined,
   setCurrentTheme: undefined,
   userListQuery: undefined,
+  enableAutoChat: false,
   // Utils
   pubSub: undefined,
   logger: undefined,

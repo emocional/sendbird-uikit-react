@@ -86,6 +86,7 @@ export interface RenderUserProfileProps {
 }
 
 export interface UserListQuery {
+  filterFn?: (user: User) => boolean;
   hasNext?: boolean;
   next(): Promise<Array<User>>;
   get isLoading(): boolean;
@@ -229,6 +230,12 @@ export interface SendbirdProviderProps extends CommonUIKitConfigProps, React.Pro
 
   // Customer provided callbacks
   eventHandlers?: SBUEventHandlers;
+
+  /**
+   * When true, creates distinct 1:1 channels for each user from `userListQuery`
+   * without opening the invite modal (onboarding / deep-link flows).
+   */
+  enableAutoChat?: boolean;
 }
 
 export interface SendbirdStateConfig {
@@ -246,6 +253,7 @@ export interface SendbirdStateConfig {
   logger: Logger;
   setCurrentTheme: (theme: 'light' | 'dark') => void;
   userListQuery?: () => UserListQuery;
+  enableAutoChat?: boolean;
   uikitUploadSizeLimit: number;
   uikitMultipleFilesMessageLimit: number;
   voiceRecord: {

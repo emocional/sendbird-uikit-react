@@ -6,6 +6,7 @@ import { GroupChannelListUIView } from './GroupChannelListUIView';
 import GroupChannelPreviewAction from '../GroupChannelPreviewAction';
 import { GroupChannelListItem } from '../GroupChannelListItem';
 import AddGroupChannel from '../AddGroupChannel';
+import AutoCreateGroupChannels from '../AutoCreateGroupChannels';
 import { GroupChannelListItemBasicProps } from '../GroupChannelListItem/GroupChannelListItemView';
 import { noop } from '../../../../utils/utils';
 import { useGroupChannelList } from '../../context/useGroupChannelList';
@@ -39,7 +40,7 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
     },
   } = useGroupChannelList();
 
-  const { state: { stores, config: { logger, isOnline } } } = useSendbird();
+  const { state: { stores, config: { logger, isOnline, enableAutoChat } } } = useSendbird();
   const sdk = stores.sdkStore.sdk;
 
   const renderListItem = (renderProps: { item: GroupChannel; index: number }) => {
@@ -78,7 +79,9 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
   };
 
   return (
-    <GroupChannelListUIView
+    <>
+      {enableAutoChat && <AutoCreateGroupChannels />}
+      <GroupChannelListUIView
       renderHeader={renderHeader}
       renderChannel={renderListItem}
       renderPlaceHolderError={renderPlaceHolderError}
@@ -93,6 +96,7 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
       renderAddChannel={() => <AddGroupChannel />}
       scrollRef={scrollRef}
     />
+    </>
   );
 };
 
