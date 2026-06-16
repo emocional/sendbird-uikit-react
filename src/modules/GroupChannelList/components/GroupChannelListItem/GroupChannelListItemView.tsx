@@ -94,9 +94,9 @@ export const GroupChannelListItemView = ({
         <div className="sendbird-channel-preview__avatar">
           <ConnectionStatusChannelAvatar channel={channel} userId={userId} theme={theme} />
         </div>
-        <div className="sendbird-channel-preview__content">
-          <div className="sendbird-channel-preview__content__upper">
-            <div className="sendbird-channel-preview__content__upper__header">
+        <div className="sendbird-channel-preview__content emo-channel-preview__content">
+          <div className="sendbird-channel-preview__content__upper emo-channel-preview__upper">
+            <div className="sendbird-channel-preview__content__upper__header emo-channel-preview__title">
               {(channel.isBroadcast || false) && (
                 <div className="sendbird-channel-preview__content__upper__header__broadcast-icon">
                   <Icon
@@ -115,18 +115,6 @@ export const GroupChannelListItemView = ({
               >
                 {channelName}
               </Label>
-              {channelTag && (
-                <Label
-                  className={[
-                    'emo-channel-preview__tag',
-                    isSelected ? 'emo-channel-preview__tag--selected' : '',
-                  ].join(' ')}
-                  type={LabelTypography.CAPTION_2}
-                  color={LabelColors.ONBACKGROUND_1}
-                >
-                  {channelTag}
-                </Label>
-              )}
               <Label
                 className="sendbird-channel-preview__content__upper__header__total-members"
                 type={LabelTypography.CAPTION_2}
@@ -150,7 +138,7 @@ export const GroupChannelListItemView = ({
             </div>
             {!channel.isEphemeral && isMessageStatusEnabled && (
               <MessageStatus
-                className="sendbird-channel-preview__content__upper__last-message-at"
+                className="sendbird-channel-preview__content__upper__last-message-at emo-channel-preview__timestamp"
                 channel={channel}
                 message={channel.lastMessage as CoreMessageType}
                 isDateSeparatorConsidered={false}
@@ -158,7 +146,7 @@ export const GroupChannelListItemView = ({
             )}
             {!channel.isEphemeral && !isMessageStatusEnabled && (
               <Label
-                className="sendbird-channel-preview__content__upper__last-message-at"
+                className="sendbird-channel-preview__content__upper__last-message-at emo-channel-preview__timestamp"
                 type={LabelTypography.CAPTION_3}
                 color={LabelColors.ONBACKGROUND_2}
               >
@@ -170,7 +158,19 @@ export const GroupChannelListItemView = ({
               </Label>
             )}
           </div>
-          <div className="sendbird-channel-preview__content__lower">
+          {channelTag && (
+            <Label
+              className={[
+                'emo-channel-preview__tag',
+                isSelected ? 'emo-channel-preview__tag--selected' : '',
+              ].join(' ')}
+              type={LabelTypography.CAPTION_2}
+              color={LabelColors.ONBACKGROUND_1}
+            >
+              {channelTag}
+            </Label>
+          )}
+          <div className="sendbird-channel-preview__content__lower emo-channel-preview__lower">
             <Label
               className="sendbird-channel-preview__content__lower__last-message"
               type={LabelTypography.BODY_2}

@@ -37,12 +37,14 @@
 }
 
 .emo-channel-preview__tag {
-  margin-top: 2px;
   font-size: 12px;
+  line-height: 1.2;
   border-radius: 12px;
-  text-align: center;
-  width: min-content;
+  width: fit-content;
+  max-width: 100%;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 2px 6px;
   background-color: #fafafaff;
 }
