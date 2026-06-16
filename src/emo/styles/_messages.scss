@@ -20,6 +20,7 @@ $emo-message-avatar-gap: 14px;
   flex-direction: row;
   justify-content: flex-start;
   align-items: flex-start;
+  position: relative;
   width: 100%;
   margin: 0;
   padding: $emo-message-content-padding-y 0;
@@ -83,12 +84,18 @@ $emo-message-avatar-gap: 14px;
   .sendbird-message-content__right {
     position: absolute;
     z-index: 10;
+    left: auto;
     right: 0;
-    top: -10px;
+    top: auto;
+    bottom: $emo-message-content-padding-y;
     display: inline-flex;
     margin-left: 0;
     padding-top: 0;
     width: auto;
+
+    &.chain-top {
+      padding-top: 0;
+    }
 
     &.use-reactions {
       width: auto;
@@ -101,8 +108,10 @@ $emo-message-avatar-gap: 14px;
       height: min-content;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       flex-direction: row;
-      justify-content: space-between;
-      min-width: 80px;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 0;
+      min-width: auto;
       position: relative;
     }
   }

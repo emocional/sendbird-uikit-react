@@ -58,13 +58,6 @@ $emo-chat-padding-y: 12px;
   }
 }
 
-.sendbird-message-input-wrapper,
-.sendbird-message-input-wrapper--voice-message {
-  .sendbird-message-input-wrapper__message-input {
-    padding: 0 $emo-chat-padding-x;
-  }
-}
-
 .sendbird-conversation__messages__notification {
   margin-left: $emo-chat-padding-x;
 }
