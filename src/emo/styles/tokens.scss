@@ -39,16 +39,19 @@
 .emo-channel-preview__tag {
   font-size: 12px;
   line-height: 1.2;
+  font-weight: 500;
   border-radius: 12px;
   width: fit-content;
   max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 2px 6px;
-  background-color: #fafafaff;
+  padding: 2px 8px;
+  background-color: #eef0f3;
+  color: #5c6570;
 }
 
 .emo-channel-preview__tag--selected {
-  background-color: #fff;
+  background-color: #e4e7ec;
+  color: #4a5360;
 }

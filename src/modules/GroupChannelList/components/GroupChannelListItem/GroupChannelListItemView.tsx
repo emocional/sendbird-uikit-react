@@ -92,8 +92,8 @@ export const GroupChannelListItemView = ({
             channel={channel}
             userId={userId}
             theme={theme}
-            width={32}
-            height={32}
+            width={40}
+            height={40}
           />
         </div>
         <div className="emo-channel-preview__identity">

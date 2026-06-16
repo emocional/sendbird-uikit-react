@@ -22,19 +22,19 @@ $emo-channel-list-row-height: 70px;
   }
 
   .sendbird-channel-preview__avatar.emo-channel-preview__avatar {
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
     overflow: visible;
 
     .emo-connection-status-channel-avatar {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
     }
 
     .sendbird-avatar {
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 40px;
     }
   }
 
@@ -54,6 +54,16 @@ $emo-channel-list-row-height: 70px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .emo-channel-preview__tag {
+    color: #5c6570;
+    background-color: #eef0f3;
+
+    &.emo-channel-preview__tag--selected {
+      color: #4a5360;
+      background-color: #e4e7ec;
+    }
   }
 
   .emo-channel-preview__meta {
@@ -87,6 +97,10 @@ $emo-channel-list-row-height: 70px;
   &:hover {
     @include themed() {
       background-color: #fafafbff;
+    }
+
+    .emo-channel-preview__timestamp {
+      display: none;
     }
   }
 }
