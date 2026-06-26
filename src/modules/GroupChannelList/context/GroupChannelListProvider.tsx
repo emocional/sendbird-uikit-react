@@ -18,6 +18,8 @@ import { deleteNullish, noop } from '../../../utils/utils';
 import useSendbird from '../../../lib/Sendbird/context/hooks/useSendbird';
 import useGroupChannelList from './useGroupChannelList';
 import useDeepCompareEffect from '../../../hooks/useDeepCompareEffect';
+// @emo-integration
+import { filterVisibleGroupChannels } from '../../../emo/features/empty-channel-visibility/filterVisibleGroupChannels';
 
 type OnCreateChannelClickParams = { users: Array<string>; onClose: () => void; channelType: CHANNEL_TYPE };
 type ChannelListDataSource = ReturnType<typeof useGroupChannelListDataSource>;
@@ -140,9 +142,12 @@ export const GroupChannelListManager: React.FC<GroupChannelListProviderProps> = 
   // SideEffect: Auto select channel
   useEffect(() => {
     if (!disableAutoSelect && stores.sdkStore.initialized && initialized) {
-      if (!selectedChannelUrl) onChannelSelect(groupChannels[0] ?? null);
+      if (!selectedChannelUrl) {
+        const visibleChannels = filterVisibleGroupChannels(groupChannels, selectedChannelUrl);
+        onChannelSelect(visibleChannels[0] ?? null);
+      }
     }
-  }, [disableAutoSelect, stores.sdkStore.initialized, initialized, selectedChannelUrl]);
+  }, [disableAutoSelect, stores.sdkStore.initialized, initialized, selectedChannelUrl, groupChannels, onChannelSelect]);
 
   // Recreates the GroupChannelCollection when `channelListQueryParams` change
   useEffect(() => {

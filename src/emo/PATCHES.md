@@ -8,7 +8,8 @@ El resto del código Emocional está en `src/emo/`.
 | `src/lib/Sendbird/types.ts` | `SendbirdProviderProps` y `SendbirdStateConfig` extienden tipos de `src/emo/types` | `@emo-integration` |
 | `src/lib/Sendbird/context/initialState.ts` | Spread de `emocionalConfigDefaults` en `config` | `@emo-integration` |
 | `src/lib/Sendbird/context/SendbirdProvider.tsx` | Config Emocional + localización ES + estilos | `@emo-integration` |
-| `src/modules/GroupChannelList/components/GroupChannelListUI/index.tsx` | `<EmocionalGroupChannelListAddons />` | `@emo-integration` |
+| `src/modules/GroupChannelList/components/GroupChannelListUI/index.tsx` | `<EmocionalGroupChannelListAddons />` + filtro canales vacíos | `@emo-integration` |
+| `src/modules/GroupChannelList/context/GroupChannelListProvider.tsx` | Auto-select del primer canal visible (con mensajes) | `@emo-integration` |
 | `src/modules/CreateChannel/components/CreateChannelUI/index.tsx` | Flujo invite directo 1:1 | `@emo-integration` |
 | `src/modules/GroupChannelList/components/AddGroupChannel/AddGroupChannelView.tsx` | Icono `+` de marca | `@emo-integration` |
 | `src/modules/GroupChannel/components/GroupChannelHeader/GroupChannelHeaderView.tsx` | Avatar online, badge empresa, sin botón info | `@emo-integration` |

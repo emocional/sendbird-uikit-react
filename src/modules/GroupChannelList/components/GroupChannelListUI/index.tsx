@@ -1,6 +1,6 @@
 import './index.scss';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import type { GroupChannel } from '@sendbird/chat/groupChannel';
 import { GroupChannelListUIView } from './GroupChannelListUIView';
 import GroupChannelPreviewAction from '../GroupChannelPreviewAction';
@@ -8,6 +8,7 @@ import { GroupChannelListItem } from '../GroupChannelListItem';
 import AddGroupChannel from '../AddGroupChannel';
 // @emo-integration
 import EmocionalGroupChannelListAddons from '../../../../emo/integration/group-channel-list';
+import { filterVisibleGroupChannels } from '../../../../emo/features/empty-channel-visibility/filterVisibleGroupChannels';
 import { GroupChannelListItemBasicProps } from '../GroupChannelListItem/GroupChannelListItemView';
 import { noop } from '../../../../utils/utils';
 import { useGroupChannelList } from '../../context/useGroupChannelList';
@@ -43,6 +44,11 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
 
   const { state: { stores, config: { logger, isOnline } } } = useSendbird();
   const sdk = stores.sdkStore.sdk;
+
+  const visibleChannels = useMemo(
+    () => filterVisibleGroupChannels(groupChannels, selectedChannelUrl),
+    [groupChannels, selectedChannelUrl],
+  );
 
   const renderListItem = (renderProps: { item: GroupChannel; index: number }) => {
     const { item: channel, index } = renderProps;
@@ -92,7 +98,7 @@ export const GroupChannelListUI = (props: GroupChannelListUIProps) => {
       onChangeTheme={onThemeChange ?? noop}
       allowProfileEdit={allowProfileEdit}
       onUserProfileUpdated={onUserProfileUpdated ?? noop}
-      channels={groupChannels}
+      channels={visibleChannels}
       onLoadMore={loadMore}
       initialized={initialized}
       renderAddChannel={() => <AddGroupChannel />}

@@ -48,5 +48,6 @@ export const EMO_FRONT_PRODUCT_SCENARIOS = {
   onboardingAutoChat: 'enableAutoChat cuando hay usersFilter (msgto / initialChats)',
   inviteSearch: 'searcherFilter enlaza búsqueda del modal con nicknameStartsWithFilter',
   distinctDmInvite: 'tap en usuario crea canal 1:1 distinct',
-  channelListIncludeEmpty: 'channelListQueryParams.includeEmpty',
+  channelListIncludeEmpty:
+    'channelListQueryParams.includeEmpty (lista filtra vacíos salvo canal seleccionado)',
 } as const;
