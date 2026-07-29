@@ -138,7 +138,7 @@
     "jest-junit": "^16.0.0",
     "jsdom": "^20.0.0",
     "plop": "^2.5.3",
-    "postcss": "^8.3.5",
+    "postcss": "^8.5.18",
     "postcss-rtlcss": "^5.3.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
